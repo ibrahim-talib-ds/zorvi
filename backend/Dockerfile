@@ -10,10 +10,10 @@ RUN pip install --no-cache-dir --timeout 600 --retries 5 -r requirements.txt
 
 COPY . .
 
-# FIXED: Use postgresql+asyncpg for the async URL, and postgresql for the sync URL
 ENV DATABASE_URL="postgresql+asyncpg://postgres:mlsawdSGAVM75Z7v8ZFcliVIZgU8IsxLXRWdmEOAHf05TUnYg7wTSiGU9CiOhJm1@5ciusmnmqis4a1hw8ikmsrjy:5432/zorvi"
 ENV DATABASE_URL_SYNC="postgresql://postgres:mlsawdSGAVM75Z7v8ZFcliVIZgU8IsxLXRWdmEOAHf05TUnYg7wTSiGU9CiOhJm1@5ciusmnmqis4a1hw8ikmsrjy:5432/zorvi"
 ENV SECRET_KEY="zorvi-super-secret-2026-key"
+ENV BACKEND_CORS_ORIGINS="http://sjsjkccnxvsuqihkh9zbzujdx.172.21.0.1.sslip.io"
 
 EXPOSE 8000
 
