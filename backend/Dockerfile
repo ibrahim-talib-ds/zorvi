@@ -2,12 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies needed for psycopg2
+# Install system dependencies
 RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Tell pip to wait 10 minutes and retry 5 times
+RUN pip install --no-cache-dir --timeout 600 --retries 5 -r requirements.txt
 
 COPY . .
 
