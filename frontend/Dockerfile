@@ -9,7 +9,8 @@ RUN npm config set fetch-retries 5 && \
 
 COPY . .
 
-# FIXED: Use absolute path /app/fontmock.js
+# Use the public backend URL for the browser
+ENV NEXT_PUBLIC_API_URL="http://lkgf3nkt0ugn23cvidfqhnci.172.21.0.1.sslip.io"
 ENV NEXT_FONT_GOOGLE_MOCKED_RESPONSES=/app/fontmock.js
 
 RUN npm run build
