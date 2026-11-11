@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- ZORVI mark: Z + upward arrow (launch/growth) -->
+  <defs>
+    <linearGradient id="zorviGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7559E8"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer rounded square background -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="#0B0F1D"/>
+
+  <!-- The Z mark -->
+  <g transform="translate(96, 96)">
+    <!-- Top horizontal bar of Z -->
+    <rect x="0" y="0" width="320" height="72" rx="8" fill="url(#zorviGrad)"/>
+
+    <!-- Diagonal of Z with arrow point -->
+    <path
+      d="M 312 72
+         L 96 320
+         L 0 320
+         L 216 72
+         Z"
+      fill="url(#zorviGrad)"
+    />
+
+    <!-- Bottom horizontal bar of Z -->
+    <rect x="0" y="248" width="320" height="72" rx="8" fill="url(#zorviGrad)"/>
+
+    <!-- Upward arrow at top-right corner -->
+    <path
+      d="M 296 60 L 360 60 L 360 124"
+      stroke="#A78BFA"
+      stroke-width="20"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+    <path
+      d="M 360 60 L 300 120"
+      stroke="#A78BFA"
+      stroke-width="20"
+      stroke-linecap="round"
+      fill="none"
+    />
+  </g>
+</svg>

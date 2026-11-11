@@ -1,0 +1,18 @@
+# =============================================================================
+# ZORVI — Local development stack
+# Author: Ibrahim Talib
+#
+# NOTE (2026-11-07): PostgreSQL now runs NATIVELY.
+#
+#   Cluster:  18/zorvi  (created with pg_createcluster 18 zorvi --port 5434)
+#   Service:  postgresql@18-zorvi.service  (systemd)
+#   Port:     5434  (host 127.0.0.1 only)
+#   Data:     /var/lib/postgresql/18/zorvi
+#   Logs:     /var/log/postgresql/postgresql-18-zorvi.log
+#
+# This file is reserved for FUTURE containerized services that do not belong
+# in native packages (Redis, Celery workers, MinIO, etc.). It currently
+# defines no services.
+# =============================================================================
+
+services: {}

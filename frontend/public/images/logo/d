@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="zorviGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6047D8"/>
+      <stop offset="100%" stop-color="#8B72EE"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="#FFFFFF"/>
+  <g transform="translate(96, 96)">
+    <rect x="0" y="0" width="320" height="72" rx="8" fill="url(#zorviGradL)"/>
+    <path d="M 312 72 L 96 320 L 0 320 L 216 72 Z" fill="url(#zorviGradL)"/>
+    <rect x="0" y="248" width="320" height="72" rx="8" fill="url(#zorviGradL)"/>
+    <path d="M 296 60 L 360 60 L 360 124" stroke="#7559E8" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M 360 60 L 300 120" stroke="#7559E8" stroke-width="20" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>
