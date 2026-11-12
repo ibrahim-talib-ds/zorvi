@@ -2,8 +2,10 @@
  * ZORVI — API client
  */
 
+// HARDCODED production API URL
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE ??
+  "http://lkgf3nkt0ugn23cvidfqhnci.172.21.0.1.sslip.io/api/v1";
 
 export class ApiError extends Error {
   constructor(

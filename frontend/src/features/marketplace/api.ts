@@ -17,7 +17,6 @@ export interface MarketplaceProduct {
   creator_name: string | null;
   creator_avatar_url: string | null;
   live_demo_url?: string | null;
-  external_download_url?: string | null;
 }
 
 export async function fetchFeaturedProducts(limit = 100): Promise<MarketplaceProduct[]> {
@@ -25,10 +24,14 @@ export async function fetchFeaturedProducts(limit = 100): Promise<MarketplacePro
     const res = await fetch(`${API_BASE}/marketplace/products?limit=${limit}`, {
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.error("Products fetch failed:", res.status);
+      return [];
+    }
     const data = await res.json();
     return Array.isArray(data) ? data : [];
-  } catch {
+  } catch (err) {
+    console.error("Products fetch error:", err);
     return [];
   }
 }
