@@ -1,25 +1,35 @@
-FROM node:20 AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Install dependencies
 COPY package*.json ./
+RUN npm install
 
-RUN npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm install
-
+# Copy code
 COPY . .
 
-# Hardcode the PUBLIC Backend URL
-ENV NEXT_PUBLIC_API_URL="http://lkgf3nkt0ugn23cvidfqhnci.172.21.0.1.sslip.io"
-ENV NEXT_FONT_GOOGLE_MOCKED_RESPONSES=/app/fontmock.js
+# Build args
+ARG NEXT_PUBLIC_API_BASE=http://lkgf3nkt0ugn23cvidfqhnci.172.21.0.1.sslip.io/api/v1
+ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
 
+# Build
 RUN npm run build
 
-FROM node:20 AS runner
+# ───────────────────────────────────────────────
+# Production stage
+# ───────────────────────────────────────────────
+FROM node:20-alpine AS runner
 WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Copy standalone build
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+
 EXPOSE 3000
-CMD ["npm", "start"]
+
+CMD ["node", "server.js"]
