@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, User, Package, Calendar } from "lucide-react";
 
+import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -30,7 +31,6 @@ interface CreatorProfile {
   products: Product[];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8010/api/v1";
 
 async function fetchCreator(id: string): Promise<CreatorProfile | null> {
   try {

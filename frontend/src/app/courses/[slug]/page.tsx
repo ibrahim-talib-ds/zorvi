@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, PlayCircle, GraduationCap } from "lucide-react";
 import { EnrollButton } from "./EnrollButton";
 
+import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -42,7 +43,6 @@ interface CourseDetail {
   modules: Module[];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8010/api/v1";
 
 async function fetchCourse(slug: string): Promise<CourseDetail | null> {
   try {
