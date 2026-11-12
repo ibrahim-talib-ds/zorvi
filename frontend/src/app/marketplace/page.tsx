@@ -33,7 +33,6 @@ export default async function MarketplacePage() {
       </div>
 
       <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        {/* Header */}
         <div className="mb-10">
           <Link href="/" className="text-sm text-[#7A8199] hover:text-[#A78BFA] transition inline-flex items-center gap-1.5 mb-4">
             ← Back to Home
@@ -51,7 +50,6 @@ export default async function MarketplacePage() {
           </div>
         </div>
 
-        {/* Interactive Grid */}
         <MarketplaceGrid products={products} categories={categories} />
       </div>
     </div>

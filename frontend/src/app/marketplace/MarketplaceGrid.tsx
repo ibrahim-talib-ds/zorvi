@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Star, ArrowRight, Sparkles, Play, Download, Filter } from "lucide-react";
+import { Search, Star, ArrowRight, Sparkles, Play, Filter } from "lucide-react";
+import { cn } from "@/lib/design-system/cn";
 
 interface Product {
   id: string;
@@ -18,7 +19,6 @@ interface Product {
   creator_name: string | null;
   creator_avatar_url?: string | null;
   live_demo_url?: string | null;
-  external_download_url?: string | null;
 }
 
 interface Category {
@@ -41,8 +41,8 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 export function MarketplaceGrid({ products, categories }: Props) {
   const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
+  const [difficulty, setDifficulty] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const filtered = useMemo(() => {
@@ -196,7 +196,6 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </Link>
 
-        {/* Demo button overlay — ALWAYS shows if demo exists */}
         {product.live_demo_url && (
           <a
             href={product.live_demo_url}
@@ -222,9 +221,7 @@ function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* Content */}
       <Link href={`/marketplace/${product.slug}`} className="p-3 flex flex-col flex-1">
-        {/* Difficulty */}
         <span className={`self-start inline-block rounded text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 border mb-2 ${DIFFICULTY_COLORS[product.difficulty] || DIFFICULTY_COLORS.beginner}`}>
           {product.difficulty}
         </span>
@@ -237,7 +234,6 @@ function ProductCard({ product }: { product: Product }) {
           {product.short_description}
         </p>
 
-        {/* Creator */}
         {product.creator_name && (
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-4 h-4 rounded-full bg-[#7559E8]/20 overflow-hidden flex items-center justify-center shrink-0">
@@ -251,13 +247,11 @@ function ProductCard({ product }: { product: Product }) {
           </div>
         )}
 
-        {/* Rating */}
         <div className="flex items-center gap-0.5 mb-2">
           <Star size={9} className="fill-[#F5A623] text-[#F5A623]" />
           <span className="text-[9px] text-[#7A8199]">5.0 (New)</span>
         </div>
 
-        {/* Price + Action */}
         <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-auto">
           <div>
             <p className="text-[8px] text-[#7A8199] font-mono uppercase tracking-wider">From</p>
