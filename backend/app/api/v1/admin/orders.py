@@ -1,29 +1,16 @@
-"""ZORVI — admin order management (mark-paid / cancelled / refunded).
-
-Only path in the entire system that sets status='paid'. Provider webhooks
-will plug into the same helper in a later phase.
-"""
-import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
 from typing import Annotated
-
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.rbac import require_role
-from app.models.download_token import DownloadToken
-from app.models.marketplace import MarketplaceProductFile
 from app.models.order import Order, OrderStatus
 from app.models.user import User
-from app.schemas.order import (
-    AdminNoteRequest,
-    DownloadTokenIssue,
-    MarkPaidResponse,
-    OrderRead,
-)
+from app.schemas.order import OrderRead, AdminNoteRequest
 
 router = APIRouter(
     prefix="/admin/orders",
@@ -31,56 +18,74 @@ router = APIRouter(
     dependencies=[Depends(require_role("admin", "super_admin"))],
 )
 
-DOWNLOAD_TOKEN_TTL_MINUTES = 15
-
-
-def _issue_token() -> str:
-    return secrets.token_urlsafe(48)[:64]
-
-
 @router.get("", response_model=list[OrderRead])
-async def list_all_orders(
+async def list_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[User, Depends(require_role("admin", "super_admin"))],
-    order_status: OrderStatus | None = None,
-    limit: int = 100,
-) -> list[OrderRead]:
-    stmt = select(Order).order_by(Order.created_at.desc()).limit(min(limit, 500))
-    if order_status is not None:
-        stmt = stmt.where(Order.status == order_status)
+    status_filter: OrderStatus | None = None,
+):
+    stmt = (
+        select(Order)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc())
+    )
+    if status_filter:
+        stmt = stmt.where(Order.status == status_filter)
+    
     result = await db.execute(stmt)
-    return [OrderRead.model_validate(o) for o in result.scalars().all()]
+    orders = result.scalars().all()
+    
+    # Attach user info
+    user_ids = {o.user_id for o in orders}
+    users_res = await db.execute(select(User).where(User.id.in_(user_ids)))
+    users = {u.id: u for u in users_res.scalars().all()}
+    
+    items = []
+    for o in orders:
+        order_data = OrderRead.model_validate(o)
+        user = users.get(o.user_id)
+        if user:
+            order_data.buyer_email = user.email
+            order_data.buyer_name = user.full_name
+        items.append(order_data)
+    
+    return items
 
-
-@router.get("/{order_id}", response_model=OrderRead)
-async def get_order(
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order(
     order_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[User, Depends(require_role("admin", "super_admin"))],
-) -> OrderRead:
+):
     order = await db.get(Order, order_id)
-    if order is None:
-        raise HTTPException(status_code=404, detail="order not found")
-    return OrderRead.model_validate(order)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    await db.delete(order)
+    await db.commit()
+    return None
 
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_orders(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    from sqlalchemy import delete
+    await db.execute(delete(Order))
+    await db.commit()
+    return None
 
-@router.post("/{order_id}/mark-paid", response_model=MarkPaidResponse)
+# --- Keep existing mark-paid logic ---
+@router.post("/{order_id}/mark-paid")
 async def mark_paid(
     order_id: uuid.UUID,
     payload: AdminNoteRequest,
     admin: Annotated[User, Depends(require_role("admin", "super_admin"))],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> MarkPaidResponse:
+):
     order = await db.get(Order, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="order not found")
     if order.status == OrderStatus.paid:
         raise HTTPException(status_code=409, detail="order already paid")
     if order.status not in (OrderStatus.pending, OrderStatus.awaiting_verification):
-        raise HTTPException(
-            status_code=409,
-            detail=f"cannot mark '{order.status.value}' as paid",
-        )
+        raise HTTPException(status_code=409, detail=f"cannot mark '{order.status.value}' as paid")
 
     now = datetime.now(timezone.utc)
     order.status = OrderStatus.paid
@@ -89,17 +94,21 @@ async def mark_paid(
     if payload.admin_note is not None:
         order.admin_note = payload.admin_note
 
-    # Issue one download token per file attached to each ordered package,
-    # plus shared files (package_id IS NULL) on the product.
-    issued: list[DownloadTokenIssue] = []
-    expires_at = now + timedelta(minutes=DOWNLOAD_TOKEN_TTL_MINUTES)
+    # Issue download tokens
+    from app.models.marketplace import MarketplaceProductFile
+    from app.models.download_token import DownloadToken
+    import secrets
+    from datetime import timedelta
+    from app.schemas.order import DownloadTokenIssue, MarkPaidResponse
 
+    issued = []
+    expires_at = now + timedelta(minutes=60)
+    
     for item in order.items:
         stmt = select(MarketplaceProductFile).where(
             MarketplaceProductFile.product_id == item.product_id,
             MarketplaceProductFile.is_active.is_(True),
         )
-        # match files for this package OR shared files (package_id null)
         result = await db.execute(stmt)
         candidate_files = result.scalars().all()
         for f in candidate_files:
@@ -108,19 +117,17 @@ async def mark_paid(
             tok = DownloadToken(
                 order_item_id=item.id,
                 product_file_id=f.id,
-                token=_issue_token(),
+                token=secrets.token_urlsafe(32),
                 expires_at=expires_at,
             )
             db.add(tok)
             await db.flush()
-            issued.append(
-                DownloadTokenIssue(
-                    order_item_id=item.id,
-                    token=tok.token,
-                    expires_at=tok.expires_at,
-                    file_name=f.file_name,
-                )
-            )
+            issued.append(DownloadTokenIssue(
+                order_item_id=item.id,
+                token=tok.token,
+                expires_at=tok.expires_at,
+                file_name=f.file_name,
+            ))
 
     await db.commit()
     await db.refresh(order)
@@ -129,42 +136,33 @@ async def mark_paid(
         download_tokens=issued,
     )
 
-
 @router.post("/{order_id}/mark-cancelled", response_model=OrderRead)
 async def mark_cancelled(
     order_id: uuid.UUID,
     payload: AdminNoteRequest,
-    admin: Annotated[User, Depends(require_role("admin", "super_admin"))],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> OrderRead:
+):
     order = await db.get(Order, order_id)
-    if order is None:
-        raise HTTPException(status_code=404, detail="order not found")
-    if order.status in (OrderStatus.cancelled, OrderStatus.refunded):
-        raise HTTPException(status_code=409, detail=f"already {order.status.value}")
+    if not order:
+        raise HTTPException(status_code=404)
     order.status = OrderStatus.cancelled
-    if payload.admin_note is not None:
+    if payload.admin_note:
         order.admin_note = payload.admin_note
     await db.commit()
     await db.refresh(order)
     return OrderRead.model_validate(order)
 
-
 @router.post("/{order_id}/mark-refunded", response_model=OrderRead)
 async def mark_refunded(
     order_id: uuid.UUID,
     payload: AdminNoteRequest,
-    admin: Annotated[User, Depends(require_role("admin", "super_admin"))],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> OrderRead:
+):
     order = await db.get(Order, order_id)
-    if order is None:
-        raise HTTPException(status_code=404, detail="order not found")
-    if order.status != OrderStatus.paid:
-        raise HTTPException(status_code=409, detail="only paid orders can be refunded")
+    if not order:
+        raise HTTPException(status_code=404)
     order.status = OrderStatus.refunded
-    order.refunded_at = datetime.now(timezone.utc)
-    if payload.admin_note is not None:
+    if payload.admin_note:
         order.admin_note = payload.admin_note
     await db.commit()
     await db.refresh(order)

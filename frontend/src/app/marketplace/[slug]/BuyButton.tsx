@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Check, X, CreditCard, Landmark } from "lucide-react";
+import { Loader2, Check, X, Download, Clock, CreditCard } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 import { cn } from "@/lib/design-system/cn";
@@ -30,13 +31,52 @@ export function BuyButton({ productId, packages }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  // State to track if the user already owns/purchased this project
+  const [existingOrder, setExistingOrder] = useState<any>(null);
+  const [checkingOwnership, setCheckingOwnership] = useState(true);
+
+  useEffect(() => {
+    if (!token) {
+      setCheckingOwnership(false);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/orders`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const orders = await res.json();
+          // Find the most recent valid order for this product
+          const validOrder = orders.find(
+            (o: any) =>
+              o.items?.some((i: any) => i.product_id === productId) &&
+              ["pending", "awaiting_verification", "paid"].includes(o.status)
+          );
+          if (validOrder) {
+            setExistingOrder(validOrder);
+            setOrderId(validOrder.id);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCheckingOwnership(false);
+      }
+    })();
+  }, [token, productId]);
+
   const handleBuyClick = () => {
     if (!isAuthenticated) {
       router.push(`/login?return=${window.location.pathname}`);
       return;
     }
     setModalOpen(true);
-    setStep("select");
+    if (existingOrder && existingOrder.status === "pending") {
+      setStep("payment");
+    } else {
+      setStep("select");
+    }
     setError(null);
   };
 
@@ -58,6 +98,7 @@ export function BuyButton({ productId, packages }: Props) {
       if (!res.ok) throw new Error(await res.text());
       const order = await res.json();
       setOrderId(order.id);
+      setExistingOrder(order);
       setStep("payment");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create order");
@@ -73,10 +114,32 @@ export function BuyButton({ productId, packages }: Props) {
     try {
       const res = await fetch(`${API_BASE}/orders/${orderId}/submit-payment`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          payment_method: "manual_bank_transfer",
+          payment_reference: orderId.substring(0, 8).toUpperCase(),
+          buyer_note: "I have sent the payment.",
+        }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        // If the order is already paid (409), refresh the page to show the download button
+        if (res.status === 409) {
+          window.location.reload();
+          return;
+        }
+        let msg = "Failed to submit payment";
+        if (data && typeof data.detail === "string") msg = data.detail;
+        else if (data && Array.isArray(data.detail)) msg = data.detail.map((d: any) => d.msg).join(", ");
+        throw new Error(msg);
+      }
       setStep("success");
+      // Refresh ownership state
+      setExistingOrder({ ...existingOrder, status: "awaiting_verification" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to submit payment");
     } finally {
@@ -87,11 +150,55 @@ export function BuyButton({ productId, packages }: Props) {
   if (!packages || packages.length === 0) {
     return (
       <button disabled className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 px-6 py-4 text-base font-bold text-[#7A8199] cursor-not-allowed border border-white/10">
-        No packages available for this project
+        No packages available
       </button>
     );
   }
 
+  if (checkingOwnership) {
+    return (
+      <button disabled className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-6 py-4 text-base font-bold text-[#7A8199]">
+        <Loader2 className="animate-spin" size={18} /> Checking...
+      </button>
+    );
+  }
+
+  // --- SMART UI RENDERING BASED ON OWNERSHIP ---
+
+  if (existingOrder) {
+    if (existingOrder.status === "paid") {
+      return (
+        <Link
+          href={`/account/orders/${existingOrder.id}`}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22C58B] to-[#1ea877] px-6 py-4 text-base font-bold text-white shadow-lg shadow-[#22C58B]/20 hover:brightness-110 transition"
+        >
+          <Download size={18} /> Download Project
+        </Link>
+      );
+    }
+    if (existingOrder.status === "awaiting_verification") {
+      return (
+        <Link
+          href={`/account/orders/${existingOrder.id}`}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/30 px-6 py-4 text-base font-bold text-[#F5A623] hover:bg-[#F5A623]/20 transition"
+        >
+          <Clock size={18} /> Awaiting Admin Approval
+        </Link>
+      );
+    }
+    if (existingOrder.status === "pending") {
+      return (
+        <button
+          onClick={handleBuyClick}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-6 py-4 text-base font-bold text-white shadow-lg shadow-[#7559E8]/20 hover:brightness-110 transition"
+        >
+          <CreditCard size={18} /> Resume Payment
+        </button>
+      );
+    }
+  }
+
+  // --- DEFAULT BUY BUTTON ---
   return (
     <>
       <button

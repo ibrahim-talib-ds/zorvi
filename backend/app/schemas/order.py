@@ -36,6 +36,8 @@ class OrderRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     status: OrderStatus
+    buyer_email: str | None = None
+    buyer_name: str | None = None
     payment_method: PaymentMethod | None
     total_cents: int
     currency: str
