@@ -86,9 +86,9 @@ export function BuyButton({ productId, packages }: Props) {
 
   if (!packages || packages.length === 0) {
     return (
-      <div className="text-sm text-[#F05D70] p-4 border border-[#F05D70]/30 rounded-lg">
-        This product has no packages yet.
-      </div>
+      <button disabled className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 px-6 py-4 text-base font-bold text-[#7A8199] cursor-not-allowed border border-white/10">
+        No packages available for this project
+      </button>
     );
   }
 

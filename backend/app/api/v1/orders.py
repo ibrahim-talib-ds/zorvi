@@ -42,27 +42,39 @@ async def create_order(
 
     total = 0
     for item_in in payload.items:
-        pkg = await db.get(MarketplacePackage, item_in.package_id)
-        if pkg is None or not pkg.is_active:
-            raise HTTPException(status_code=400, detail=f"package {item_in.package_id} unavailable")
-        product = await db.get(MarketplaceProduct, pkg.product_id)
-        if (
-            product is None
-            or product.status != ProductStatus.published
-            or product.deleted_at is not None
-        ):
-            raise HTTPException(status_code=400, detail=f"product for package {pkg.id} not for sale")
+        # Handle free products (no package)
+        if item_in.package_id is not None:
+            pkg = await db.get(MarketplacePackage, item_in.package_id)
+            if pkg is None or not pkg.is_active:
+                raise HTTPException(status_code=400, detail=f"package {item_in.package_id} unavailable")
+            product = await db.get(MarketplaceProduct, pkg.product_id)
+            if (
+                product is None
+                or product.status != ProductStatus.published
+                or product.deleted_at is not None
+            ):
+                raise HTTPException(status_code=400, detail=f"product for package {pkg.id} not for sale")
+        else:
+            # Free product — look up by product_id directly
+            pkg = None
+            product = await db.get(MarketplaceProduct, item_in.product_id)
+            if (
+                product is None
+                or product.status != ProductStatus.published
+                or product.deleted_at is not None
+            ):
+                raise HTTPException(status_code=400, detail=f"product {item_in.product_id} not for sale")
 
         snapshot = OrderItem(
             order_id=order.id,
             product_id=product.id,
-            package_id=pkg.id,
+            package_id=pkg.id if pkg else None,
             product_title=product.title,
             product_slug=product.slug,
-            package_name=pkg.name,
-            license_type=pkg.license_type.value,
-            price_cents=pkg.price_cents,
-            currency=pkg.currency.upper(),
+            package_name=pkg.name if pkg else "Free Download",
+            license_type=pkg.license_type.value if pkg else "personal",
+            price_cents=pkg.price_cents if pkg else 0,
+            currency=pkg.currency.upper() if pkg else "USD",
         )
         db.add(snapshot)
         total += pkg.price_cents

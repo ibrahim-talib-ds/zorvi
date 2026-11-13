@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -103,7 +104,7 @@ async def get_product(
     slug: str, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ProductRead:
     result = await db.execute(
-        select(MarketplaceProduct).where(
+        select(MarketplaceProduct).options(selectinload(MarketplaceProduct.packages)).where(
             MarketplaceProduct.slug == slug,
             MarketplaceProduct.status == ProductStatus.published,
             MarketplaceProduct.deleted_at.is_(None),
@@ -184,7 +185,7 @@ async def get_product_images(
 ):
     """Public: fetch all gallery images for a product."""
     product_res = await db.execute(
-        select(MarketplaceProduct).where(
+        select(MarketplaceProduct).options(selectinload(MarketplaceProduct.packages)).where(
             MarketplaceProduct.slug == slug,
             MarketplaceProduct.deleted_at.is_(None),
         )
