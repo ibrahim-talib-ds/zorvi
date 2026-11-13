@@ -32,7 +32,7 @@ async def create_order(
 ) -> OrderRead:
     order = Order(
         user_id=user.id,
-        status=OrderStatus.pending,
+        status=OrderStatus.paid if payload.is_free_checkout else OrderStatus.pending,
         total_cents=0,
         currency=payload.currency.upper(),
         buyer_note=payload.buyer_note,

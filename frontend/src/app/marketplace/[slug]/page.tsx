@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Download, User, Play, Check, Clock } from "lucide-react";
 import { BuyButton } from "./BuyButton";
+import { FreeDownloadButton } from "./FreeDownloadButton";
 import { ProductGallery } from "./ProductGallery";
 import { ProductTabs } from "./ProductTabs";
 
@@ -171,14 +172,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <div className="space-y-3">
                 {isFree ? (
-                  <a
-                    href={product.external_download_url || "#"}
-                    target={product.external_download_url ? "_blank" : undefined}
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22C58B] to-[#1ea877] px-6 py-4 text-base font-bold text-white shadow-lg shadow-[#22C58B]/20 hover:brightness-110 transition"
-                  >
-                    <Download size={18} /> Download Free Project
-                  </a>
+                  <FreeDownloadButton productId={product.id} packages={activePackages} />
                 ) : (
                   <BuyButton productId={product.id} packages={activePackages} />
                 )}

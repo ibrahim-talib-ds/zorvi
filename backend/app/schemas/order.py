@@ -12,6 +12,7 @@ class OrderItemCreate(BaseModel):
 
 
 class OrderCreate(BaseModel):
+    is_free_checkout: bool = False
     items: list[OrderItemCreate] = Field(min_length=1, max_length=20)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     buyer_note: str | None = None
