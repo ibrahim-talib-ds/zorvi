@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1 import messages as public_messages,
+from app.api.v1.admin import messages as admin_messages,
 from app.api.v1 import (
     auth,
     users,
@@ -42,6 +44,8 @@ app.include_router(marketplace.router, prefix="/api/v1", tags=["marketplace"])
 app.include_router(orders.router, prefix="/api/v1", tags=["orders"])
 app.include_router(courses.router, prefix="/api/v1", tags=["courses"])
 app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])
+    app.include_router(public_messages.router, prefix="/api/v1", tags=["messages"])
+    app.include_router(admin_messages.router, prefix="/api/v1", tags=["admin:messages"])
 app.include_router(certificates.router, prefix="/api/v1", tags=["certificates"])
 app.include_router(downloads.router, prefix="/api/v1", tags=["downloads"])
 app.include_router(instructor_applications.router, prefix="/api/v1", tags=["instructor-applications"])

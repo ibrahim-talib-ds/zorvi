@@ -212,7 +212,7 @@ export default function AdminOrdersPage() {
                   </div>
                 ))}
 
-                {o.status === "awaiting_verification" && (
+                {(o.status === "awaiting_verification" || o.status === "pending") && (
                   <div className="pt-3 flex items-center gap-2">
                     <button
                       onClick={() => handleMarkPaid(o.id)}

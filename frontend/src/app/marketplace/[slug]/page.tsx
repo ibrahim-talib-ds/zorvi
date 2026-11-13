@@ -5,6 +5,7 @@ import { BuyButton } from "./BuyButton";
 import { FreeDownloadButton } from "./FreeDownloadButton";
 import { ProductGallery } from "./ProductGallery";
 import { ProductTabs } from "./ProductTabs";
+import { ContactSellerModal } from "./ContactSellerModal";
 
 import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,19 @@ export default async function ProductDetailPage({ params }: PageProps) {
           {/* RIGHT: Purchase Card */}
           <div className="lg:sticky lg:top-24 space-y-4">
             {/* CREATOR CARD - at the TOP */}
+            {product.creator_id && (
+              <button
+                onClick={() => {
+                  const btn = document.getElementById('contact-modal-trigger');
+                  if (btn) btn.click();
+                }}
+                className="w-full mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
+              >
+                Ask a Question
+              </button>
+            )}
+            <button id="contact-modal-trigger" className="hidden" onClick={() => {}} />
+            {/* ContactSellerModal will be injected via JSX below */}
             {product.creator_name && product.creator_id && (
               <Link
                 href={`/creators/${product.creator_id}`}

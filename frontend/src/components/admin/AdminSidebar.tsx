@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, Layers, GraduationCap,
-  Settings, ArrowLeft, User as UserIcon, LogOut, Users, Menu, X, ChevronLeft, Bell
+  Settings, ArrowLeft, User as UserIcon, LogOut, Users, Menu, X, ChevronLeft, Bell, MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/design-system/cn";
@@ -35,6 +35,7 @@ export function AdminSidebar({
       { href: "/admin/courses", label: "Courses", icon: GraduationCap },
       { href: "/admin/instructor-applications", label: "Instructor Apps", icon: Users },
       { href: "/admin/notifications", label: "Notifications", icon: Bell },
+      { href: "/admin/messages", label: "Inbox", icon: MessageSquare },
     ]},
     { group: "System", items: [
       { href: "/admin/settings", label: "Settings", icon: Settings },
