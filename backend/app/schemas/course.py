@@ -51,7 +51,7 @@ class CourseListItem(BaseModel):
     slug: str
     short_description: str
     cover_image_url: str | None = None
-    thumbnail_url: str | None
+    thumbnail_url: str | None = None
     difficulty: str
     status: str
     technologies: list[str] = []
@@ -104,7 +104,7 @@ class MyCourseItem(BaseModel):
     course_title: str
     course_slug: str
     course_cover_image_url: str | None = None
-    thumbnail_url: str | None
+    thumbnail_url: str | None = None
     enrolled_at: datetime
     total_lessons: int
     completed_lessons: int

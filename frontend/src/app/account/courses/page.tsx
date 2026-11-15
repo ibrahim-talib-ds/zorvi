@@ -41,7 +41,7 @@ function AccountCoursesContent() {
           id: c.id || c.course_id,
           course_title: c.course_title || c.title || "Untitled Course",
           course_slug: c.course_slug || c.slug || "",
-          course_thumbnail: c.course_thumbnail || c.thumbnail_url || null,
+          course_thumbnail: (c as any).course_cover_image_url || c.thumbnail_url || null,
           course_technologies: c.course_technologies || c.technologies || [],
           total_lessons: c.total_lessons || 0,
           completed_lessons: c.completed_lessons || 0,
@@ -154,7 +154,7 @@ function AccountCoursesContent() {
             <div key={c.id} className="group rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden hover:border-white/10 transition">
               <div className="aspect-[16/9] bg-gradient-to-br from-[#171B33] to-[#0B0F1D] relative flex items-center justify-center">
                 {c.course_thumbnail ? (
-                  <img src={c.course_thumbnail} alt={c.course_title} className="w-full h-full object-cover" />
+                  <img src={c.course_thumbnail} alt={c.course_title} className="w-full h-full object-contain p-4" />
                 ) : (
                   <span className="text-7xl font-extrabold text-[#7559E8]/20 group-hover:text-[#7559E8]/30 transition-colors duration-500">
                     {c.course_title.substring(0, 2).toUpperCase()}
