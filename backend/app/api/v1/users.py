@@ -70,10 +70,12 @@ async def upload_avatar(
     if len(content) > MAX_AVATAR_SIZE:
         raise HTTPException(status_code=413, detail="Avatar must be under 2 MB")
 
+    import cloudinary
     cloudinary.config(
-        cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-        api_key=os.getenv("CLOUDINARY_API_KEY"),
-        api_secret=os.getenv("CLOUDINARY_API_SECRET")
+        cloud_name="daltlnlw", 
+        api_key="148286111648846", 
+        api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g",
+        secure=True
     )
     
     try:
