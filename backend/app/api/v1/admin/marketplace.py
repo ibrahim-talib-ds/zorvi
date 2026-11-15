@@ -418,3 +418,18 @@ async def upload_gallery_image(
     await db.commit()
     await db.refresh(img)
     return ProductImageRead.model_validate(img)
+
+@router.get("/{product_id}/images", response_model=list[ProductImageRead])
+async def get_product_images(
+    product_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("admin", "super_admin")),
+) -> list[ProductImageRead]:
+    """Admin: get all gallery images for a product."""
+    res = await db.execute(
+        select(ProductImage)
+        .where(ProductImage.product_id == product_id)
+        .order_by(ProductImage.sort_order)
+    )
+    images = res.scalars().all()
+    return [ProductImageRead.model_validate(img) for img in images]

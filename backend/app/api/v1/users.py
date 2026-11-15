@@ -5,6 +5,8 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
+import cloudinary
+import cloudinary.uploader
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import func as sql_func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,12 +70,21 @@ async def upload_avatar(
     if len(content) > MAX_AVATAR_SIZE:
         raise HTTPException(status_code=413, detail="Avatar must be under 2 MB")
 
-    safe_name = f"{current_user.id}{ext}"
-    file_path = AVATAR_DIR / safe_name
-    file_path.write_bytes(content)
-
-    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://ibrant-api.onrender.com")
-    current_user.avatar_url = f"{base_url}/api/v1/users/avatars/{safe_name}"
+    cloudinary.config(
+        cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+        api_key=os.getenv("CLOUDINARY_API_KEY"),
+        api_secret=os.getenv("CLOUDINARY_API_SECRET")
+    )
+    
+    try:
+        upload_result = cloudinary.uploader.upload(
+            content,
+            folder="ibrant/avatars",
+            public_id=f"user_{current_user.id}"
+        )
+        current_user.avatar_url = upload_result.get("secure_url")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Avatar upload failed: {str(e)}")
     await db.commit()
     await db.refresh(current_user)
     return UserRead.model_validate(current_user)
