@@ -66,7 +66,7 @@ export function Header() {
   }, [open]);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("zorvi_lang") : null;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("ibrant_lang") : null;
     if (stored && LANGUAGES.find((l) => l.code === stored)) setCurrentLang(stored);
   }, []);
 
@@ -115,7 +115,7 @@ export function Header() {
 
   const handleLangChange = (code: string) => {
     setCurrentLang(code);
-    if (typeof window !== "undefined") localStorage.setItem("zorvi_lang", code);
+    if (typeof window !== "undefined") localStorage.setItem("ibrant_lang", code);
     setLangOpen(false);
   };
 
@@ -145,14 +145,14 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 gap-2">
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
+          <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
             <img
-              src="/images/logo/zorvi-mark.png"
-              alt="ZORVI"
-              className="w-9 h-9 sm:w-10 sm:h-10 transition-transform group-hover:scale-105"
+              src="/images/logo/ibrant-mark.png"
+              alt="IBRANT Icon"
+              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
             />
-            <span className="font-display text-lg sm:text-xl font-extrabold tracking-tight text-white">
-              ZORVI
+            <span className="font-display text-2xl font-extrabold tracking-tight text-[#8B70FF]">
+              IBRANT
             </span>
           </Link>
 

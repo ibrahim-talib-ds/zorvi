@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.rbac import require_role
 from app.models.certificate import Certificate
 from app.models.course import Course, CourseDifficulty, CourseStatus
 from app.models.course_module import CourseModule
@@ -497,3 +498,20 @@ async def list_technologies(
         key=lambda x: (-x[1], x[0].lower()),
     )
     return [{"name": name, "count": count} for name, count in sorted_techs]
+
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role("admin", "super_admin"))])
+async def delete_course(
+    course_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Permanently delete a course."""
+    query = select(Course).where(Course.id == course_id)
+    result = await db.execute(query)
+    course = result.scalar_one_or_none()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    await db.delete(course)
+    await db.commit()
+    return None

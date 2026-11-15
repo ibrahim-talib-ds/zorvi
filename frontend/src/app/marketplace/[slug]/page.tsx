@@ -2,45 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Download, User, Play, Check, Clock } from "lucide-react";
 import { BuyButton } from "./BuyButton";
-import { FreeDownloadButton } from "./FreeDownloadButton";
 import { ProductGallery } from "./ProductGallery";
 import { ProductTabs } from "./ProductTabs";
-import { ContactSellerModal } from "./ContactSellerModal";
+import { ContactSellerButton } from "./ContactSellerButton";
+import { FreeDownloadButton } from "./FreeDownloadButton";
 
-import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-interface ProductDetail {
-  id: string;
-  title: string;
-  slug: string;
-  short_description: string;
-  long_description: string;
-  instructions: string | null;
-  license: string | null;
-  difficulty: string;
-  status: string;
-  starting_price_cents: number;
-  currency: string;
-  cover_image_url: string | null;
-  demo_video_url: string | null;
-  live_demo_url: string | null;
-  is_featured: boolean;
-  is_free?: boolean;
-  external_download_url: string | null;
-  published_at: string | null;
-  packages: any[];
-  creator_id: string | null;
-  creator_name: string | null;
-  creator_avatar_url: string | null;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8010/api/v1";
 
-
-async function fetchProduct(slug: string): Promise<ProductDetail | null> {
+async function fetchProduct(slug: string) {
   try {
     const res = await fetch(`${API_BASE}/marketplace/products/${slug}`, { cache: "no-store" });
     if (!res.ok) return null;
@@ -48,7 +23,7 @@ async function fetchProduct(slug: string): Promise<ProductDetail | null> {
   } catch { return null; }
 }
 
-async function fetchImages(slug: string): Promise<any[]> {
+async function fetchImages(slug: string) {
   try {
     const res = await fetch(`${API_BASE}/marketplace/products/${slug}/images`, { cache: "no-store" });
     if (!res.ok) return [];
@@ -59,8 +34,8 @@ async function fetchImages(slug: string): Promise<any[]> {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
-  if (!product) return { title: "Product not found — ZORVI" };
-  return { title: `${product.title} — ZORVI`, description: product.short_description };
+  if (!product) return { title: "Product not found — IBRANT" };
+  return { title: `${product.title} — IBRANT`, description: product.short_description };
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
@@ -73,7 +48,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const minPrice = activePackages.length > 0 ? Math.min(...activePackages.map((p: any) => p.price_cents)) : product.starting_price_cents;
   const isFree = product.is_free || minPrice === 0;
 
-  // Build all images: cover first, then gallery
   const allImages: string[] = [];
   if (product.cover_image_url) allImages.push(product.cover_image_url);
   images.forEach((img: any) => {
@@ -92,41 +66,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
         </Link>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-8 lg:gap-12 items-start">
-          {/* LEFT: Gallery + Details */}
           <div className="min-w-0">
-            {/* Full Gallery Component */}
-            <ProductGallery
-              images={allImages}
-              title={product.title}
-            />
-
-            {/* Tabs with real content */}
+            <ProductGallery images={allImages} title={product.title} />
             <ProductTabs
               longDescription={product.long_description}
               instructions={product.instructions}
               license={product.license}
               reviewCount={0}
             />
-
-            
           </div>
 
-          {/* RIGHT: Purchase Card */}
           <div className="lg:sticky lg:top-24 space-y-4">
-            {/* CREATOR CARD - at the TOP */}
-            {product.creator_id && (
-              <button
-                onClick={() => {
-                  const btn = document.getElementById('contact-modal-trigger');
-                  if (btn) btn.click();
-                }}
-                className="w-full mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
-              >
-                Ask a Question
-              </button>
-            )}
-            <button id="contact-modal-trigger" className="hidden" onClick={() => {}} />
-            {/* ContactSellerModal will be injected via JSX below */}
+            {/* Creator Card */}
             {product.creator_name && product.creator_id && (
               <Link
                 href={`/creators/${product.creator_id}`}
@@ -147,7 +98,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </Link>
             )}
 
-            {/* PURCHASE CARD */}
+            {/* Purchase Card */}
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#171B33]/80 to-[#0B0F1D] p-6 shadow-xl shadow-black/40">
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-block rounded-full border border-[#5B9EFF]/30 bg-[#5B9EFF]/10 px-2.5 py-1 text-[10px] font-medium text-[#5B9EFF] uppercase tracking-wider">
@@ -172,7 +123,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* SINGLE Test Live Project button */}
               {product.live_demo_url && (
                 <a
                   href={product.live_demo_url}
@@ -198,6 +148,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 <div className="flex items-center gap-2.5 text-[#B7BDD0]"><Check size={16} className="text-[#22C58B]" /> Lifetime access</div>
                 <div className="flex items-center gap-2.5 text-[#B7BDD0]"><Check size={16} className="text-[#22C58B]" /> {isFree ? "Instant download" : "Instant access after approval"}</div>
               </div>
+
+              {/* Ask a Question Button (Client Component) */}
+              {product.creator_id && product.creator_name && (
+                <ContactSellerButton
+                  productId={product.id}
+                  sellerId={product.creator_id}
+                  sellerName={product.creator_name}
+                />
+              )}
             </div>
           </div>
         </div>

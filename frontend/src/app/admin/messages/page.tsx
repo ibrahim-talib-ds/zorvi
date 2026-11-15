@@ -83,7 +83,9 @@ export default function AdminMessagesPage() {
 
               <div className="flex items-center gap-3">
                 <a
-                  href={`mailto:${m.sender_email}?subject=Re: ${m.subject}`}
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${m.sender_email}&su=${encodeURIComponent(`Re: ${m.subject}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#8B70FF] transition"
                 >
                   <Mail size={16} /> Reply via Email

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Loader2, ArrowLeft, Plus, Edit3, Eye, EyeOff, BookOpen, Search, Filter,
+  Loader2, ArrowLeft, Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Search, Filter,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
@@ -46,6 +46,23 @@ export default function AdminCoursesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${title}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/courses/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setCourses(courses.filter(c => c.id !== id));
+      } else {
+        alert('Failed to delete course. Check backend logs.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting course');
+    }
+  };
+
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -112,7 +129,8 @@ export default function AdminCoursesPage() {
     c.modules.reduce((sum, m) => sum + m.lessons.length, 0);
 
   if (authLoading) {
-    return (
+
+  return (
       <div className="py-20 flex items-center justify-center">
         <Loader2 className="animate-spin text-[#A78BFA]" size={32} />
       </div>
@@ -286,6 +304,13 @@ export default function AdminCoursesPage() {
                       >
                         <Edit3 size={14} />
                       </Link>
+                      <button
+                        onClick={() => handleDelete(course.id, course.title)}
+                        className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition"
+                        title="Delete course"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </td>
                 </tr>

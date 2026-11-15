@@ -1,5 +1,5 @@
 /**
- * ZORVI — Marketplace types
+ * IBRANT — Marketplace types
  * Match the FastAPI response shapes from /api/v1/marketplace/*.
  */
 

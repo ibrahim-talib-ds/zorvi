@@ -25,7 +25,7 @@ export function HeroVisual() {
         <div className="relative w-full aspect-[16/10] bg-[#171B33]">
           <Image 
             src="/images/hero/dashboard.png" 
-            alt="ZORVI Dashboard" 
+            alt="IBRANT Dashboard" 
             fill 
             className="object-cover" 
             priority 

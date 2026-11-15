@@ -13,7 +13,7 @@ export function FinalCTASection() {
           Your next great idea could start here.
         </h2>
         <p className="text-lg text-[#B7BDD0] mb-10 max-w-xl mx-auto">
-          Whether you want to learn development, build your first application, or explore complete software products, ZORVI gives you a place to begin.
+          Whether you want to learn development, build your first application, or explore complete software products, IBRANT gives you a place to begin.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">

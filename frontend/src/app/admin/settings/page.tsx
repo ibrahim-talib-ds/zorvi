@@ -16,12 +16,12 @@ export default function AdminSettingsPage() {
 
   const [form, setForm] = useState({
     // Branding
-    site_name: "ZORVI",
+    site_name: "IBRANT",
     site_tagline: "Learn. Create. Launch.",
     site_description: "Premium full-stack academy and marketplace.",
     logo_url: "",
     // Contact
-    support_email: "support@zorvi.com",
+    support_email: "support@ibrant.com",
     support_phone: "",
     contact_address: "",
     // Payments — Stripe

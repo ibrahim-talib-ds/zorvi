@@ -266,7 +266,7 @@ export function BuyButton({ productId, packages }: Props) {
                   <div className="text-sm text-[#B7BDD0] space-y-1 font-mono">
                     <p><span className="text-[#7A8199]">Bank:</span> CRDB Bank</p>
                     <p><span className="text-[#7A8199]">Account:</span> 0150 1234 5678 90</p>
-                    <p><span className="text-[#7A8199]">Name:</span> ZORVI Academy</p>
+                    <p><span className="text-[#7A8199]">Name:</span> IBRANT Academy</p>
                     <p><span className="text-[#7A8199]">Amount:</span> ${selectedPkg ? (selectedPkg.price_cents / 100).toFixed(0) : ""} USD</p>
                     <p><span className="text-[#7A8199]">Reference:</span> {orderId?.substring(0, 8).toUpperCase()}</p>
                   </div>

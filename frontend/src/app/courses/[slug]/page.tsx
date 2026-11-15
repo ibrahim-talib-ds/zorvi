@@ -57,9 +57,9 @@ async function fetchCourse(slug: string): Promise<CourseDetail | null> {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const course = await fetchCourse(slug);
-  if (!course) return { title: "Course not found — ZORVI" };
+  if (!course) return { title: "Course not found — IBRANT" };
   return {
-    title: `${course.title} — ZORVI Academy`,
+    title: `${course.title} — IBRANT Academy`,
     description: course.short_description,
   };
 }

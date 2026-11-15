@@ -18,8 +18,8 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [accountCollapsed, setAccountCollapsed] = useState(false);
 
   useEffect(() => {
-    const admin = typeof window !== "undefined" ? localStorage.getItem("zorvi_admin_sidebar_collapsed") : null;
-    const account = typeof window !== "undefined" ? localStorage.getItem("zorvi_account_sidebar_collapsed") : null;
+    const admin = typeof window !== "undefined" ? localStorage.getItem("ibrant_admin_sidebar_collapsed") : null;
+    const account = typeof window !== "undefined" ? localStorage.getItem("ibrant_account_sidebar_collapsed") : null;
     if (admin === "true") setAdminCollapsed(true);
     if (account === "true") setAccountCollapsed(true);
   }, []);
@@ -27,7 +27,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const toggleAdmin = () => {
     setAdminCollapsed((v) => {
       const next = !v;
-      if (typeof window !== "undefined") localStorage.setItem("zorvi_admin_sidebar_collapsed", String(next));
+      if (typeof window !== "undefined") localStorage.setItem("ibrant_admin_sidebar_collapsed", String(next));
       return next;
     });
   };
@@ -35,7 +35,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const toggleAccount = () => {
     setAccountCollapsed((v) => {
       const next = !v;
-      if (typeof window !== "undefined") localStorage.setItem("zorvi_account_sidebar_collapsed", String(next));
+      if (typeof window !== "undefined") localStorage.setItem("ibrant_account_sidebar_collapsed", String(next));
       return next;
     });
   };

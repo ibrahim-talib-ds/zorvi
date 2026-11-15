@@ -14,6 +14,7 @@ class CourseCreate(BaseModel):
     short_description: str = Field(min_length=10, max_length=500)
     long_description: str = ""
     thumbnail_url: str | None = None
+    cover_image_url: str | None = None
     category_id: uuid.UUID | None = None
     difficulty: CourseDifficulty = CourseDifficulty.beginner
     technologies: list[str] = []
@@ -28,6 +29,7 @@ class CourseUpdate(BaseModel):
     short_description: str | None = Field(default=None, min_length=10, max_length=500)
     long_description: str | None = None
     thumbnail_url: str | None = None
+    cover_image_url: str | None = None
     category_id: uuid.UUID | None = None
     difficulty: CourseDifficulty | None = None
     technologies: list[str] | None = None

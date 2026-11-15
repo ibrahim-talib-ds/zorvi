@@ -6,7 +6,7 @@ import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marketplace — ZORVI",
+  title: "Marketplace — IBRANT",
   description: "Browse production-ready software projects. Buy complete source code with documentation and licensing.",
 };
 

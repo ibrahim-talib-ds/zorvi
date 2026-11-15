@@ -1,8 +1,8 @@
 "use client";
 
-export const TOKEN_KEY = "zorvi_access_token";
-export const REFRESH_KEY = "zorvi_refresh_token";
-export const USER_KEY = "zorvi_user";
+export const TOKEN_KEY = "ibrant_access_token";
+export const REFRESH_KEY = "ibrant_refresh_token";
+export const USER_KEY = "ibrant_user";
 
 export interface User {
   id: string;

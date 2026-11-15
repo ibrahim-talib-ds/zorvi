@@ -84,7 +84,7 @@ export function InstructorApplyModal({ open, onClose }: { open: boolean; onClose
               </div>
               <h2 className="font-display text-2xl font-bold text-white">Apply to Teach</h2>
             </div>
-            <p className="text-sm text-[#7A8199] mb-6">Share your expertise. Start building your course on ZORVI.</p>
+            <p className="text-sm text-[#7A8199] mb-6">Share your expertise. Start building your course on IBRANT.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <div className="p-3 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 text-sm text-[#F05D70]">{error}</div>}
@@ -141,7 +141,7 @@ export function InstructorApplyModal({ open, onClose }: { open: boolean; onClose
 
               {isPaid && (
                 <p className="text-xs text-[#F5A623] bg-[#F5A623]/10 p-3 rounded-lg border border-[#F5A623]/20">
-                  Note: Paid courses require manual approval by the ZORVI team. We will verify your expertise and content plan before you can publish.
+                  Note: Paid courses require manual approval by the IBRANT team. We will verify your expertise and content plan before you can publish.
                 </p>
               )}
 

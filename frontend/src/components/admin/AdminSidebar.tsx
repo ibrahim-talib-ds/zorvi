@@ -52,7 +52,7 @@ export function AdminSidebar({
             <span className="font-display text-xl font-extrabold tracking-tight text-[#7559E8]">Z</span>
           ) : (
             <span className="font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap">
-              ZORVI <span className="text-[#7559E8]">Admin</span>
+              IBRANT <span className="text-[#7559E8]">Admin</span>
             </span>
           )}
         </Link>

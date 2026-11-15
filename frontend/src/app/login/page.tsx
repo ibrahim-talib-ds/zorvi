@@ -48,7 +48,7 @@ function LoginForm() {
         <div className="rounded-2xl border border-white/10 bg-[#11152A] p-8 shadow-2xl">
           <div className="mb-8 text-center">
             <h1 className="font-display text-3xl font-extrabold text-white mb-2">Welcome back</h1>
-            <p className="text-sm text-[#B7BDD0]">Log in to your ZORVI account.</p>
+            <p className="text-sm text-[#B7BDD0]">Log in to your IBRANT account.</p>
           </div>
           {error && (
             <div className="mb-6 p-3 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 text-sm text-[#F05D70] text-center">

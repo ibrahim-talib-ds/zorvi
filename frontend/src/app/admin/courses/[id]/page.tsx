@@ -93,6 +93,8 @@ export default function AdminCourseEditPage() {
       setTitle(data.title);
       setShortDesc(data.short_description);
       setLongDesc(data.long_description);
+      setCoverImage((data as any).cover_image_url || "");
+      setCoverImage((data as any).cover_image_url || "");
       setDifficulty(data.difficulty);
       setEstimatedHours(String(data.estimated_hours));
     } catch (e) {
@@ -123,6 +125,7 @@ export default function AdminCourseEditPage() {
           "Content-Type": "application/json",
           },
         body: JSON.stringify({
+        cover_image_url: coverImage.trim() || null,
           title: title.trim(),
           short_description: shortDesc.trim(),
           long_description: longDesc.trim(),
@@ -338,6 +341,15 @@ export default function AdminCourseEditPage() {
             />
           </div>
           <div>
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-[#B7BDD0] mb-1.5">Cover Image URL</label>
+              <input type="url" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://example.com/image.jpg" className="w-full px-4 py-2.5 rounded-lg bg-[#0B0F1D] border border-white/10 text-white text-sm focus:outline-none focus:border-[#7559E8] transition" />
+              {coverImage && (
+                <div className="mt-3 p-2 rounded-lg bg-[#0B0F1D] border border-white/10 inline-block">
+                  <img src={coverImage} alt="Preview" className="h-24 object-contain rounded" onError={(e) => (e.target as HTMLImageElement).style.display = "none"} />
+                </div>
+              )}
+            </div>
             <label className="block text-sm font-medium text-[#B7BDD0] mb-2">Long description</label>
             <textarea
               rows={4}

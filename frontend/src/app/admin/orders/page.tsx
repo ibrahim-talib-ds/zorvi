@@ -188,7 +188,9 @@ export default function AdminOrdersPage() {
                 <div className="flex items-center gap-2">
                   {o.buyer_email && (
                     <a
-                      href={`mailto:${o.buyer_email}?subject=Your ZORVI Order %23${o.id.substring(0, 8)}`}
+                      href={`https://mail.google.com/mail/?view=cm&fs=1&to=${o.buyer_email}&su=${encodeURIComponent(`Your IBRANT Order #${o.id.substring(0, 8)}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-md bg-white/5 px-3 py-1.5 text-xs font-medium text-[#B7BDD0] hover:bg-white/10 hover:text-white transition"
                     >
                       <Mail size={12} /> Send Email

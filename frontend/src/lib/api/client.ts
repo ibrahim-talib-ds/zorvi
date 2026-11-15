@@ -1,5 +1,5 @@
 /**
- * ZORVI — API client
+ * IBRANT — API client
  */
 
 const isServer = typeof window === "undefined";

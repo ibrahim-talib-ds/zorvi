@@ -57,7 +57,7 @@ export default function CoursesPage() {
 
         <div className="mb-10 text-center max-w-3xl mx-auto">
           <p className="text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-4">
-            ZORVI Academy
+            IBRANT Academy
           </p>
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 leading-tight">
             Learn by building real software.
@@ -131,7 +131,7 @@ export default function CoursesPage() {
         {/* Want to teach CTA */}
         <div className="mt-16 rounded-2xl border border-[#7559E8]/20 bg-[#7559E8]/5 p-8 text-center max-w-3xl mx-auto">
           <h2 className="font-display text-2xl font-bold text-white mb-2">
-            Want to teach on ZORVI?
+            Want to teach on IBRANT?
           </h2>
           <p className="text-sm text-[#B7BDD0] mb-6">
             Share your expertise. Publish a course and reach developers

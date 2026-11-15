@@ -13,9 +13,9 @@ export default function PreviewPage() {
     <main className="min-h-screen bg-bg-base text-text-primary p-10">
       <div className="mx-auto max-w-5xl space-y-12">
         <header>
-          <h1 className="font-display text-3xl font-bold">ZORVI Design System</h1>
+          <h1 className="font-display text-3xl font-bold">IBRANT Design System</h1>
           <p className="mt-2 text-text-secondary">
-            Live preview of the reusable components. Every screen in ZORVI
+            Live preview of the reusable components. Every screen in IBRANT
             will use these — no more one-off styling.
           </p>
         </header>

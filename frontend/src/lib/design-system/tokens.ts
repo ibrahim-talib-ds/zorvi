@@ -1,9 +1,9 @@
 /**
- * ZORVI — Design tokens
+ * IBRANT — Design tokens
  * Author: Ibrahim Talib
  *
  * Single source of truth for colors, spacing, typography, radius.
- * Every color used in ZORVI must come from `colors`.
+ * Every color used in IBRANT must come from `colors`.
  * Every spacing value must come from `space`.
  * Every font size must come from `text`.
  *

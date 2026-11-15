@@ -30,7 +30,7 @@ export function BackendSection() {
           <div className="h-8 bg-[#151A2D] flex items-center justify-between px-4 border-b border-white/5">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-[#5B9EFF]" />
-              <span className="text-xs font-mono text-[#7A8199]">DBeaver — zorvi_db</span>
+              <span className="text-xs font-mono text-[#7A8199]">DBeaver — ibrant_db</span>
             </div>
             <span className="text-xs font-mono text-[#22C58B]">PostgreSQL 18.6</span>
           </div>

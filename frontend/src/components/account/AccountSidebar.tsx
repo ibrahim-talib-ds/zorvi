@@ -49,8 +49,9 @@ export function AccountSidebar({
     <>
       <div className="h-16 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
         <Link href="/" className="flex items-center gap-2 overflow-hidden">
-          {collapsed ? <span className="font-display text-xl font-extrabold tracking-tight text-white">Z</span> : <span className="font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap">ZORVI</span>}
-        </Link>
+                <img src="/images/logo/ibrant-mark.png" alt="IBRANT" className="h-8 w-auto object-contain" />
+                {!collapsed && <span className="font-display text-xl font-extrabold tracking-tight text-[#8B70FF]">IBRANT</span>}
+              </Link>
         <button onClick={onToggle} className="hidden md:flex text-[#7A8199] hover:text-white transition">
           <ChevronLeft className={cn("transition-transform", collapsed && "rotate-180")} size={18} />
         </button>

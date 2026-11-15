@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "Pricing — ZORVI",
+  title: "Pricing — IBRANT",
   description: "Free access to all courses and premium project marketplace. Learn. Build. Launch.",
 };
 
@@ -82,7 +82,7 @@ const PLANS = [
 
 const FAQ = [
   {
-    q: "Is ZORVI really free to start?",
+    q: "Is IBRANT really free to start?",
     a: "Yes. Every course is free to enroll and complete. You get full access to lessons, videos, exercises, and certificates at no cost. Paid tiers will add premium features like mentorship and early access — but core learning stays free.",
   },
   {
@@ -99,7 +99,7 @@ const FAQ = [
   },
   {
     q: "Do you offer institutional plans?",
-    a: "Yes — for schools, universities, and companies. Contact us at support@zorvi.com for details on group licensing, custom content, and dedicated support.",
+    a: "Yes — for schools, universities, and companies. Contact us at support@ibrant.com for details on group licensing, custom content, and dedicated support.",
   },
   {
     q: "How do I cancel my subscription?",

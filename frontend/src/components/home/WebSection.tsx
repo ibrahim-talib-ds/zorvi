@@ -23,7 +23,7 @@ export function WebSection() {
             <div className="w-3 h-3 rounded-full bg-[#F05D70]" />
             <div className="w-3 h-3 rounded-full bg-[#F5A623]" />
             <div className="w-3 h-3 rounded-full bg-[#22C58B]" />
-            <span className="ml-4 text-xs font-mono text-[#7A8199]">zorvi-academy-dashboard</span>
+            <span className="ml-4 text-xs font-mono text-[#7A8199]">ibrant-academy-dashboard</span>
           </div>
           <div className="relative w-full aspect-[16/9] bg-[#0B0F1D]">
             <Image src="/images/hero/dashboard.png" alt="EduSmart Web Dashboard" fill className="object-cover" priority />

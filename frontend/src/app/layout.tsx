@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "ZORVI — Learn. Create. Launch.",
+  title: "IBRANT — Learn. Create. Launch.",
   description: "A premium full-stack academy and marketplace. Learn to build real software, or buy production-ready projects.",
 };
 

@@ -45,8 +45,8 @@ async function fetchCreator(id: string): Promise<CreatorProfile | null> {
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const data = await fetchCreator(id);
-  if (!data) return { title: "Creator not found — ZORVI" };
-  return { title: `${data.creator.full_name} — ZORVI` };
+  if (!data) return { title: "Creator not found — IBRANT" };
+  return { title: `${data.creator.full_name} — IBRANT` };
 }
 
 export default async function CreatorPage({ params }: PageProps) {

@@ -66,7 +66,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
         } else {
           // Refresh failed — clear auth
           clearAuth();
-          document.cookie = "zorvi_access_token=; path=/; max-age=0; SameSite=Lax";
+          document.cookie = "ibrant_access_token=; path=/; max-age=0; SameSite=Lax";
           if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
             window.location.href = "/login?return=" + encodeURIComponent(window.location.pathname);
           }
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (refreshRes.ok) {
             const data = await refreshRes.json();
             setTokens(data.access_token, data.refresh_token);
-            document.cookie = `zorvi_access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+            document.cookie = `ibrant_access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 
             const me = await fetchMe(data.access_token);
             setUser(me);
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearAuth();
           setToken(null);
           setUser(null);
-          document.cookie = "zorvi_access_token=; path=/; max-age=0; SameSite=Lax";
+          document.cookie = "ibrant_access_token=; path=/; max-age=0; SameSite=Lax";
         }
       }
 
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const data = await res.json();
     setTokens(data.access_token, data.refresh_token);
-    document.cookie = `zorvi_access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    document.cookie = `ibrant_access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 
     const me = await fetchMe(data.access_token);
     storeUser(me);
@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     clearAuth();
-    document.cookie = "zorvi_access_token=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "ibrant_access_token=; path=/; max-age=0; SameSite=Lax";
     setToken(null);
     setUser(null);
   };

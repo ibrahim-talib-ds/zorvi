@@ -49,16 +49,16 @@ export function Footer() {
         <div className="grid gap-8 md:gap-10">
           {/* Brand — full width on mobile, 2 cols on desktop */}
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-3 group">
-              <img
-                src="/images/logo/zorvi-mark.png"
-                alt="ZORVI"
-                className="w-10 h-10 transition-transform group-hover:scale-105"
-              />
-              <span className="font-display text-2xl font-extrabold text-white">
-                ZORVI
-              </span>
-            </Link>
+            <Link href="/" className="flex items-center gap-3">
+                <img
+                  src="/images/logo/ibrant-mark.png"
+                  alt="IBRANT Icon"
+                  className="h-10 w-auto object-contain"
+                />
+                <span className="font-display text-2xl font-extrabold tracking-tight text-[#8B70FF]">
+                  IBRANT
+                </span>
+              </Link>
             <p className="mt-1 text-sm text-[#A78BFA]">Learn. Create. Launch.</p>
             <p className="mt-2 max-w-sm text-sm text-[#B7BDD0]">
               Turn your ideas into real software products.
@@ -91,7 +91,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-xs text-[#7A8199]">
-          <p>© {year} ZORVI. All rights reserved.</p>
+          <p>© {year} IBRANT. All rights reserved.</p>
           <p className="font-mono">PostgreSQL 18 · FastAPI · Next.js 15</p>
         </div>
       </div>

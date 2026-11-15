@@ -4,7 +4,7 @@ import { ArrowRight, BookOpen, Store, Rocket } from "lucide-react";
 const CARDS = [
   {
     icon: BookOpen,
-    eyebrow: "ZORVI Academy",
+    eyebrow: "IBRANT Academy",
     title: "Learn by building. Not just watching.",
     description:
       "Follow complete, structured project journeys. Understand how frontend, backend, databases, and deployment work together.",

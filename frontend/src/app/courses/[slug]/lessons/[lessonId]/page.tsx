@@ -59,7 +59,7 @@ interface Progress {
 
 async function getTokenFromCookies(): Promise<string | null> {
   const cookieStore = await cookies();
-  return cookieStore.get("zorvi_access_token")?.value ?? null;
+  return cookieStore.get("ibrant_access_token")?.value ?? null;
 }
 
 async function fetchCourse(slug: string): Promise<CourseDetail | null> {
@@ -250,7 +250,7 @@ export default async function LessonPage({ params }: PageProps) {
         <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
           
           {/* Video */}
-          {youtubeId ? (
+          {youtubeId && (
             <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 bg-[#000] mb-10 shadow-lg shadow-black/50">
               <iframe
                 src={`https://www.youtube.com/embed/${youtubeId}`}
@@ -259,13 +259,6 @@ export default async function LessonPage({ params }: PageProps) {
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
               />
-            </div>
-          ) : (
-            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#171B33] to-[#0B0F1D] flex items-center justify-center mb-10">
-              <div className="text-center">
-                <BookOpen size={48} className="text-[#7559E8]/50 mx-auto mb-3" />
-                <p className="text-sm text-[#7A8199]">Written Lesson</p>
-              </div>
             </div>
           )}
 
