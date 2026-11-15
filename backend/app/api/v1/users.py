@@ -71,18 +71,14 @@ async def upload_avatar(
         raise HTTPException(status_code=413, detail="Avatar must be under 2 MB")
 
     import cloudinary
-    cloudinary.config(
-        cloud_name="daltlnlw", 
-        api_key="148286111648846", 
-        api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g",
-        secure=True
-    )
-    
     try:
         upload_result = cloudinary.uploader.upload(
             content,
             folder="ibrant/avatars",
-            public_id=f"user_{current_user.id}"
+            public_id=f"user_{current_user.id}",
+            cloud_name="daltlnlw",
+            api_key="148286111648846",
+            api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g"
         )
         current_user.avatar_url = upload_result.get("secure_url")
     except Exception as e:

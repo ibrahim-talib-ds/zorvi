@@ -389,17 +389,13 @@ async def upload_gallery_image(
     import cloudinary.uploader
     
     import cloudinary
-    cloudinary.config(
-        cloud_name="daltlnlw", 
-        api_key="148286111648846", 
-        api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g",
-        secure=True
-    )
-    
     try:
         upload_result = cloudinary.uploader.upload(
             contents,
-            folder=f"ibrant/products/{product_id}"
+            folder=f"ibrant/products/{product_id}",
+            cloud_name="daltlnlw",
+            api_key="148286111648846",
+            api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g"
         )
         image_url = upload_result.get("secure_url")
     except Exception as e:
