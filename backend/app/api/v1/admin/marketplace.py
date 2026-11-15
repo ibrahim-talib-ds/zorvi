@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
+import cloudinary
+import cloudinary.uploader
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -382,18 +384,24 @@ async def upload_gallery_image(
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Max 10MB per image")
 
-    # Save file
-    ext = file.filename.split(".")[-1].lower() if file.filename else "jpg"
-    filename = f"{uuid_lib.uuid4().hex}.{ext}"
-    upload_dir = Path("storage/product_images") / str(product_id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    filepath = upload_dir / filename
-    with open(filepath, "wb") as f_out:
-        f_out.write(contents)
-
-    # Public URL
-    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://ibrant-api.onrender.com")
-    image_url = f"{base_url}/api/v1/products/images/{product_id}/{filename}"
+    # Upload to Cloudinary
+    import cloudinary
+    import cloudinary.uploader
+    
+    cloudinary.config(
+        cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+        api_key=os.getenv("CLOUDINARY_API_KEY"),
+        api_secret=os.getenv("CLOUDINARY_API_SECRET")
+    )
+    
+    try:
+        upload_result = cloudinary.uploader.upload(
+            contents,
+            folder=f"ibrant/products/{product_id}"
+        )
+        image_url = upload_result.get("secure_url")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {str(e)}")
 
     # Count existing to set sort_order
     count_res = await db.execute(
