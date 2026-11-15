@@ -392,7 +392,8 @@ async def upload_gallery_image(
         f_out.write(contents)
 
     # Public URL
-    image_url = f"/api/v1/products/images/{product_id}/{filename}"
+    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://ibrant-api.onrender.com")
+    image_url = f"{base_url}/api/v1/products/images/{product_id}/{filename}"
 
     # Count existing to set sort_order
     count_res = await db.execute(

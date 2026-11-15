@@ -1,3 +1,4 @@
+import os
 """ZORVI — user endpoints."""
 import re
 import uuid
@@ -71,7 +72,8 @@ async def upload_avatar(
     file_path = AVATAR_DIR / safe_name
     file_path.write_bytes(content)
 
-    current_user.avatar_url = f"/api/v1/users/avatars/{safe_name}"
+    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://ibrant-api.onrender.com")
+    current_user.avatar_url = f"{base_url}/api/v1/users/avatars/{safe_name}"
     await db.commit()
     await db.refresh(current_user)
     return UserRead.model_validate(current_user)
