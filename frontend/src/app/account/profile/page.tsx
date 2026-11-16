@@ -50,9 +50,11 @@ export default function ProfilePage() {
         const [userRes, statsRes] = await Promise.all([
           fetch(`${API_BASE}/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store"
           }),
           fetch(`${API_BASE}/users/me/stats`, {
             headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store"
           }),
         ]);
         if (userRes.ok) setUser(await userRes.json());

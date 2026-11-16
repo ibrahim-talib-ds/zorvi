@@ -43,7 +43,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     if (t) {
       headers.set("Authorization", `Bearer ${t}`);
     }
-    return fetch(url, { ...options, headers });
+    return fetch(url, { cache: "no-store", ...options, headers });
   };
 
   let response = await makeRequest(token);
