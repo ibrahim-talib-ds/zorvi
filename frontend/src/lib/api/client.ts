@@ -5,8 +5,8 @@
 const isServer = typeof window === "undefined";
 
 // Default to local development URLs
-let serverBase = "http://127.0.0.1:8010/api/v1";
-let clientBase = "http://127.0.0.1:8010/api/v1";
+let serverBase = "/api/v1";
+let clientBase = "/api/v1";
 
 // If running in Coolify (production), use the hardcoded Docker/Public URLs
 if (process.env.NODE_ENV === "production") {

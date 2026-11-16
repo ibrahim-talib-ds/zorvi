@@ -99,7 +99,7 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
           >
             {avatarUrl ? (
               <img
-                src={`http://127.0.0.1:8010${avatarUrl}`}
+                src={`${avatarUrl}`}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />

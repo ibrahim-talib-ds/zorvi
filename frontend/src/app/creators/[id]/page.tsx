@@ -74,7 +74,7 @@ export default async function CreatorPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12 pb-10 border-b border-white/5">
           <div className="w-24 h-24 rounded-full bg-[#7559E8]/20 border border-[#7559E8]/30 flex items-center justify-center overflow-hidden shrink-0">
             {creator.avatar_url ? (
-              <img src={`http://127.0.0.1:8010${creator.avatar_url}`} alt={creator.full_name} className="w-full h-full object-cover" />
+              <img src={`${creator.avatar_url}`} alt={creator.full_name} className="w-full h-full object-cover" />
             ) : (
               <User size={40} className="text-[#A78BFA]" />
             )}

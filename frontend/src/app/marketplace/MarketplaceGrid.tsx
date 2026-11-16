@@ -238,7 +238,7 @@ function ProductCard({ product }: { product: Product }) {
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-4 h-4 rounded-full bg-[#7559E8]/20 overflow-hidden flex items-center justify-center shrink-0">
               {product.creator_avatar_url ? (
-                <img src={`http://127.0.0.1:8010${product.creator_avatar_url}`} alt="" className="w-full h-full object-cover" />
+                <img src={`${product.creator_avatar_url}`} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[8px] font-bold text-[#A78BFA]">{product.creator_name.charAt(0)}</span>
               )}

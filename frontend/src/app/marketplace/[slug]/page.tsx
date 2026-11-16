@@ -13,7 +13,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8010/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
 async function fetchProduct(slug: string) {
   try {
@@ -85,7 +85,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               >
                 <div className="w-12 h-12 rounded-full bg-[#7559E8]/20 border border-[#7559E8]/30 flex items-center justify-center overflow-hidden shrink-0">
                   {product.creator_avatar_url ? (
-                    <img src={`http://127.0.0.1:8010${product.creator_avatar_url}`} alt={product.creator_name} className="w-full h-full object-cover" />
+                    <img src={`${product.creator_avatar_url}`} alt={product.creator_name} className="w-full h-full object-cover" />
                   ) : (
                     <User size={22} className="text-[#A78BFA]" />
                   )}

@@ -105,7 +105,7 @@ export default function ProfilePage() {
             <div className="w-24 h-24 rounded-full border-2 border-[#7559E8]/30 overflow-hidden bg-[#7559E8]/20 flex-shrink-0">
               {user.avatar_url ? (
                 <img
-                  src={`http://127.0.0.1:8010${user.avatar_url}`}
+                  src={user.avatar_url}
                   alt={displayName}
                   className="w-full h-full object-cover"
                 />

@@ -98,7 +98,7 @@ export function AccountSidebar({
       <div className="p-3 border-t border-white/5 space-y-2 shrink-0">
         <div className={cn("flex items-center gap-3 px-2 py-2 rounded-lg bg-white/5", collapsed && "justify-center")}>
           <div className="w-8 h-8 rounded-full bg-[#7559E8]/20 flex items-center justify-center shrink-0 overflow-hidden">
-             {user?.avatar_url ? <img src={`http://127.0.0.1:8010${user.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" /> : <User size={16} className="text-[#A78BFA]" />}
+             {user?.avatar_url ? <img src={`${user.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" /> : <User size={16} className="text-[#A78BFA]" />}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">

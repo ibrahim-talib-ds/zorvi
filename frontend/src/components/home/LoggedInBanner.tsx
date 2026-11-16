@@ -20,7 +20,7 @@ export function LoggedInBanner() {
           <div className="w-8 h-8 rounded-full bg-[#7559E8]/30 border border-[#7559E8]/40 flex items-center justify-center overflow-hidden flex-shrink-0">
             {user.avatar_url ? (
               <img
-                src={`http://127.0.0.1:8010${user.avatar_url}`}
+                src={`${user.avatar_url}`}
                 alt={displayName}
                 className="w-full h-full object-cover"
               />

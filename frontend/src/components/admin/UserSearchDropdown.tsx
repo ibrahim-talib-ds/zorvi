@@ -178,7 +178,7 @@ export function UserSearchDropdown({ selectedIds, onSelectionChange }: Props) {
                   <div className="w-8 h-8 rounded-full bg-[#7559E8]/20 border border-[#7559E8]/30 flex items-center justify-center overflow-hidden shrink-0">
                     {u.avatar_url ? (
                       <img
-                        src={`http://127.0.0.1:8010${u.avatar_url}`}
+                        src={`${u.avatar_url}`}
                         alt=""
                         className="w-full h-full object-cover"
                       />
