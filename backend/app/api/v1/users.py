@@ -71,18 +71,26 @@ async def upload_avatar(
         raise HTTPException(status_code=413, detail="Avatar must be under 2 MB")
 
     import cloudinary
+    import os
+    import uuid
+    from supabase import create_client, Client
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+    supabase: Client = create_client(supabase_url, supabase_key)
+
+    filename = f"{uuid.uuid4().hex}{ext}"
+    storage_path = f"avatars/{current_user.id}/{filename}"
+
     try:
-        upload_result = cloudinary.uploader.upload(
-            content,
-            folder="ibrant/avatars",
-            public_id=f"user_{current_user.id}",
-            cloud_name="daltlnlw",
-            api_key="148286111648846",
-            api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g"
+        supabase.storage.from_("ibrant-images").upload(
+            path=storage_path,
+            file=content,
+            file_options={"content-type": file.content_type, "upsert": "true"}
         )
-        current_user.avatar_url = upload_result.get("secure_url")
+        current_user.avatar_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Avatar upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Supabase avatar upload failed: {str(e)}")
     await db.commit()
     await db.refresh(current_user)
     return UserRead.model_validate(current_user)

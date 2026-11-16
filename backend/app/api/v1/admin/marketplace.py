@@ -389,17 +389,24 @@ async def upload_gallery_image(
     import cloudinary.uploader
     
     import cloudinary
+    import os
+    from supabase import create_client, Client
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+    supabase: Client = create_client(supabase_url, supabase_key)
+
+    storage_path = f"products/{product_id}/{filename}"
+
     try:
-        upload_result = cloudinary.uploader.upload(
-            contents,
-            folder=f"ibrant/products/{product_id}",
-            cloud_name="daltlnlw",
-            api_key="148286111648846",
-            api_secret="bOIffd0-xmVTgsfU8hDI7JhjA-g"
+        supabase.storage.from_("ibrant-images").upload(
+            path=storage_path,
+            file=contents,
+            file_options={"content-type": file.content_type, "upsert": "true"}
         )
-        image_url = upload_result.get("secure_url")
+        image_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Supabase upload failed: {str(e)}")
 
     # Count existing to set sort_order
     count_res = await db.execute(
