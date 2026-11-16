@@ -396,6 +396,9 @@ async def upload_gallery_image(
     supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
     supabase: Client = create_client(supabase_url, supabase_key)
 
+    import uuid
+    ext = file.filename.split(".")[-1].lower() if file.filename else "jpg"
+    filename = f"{uuid.uuid4().hex}.{ext}"
     storage_path = f"products/{product_id}/{filename}"
 
     try:
