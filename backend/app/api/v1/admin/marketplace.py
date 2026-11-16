@@ -404,7 +404,7 @@ async def upload_gallery_image(
             file=contents,
             file_options={"content-type": file.content_type, "upsert": "true"}
         )
-        image_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path)
+        image_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path).rstrip("?")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Supabase upload failed: {str(e)}")
 

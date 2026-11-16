@@ -88,7 +88,7 @@ async def upload_avatar(
             file=content,
             file_options={"content-type": file.content_type, "upsert": "true"}
         )
-        current_user.avatar_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path)
+        current_user.avatar_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path).rstrip("?")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Supabase avatar upload failed: {str(e)}")
     await db.commit()
