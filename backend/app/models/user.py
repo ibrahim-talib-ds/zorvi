@@ -27,6 +27,13 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
             postgresql_where=text("deleted_at IS NULL"),
         ),
         Index("ix_users_created_at", "created_at"),
+        Index(
+            "uq_users_oauth_provider_id",
+            "oauth_provider",
+            "oauth_id",
+            unique=True,
+            postgresql_where=text("oauth_provider IS NOT NULL"),
+        ),
     )
 
     email: Mapped[str] = mapped_column(String(320), nullable=False)
@@ -42,6 +49,8 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    oauth_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    oauth_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     roles: Mapped[list["Role"]] = relationship(
         "Role",

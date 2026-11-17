@@ -18,6 +18,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -174,6 +175,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.access_token);
   };
 
+  const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+    setTokens(accessToken, refreshToken);
+    document.cookie = `ibrant_access_token=${accessToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    const me = await fetchMe(accessToken);
+    storeUser(me);
+    setUser(me);
+    setToken(accessToken);
+  };
+
   const register = async (email: string, password: string, fullName?: string) => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
@@ -215,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!token && !!user,
         login,
+        loginWithTokens,
         register,
         updateUser,
         logout,

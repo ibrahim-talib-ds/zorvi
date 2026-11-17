@@ -1,4 +1,9 @@
 """ZORVI — authentication endpoints (register, login, refresh, logout)."""
+import secrets
+from urllib.parse import urlencode
+
+import httpx
+from fastapi.responses import RedirectResponse
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -188,3 +193,162 @@ async def change_password(
     current_user.password_hash = hash_password(payload.new_password)
     await db.commit()
     return MessageResponse(message="Password changed successfully")
+
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
+GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+GITHUB_USER_URL = "https://api.github.com/user"
+GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
+
+
+async def _find_or_create_oauth_user(
+    db: AsyncSession, *, provider: str, oauth_id: str, email: str, full_name: str | None
+) -> User:
+    result = await db.execute(
+        select(User).where(
+            User.oauth_provider == provider,
+            User.oauth_id == oauth_id,
+            User.deleted_at.is_(None),
+        )
+    )
+    user = result.scalar_one_or_none()
+    if user is not None:
+        return user
+
+    result = await db.execute(
+        select(User).where(
+            func.lower(User.email) == email.lower(),
+            User.deleted_at.is_(None),
+        )
+    )
+    user = result.scalar_one_or_none()
+    if user is not None:
+        if user.oauth_provider is None:
+            user.oauth_provider = provider
+            user.oauth_id = oauth_id
+            await db.commit()
+        return user
+
+    user = User(
+        email=email.lower(),
+        password_hash=hash_password(secrets.token_urlsafe(32)),
+        full_name=full_name,
+        is_verified=True,
+        oauth_provider=provider,
+        oauth_id=oauth_id,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+def _oauth_redirect(tokens: TokenPair) -> RedirectResponse:
+    return RedirectResponse(
+        f"{settings.FRONTEND_URL}/auth/callback"
+        f"?access_token={tokens.access_token}&refresh_token={tokens.refresh_token}"
+    )
+
+
+@router.get("/google", summary="Start Google OAuth")
+async def google_login():
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "prompt": "select_account",
+    }
+    return RedirectResponse(f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
+
+
+@router.get("/google/callback", summary="Google OAuth callback")
+async def google_callback(code: str, db: AsyncSession = Depends(get_db)):
+    async with httpx.AsyncClient(timeout=10) as client:
+        token_res = await client.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+        )
+        if token_res.status_code != 200:
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=google_auth_failed")
+        access_token = token_res.json()["access_token"]
+
+        info_res = await client.get(
+            GOOGLE_USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"}
+        )
+        if info_res.status_code != 200:
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=google_auth_failed")
+        info = info_res.json()
+
+    email = info.get("email")
+    if not email:
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=no_email")
+
+    user = await _find_or_create_oauth_user(
+        db, provider="google", oauth_id=info["sub"], email=email, full_name=info.get("name")
+    )
+    user.last_login_at = datetime.now(timezone.utc)
+    return _oauth_redirect(await _issue_token_pair(db, user))
+
+
+@router.get("/github", summary="Start GitHub OAuth")
+async def github_login():
+    params = {
+        "client_id": settings.GITHUB_CLIENT_ID,
+        "redirect_uri": settings.GITHUB_REDIRECT_URI,
+        "scope": "read:user user:email",
+    }
+    return RedirectResponse(f"{GITHUB_AUTH_URL}?{urlencode(params)}")
+
+
+@router.get("/github/callback", summary="GitHub OAuth callback")
+async def github_callback(code: str, db: AsyncSession = Depends(get_db)):
+    async with httpx.AsyncClient(timeout=10) as client:
+        token_res = await client.post(
+            GITHUB_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.GITHUB_CLIENT_ID,
+                "client_secret": settings.GITHUB_CLIENT_SECRET,
+                "redirect_uri": settings.GITHUB_REDIRECT_URI,
+            },
+            headers={"Accept": "application/json"},
+        )
+        token_json = token_res.json() if token_res.status_code == 200 else {}
+        if "access_token" not in token_json:
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=github_auth_failed")
+        access_token = token_json["access_token"]
+
+        headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/vnd.github+json"}
+        user_res = await client.get(GITHUB_USER_URL, headers=headers)
+        if user_res.status_code != 200:
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=github_auth_failed")
+        gh_user = user_res.json()
+
+        email = gh_user.get("email")
+        if not email:
+            emails_res = await client.get(GITHUB_EMAILS_URL, headers=headers)
+            if emails_res.status_code == 200:
+                primary = next(
+                    (e for e in emails_res.json() if e.get("primary") and e.get("verified")), None
+                )
+                email = primary["email"] if primary else None
+
+    if not email:
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=no_email")
+
+    user = await _find_or_create_oauth_user(
+        db, provider="github", oauth_id=str(gh_user["id"]), email=email, full_name=gh_user.get("name")
+    )
+    user.last_login_at = datetime.now(timezone.utc)
+    return _oauth_redirect(await _issue_token_pair(db, user))
+
