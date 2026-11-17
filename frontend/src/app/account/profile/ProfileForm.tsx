@@ -1,80 +1,27 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Camera, Check } from "lucide-react";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { Loader2, Check } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 
 interface Props {
   initialName: string;
   initialAvatarUrl: string | null;
+  token: string;
 }
 
-export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
+export function ProfileForm({ initialName, initialAvatarUrl, token }: Props) {
   const router = useRouter();
-  const { updateUser } = useAuth();
-  const { token, isAuthenticated } = useAuth();
   const [name, setName] = useState(initialName);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imgError, setImgError] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const initials = initialName 
-    ? initialName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() 
+
+  // Generate initials (e.g., "Ibrahim Talib" -> "IT")
+  const initials = name.trim()
+    ? name.trim().split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
     : "U";
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !token) return;
-    if (file.size > 2 * 1024 * 1024) { setError("Avatar must be under 2 MB"); return; }
-
-    setUploading(true);
-    setError(null);
-
-    const attemptUpload = async (signal: AbortSignal) => {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(`${API_BASE}/users/me/avatar`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-        signal,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    };
-
-    let lastErr: unknown;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15000);
-      try {
-        const data = await attemptUpload(controller.signal);
-        clearTimeout(timer);
-        setAvatarUrl(data.avatar_url);
-        if (typeof updateUser === "function") updateUser(data);
-        router.refresh();
-        setUploading(false);
-        if (fileRef.current) fileRef.current.value = "";
-        return;
-      } catch (err) {
-        clearTimeout(timer);
-        lastErr = err;
-        const isNetworkLayerFailure = err instanceof TypeError;
-        if (!isNetworkLayerFailure || attempt === 2) break;
-        await new Promise((r) => setTimeout(r, 800));
-      }
-    }
-
-    const msg = lastErr instanceof Error ? lastErr.message : "Failed to upload avatar";
-    setError(msg === "Failed to fetch" ? "Couldn't reach the server — check your connection and try again." : msg);
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
-  };
 
   const handleSaveName = async () => {
     if (!token) return;
@@ -92,8 +39,6 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
       });
       if (!res.ok) throw new Error(await res.text());
       setSaved(true);
-      const updatedUser = await res.json();
-      if (typeof updateUser === "function") updateUser(updatedUser);
       router.refresh();
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
@@ -103,101 +48,46 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
     }
   };
 
-  const initials = (name || "U").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-
   return (
-    <div className="space-y-6">
-      {/* Avatar */}
-      <div>
-        <label className="block text-sm font-medium text-[#B7BDD0] mb-3">
-          Profile picture
-        </label>
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 bg-[#7559E8]/20 hover:border-[#7559E8]/60 transition group"
-          >
-            {avatarUrl ? (
-              <img
-                src={`${avatarUrl}`}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="flex items-center justify-center w-full h-full font-display text-2xl font-bold text-[#A78BFA]">
-                {initials}
-              </span>
-            )}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-              {uploading ? (
-                <Loader2 size={24} className="text-white animate-spin" />
-              ) : (
-                <Camera size={24} className="text-white" />
-              )}
-            </div>
-          </button>
-          <div>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="text-sm font-medium text-[#A78BFA] hover:text-[#8B70FF] transition disabled:opacity-50"
-            >
-              {uploading ? "Uploading..." : avatarUrl ? "Change picture" : "Upload picture"}
-            </button>
-            <p className="text-xs text-[#7A8199] mt-1">JPG, PNG or WebP · Max 2 MB</p>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp"
-            onChange={handleAvatarUpload}
-            className="hidden"
-          />
+    <div className="space-y-8">
+      {/* Elegant Initials Avatar */}
+      <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
+        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] flex items-center justify-center shadow-lg shadow-[#7559E8]/20 border-2 border-white/10">
+          <span className="text-4xl font-display font-extrabold text-white tracking-widest">
+            {initials}
+          </span>
+        </div>
+        <div className="text-center sm:text-left mt-2">
+          <h3 className="text-lg font-display font-semibold text-white">Profile Identity</h3>
+          <p className="text-sm text-[#7A8199] max-w-xs mt-1">
+            Your initials are automatically generated from your full name.
+          </p>
         </div>
       </div>
 
-      {/* Name */}
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-[#B7BDD0] mb-2">
-          Full name
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="fullName"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your full name"
-            maxLength={120}
-            className="flex-1 bg-[#0B0F1D] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#7559E8]"
-          />
-          <button
-            type="button"
-            onClick={handleSaveName}
-            disabled={saving || name === initialName}
-            className="px-5 rounded-lg bg-[#7559E8] text-white text-sm font-semibold hover:bg-[#8B70FF] disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
-          >
-            {saving ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : saved ? (
-              <>
-                <Check size={14} /> Saved
-              </>
-            ) : (
-              "Save"
-            )}
-          </button>
-        </div>
+      <div className="border-t border-white/5 pt-6">
+        <label className="block text-sm font-medium text-[#B7BDD0] mb-2">Full Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full max-w-md px-4 py-3 rounded-lg bg-[#0B0F1D] border border-white/10 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#7559E8] transition"
+          placeholder="e.g. Ibrahim Talib"
+        />
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 p-3">
-          <p className="text-sm text-[#F05D70]">{error}</p>
-        </div>
-      )}
+      <div className="flex items-center gap-4 pt-2">
+        <button
+          onClick={handleSaveName}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-lg bg-[#7559E8] hover:bg-[#8B70FF] text-white font-medium text-sm transition flex items-center gap-2 disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+          Save Changes
+        </button>
+        {saved && <span className="text-sm text-[#22C58B]">Saved successfully!</span>}
+        {error && <span className="text-sm text-[#F05D70]">{error}</span>}
+      </div>
     </div>
   );
 }

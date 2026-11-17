@@ -165,10 +165,7 @@ export default function ProfilePage() {
         {/* Edit form */}
         <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 mb-6">
           <h2 className="font-display text-lg font-bold text-white mb-6">Edit profile</h2>
-          <ProfileForm
-            initialName={user.full_name || ""}
-            initialAvatarUrl={user.avatar_url}
-          />
+          <ProfileForm initialName={user.full_name || ""} initialAvatarUrl={user.avatar_url} token={token || ""} />
         </div>
 
         {/* Admin panel link */}
