@@ -1,98 +1,90 @@
-import Link from "next/link";
+"use client";
 
-const FOOTER_GROUPS = [
-  {
-    title: "Platform",
-    links: [
-      { href: "/courses", label: "Academy" },
-      { href: "/marketplace", label: "Project Marketplace" },
-      { href: "/#technologies", label: "Technologies" },
-      { href: "/#how-it-works", label: "How It Works" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { href: "/docs", label: "Documentation" },
-      { href: "/guides", label: "Learning Guides" },
-      { href: "/help", label: "Help Center" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    title: "Account",
-    links: [
-      { href: "/login", label: "Log In" },
-      { href: "/register", label: "Create Account" },
-      { href: "/account/courses", label: "My Learning" },
-      { href: "/account/orders", label: "My Purchases" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { href: "/terms", label: "Terms of Service" },
-      { href: "/privacy", label: "Privacy Policy" },
-      { href: "/license", label: "License Terms" },
-      { href: "/refund", label: "Refund Policy" },
-    ],
-  },
-];
+import Link from "next/link";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export function Footer() {
-  const year = new Date().getFullYear();
+  const { isAuthenticated } = useAuth();
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/5 bg-[#0B0F1D]">
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
-        {/* Top: brand + link columns */}
-        <div className="grid gap-8 md:gap-10">
-          {/* Brand — full width on mobile, 2 cols on desktop */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3">
-                <img
-                  src="/images/logo/ibrant-mark.png"
-                  alt="IBRANT Icon"
-                  className="h-10 w-auto object-contain"
-                />
-                <span className="font-display text-2xl font-extrabold tracking-tight text-[#8B70FF]">
-                  IBRANT
-                </span>
-              </Link>
-            <p className="mt-1 text-sm text-[#A78BFA]">Learn. Create. Launch.</p>
-            <p className="mt-2 max-w-sm text-sm text-[#B7BDD0]">
+    <footer className="border-t border-white/5 bg-[#0B0F1D] pt-16 pb-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          {/* Column 1: Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-3 mb-4">
+              <img src="/images/logo/ibrant-mark.png" alt="IBRANT" className="h-8 w-auto object-contain" />
+              <span className="font-display text-xl font-extrabold tracking-tight text-[#8B70FF]">IBRANT</span>
+            </Link>
+            <p className="text-sm text-[#7A8199] mb-6 max-w-xs">
+              Learn. Create. Launch. <br />
               Turn your ideas into real software products.
             </p>
           </div>
 
-          {/* Link groups — 2 columns on mobile, 4 columns on desktop */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 sm:gap-x-8">
-            {FOOTER_GROUPS.map((group) => (
-              <div key={group.title}>
-                <h4 className="mb-3 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#7A8199]">
-                  {group.title}
-                </h4>
-                <ul className="space-y-2">
-                  {group.links.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-sm text-[#B7BDD0] hover:text-white transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          {/* Column 2: Platform */}
+          <div>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Platform</h4>
+            <ul className="space-y-3 text-sm text-[#B7BDD0]">
+              <li><Link href="/courses" className="hover:text-[#8B70FF] transition">Academy</Link></li>
+              <li><Link href="/marketplace" className="hover:text-[#8B70FF] transition">Project Marketplace</Link></li>
+              <li><Link href="/technologies" className="hover:text-[#8B70FF] transition">Technologies</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-[#8B70FF] transition">How It Works</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Resources */}
+          <div>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Resources</h4>
+            <ul className="space-y-3 text-sm text-[#B7BDD0]">
+              <li><Link href="/documentation" className="hover:text-[#8B70FF] transition">Documentation</Link></li>
+              <li><Link href="/guides" className="hover:text-[#8B70FF] transition">Learning Guides</Link></li>
+              <li><Link href="/help" className="hover:text-[#8B70FF] transition">Help Center</Link></li>
+              <li><Link href="/contact" className="hover:text-[#8B70FF] transition">Contact</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Account & Legal */}
+          <div>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Account</h4>
+            <ul className="space-y-3 text-sm text-[#B7BDD0] mb-6">
+              {!isAuthenticated ? (
+                <>
+                  <li><Link href="/login" className="hover:text-[#8B70FF] transition">Log In</Link></li>
+                  <li><Link href="/register" className="hover:text-[#8B70FF] transition">Create Account</Link></li>
+                </>
+              ) : (
+                <>
+                  <li><Link href="/account" className="hover:text-[#8B70FF] transition">My Dashboard</Link></li>
+                  <li><Link href="/account/courses" className="hover:text-[#8B70FF] transition">My Learning</Link></li>
+                  <li><Link href="/account/orders" className="hover:text-[#8B70FF] transition">My Purchases</Link></li>
+                </>
+              )}
+            </ul>
+            
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4 mt-6">Legal</h4>
+            <ul className="space-y-3 text-sm text-[#B7BDD0]">
+              <li><Link href="/terms" className="hover:text-[#8B70FF] transition">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-[#8B70FF] transition">Privacy Policy</Link></li>
+              <li><Link href="/license" className="hover:text-[#8B70FF] transition">License Terms</Link></li>
+              <li><Link href="/refund" className="hover:text-[#8B70FF] transition">Refund Policy</Link></li>
+            </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-xs text-[#7A8199]">
-          <p>© {year} IBRANT. All rights reserved.</p>
-          <p className="font-mono">PostgreSQL 18 · FastAPI · Next.js 15</p>
+        {/* Bottom Bar */}
+        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[#7A8199]">
+            &copy; {currentYear} IBRANT. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-xs font-mono text-[#7A8199]">
+            <span>PostgreSQL 18</span>
+            <span className="text-white/20">&bull;</span>
+            <span>FastAPI</span>
+            <span className="text-white/20">&bull;</span>
+            <span>Next.js 15</span>
+          </div>
         </div>
       </div>
     </footer>
