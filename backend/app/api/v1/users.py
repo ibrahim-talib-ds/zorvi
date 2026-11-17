@@ -5,8 +5,6 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-import cloudinary
-import cloudinary.uploader
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import func as sql_func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +22,13 @@ from app.schemas.user import UserRead, UserStats, UserUpdate
 from app.services.storage import LocalStorage
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+import os
+from supabase import create_client, Client
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 AVATAR_DIR = Path(__file__).resolve().parents[2] / "storage" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
@@ -70,14 +75,8 @@ async def upload_avatar(
     if len(content) > MAX_AVATAR_SIZE:
         raise HTTPException(status_code=413, detail="Avatar must be under 2 MB")
 
-    import cloudinary
-    import os
     import uuid
-    from supabase import create_client, Client
-
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
-    supabase: Client = create_client(supabase_url, supabase_key)
+    supabase = supabase_client
 
     filename = f"{uuid.uuid4().hex}{ext}"
     storage_path = f"avatars/{current_user.id}/{filename}"

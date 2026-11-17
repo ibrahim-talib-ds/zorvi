@@ -13,6 +13,7 @@ interface Props {
 
 export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
   const router = useRouter();
+  const { updateUser } = useAuth();
   const { token, isAuthenticated } = useAuth();
   const [name, setName] = useState(initialName);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
@@ -47,6 +48,7 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setAvatarUrl(data.avatar_url);
+      if (typeof updateUser === "function") updateUser(data);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to upload avatar");
@@ -72,6 +74,8 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
       });
       if (!res.ok) throw new Error(await res.text());
       setSaved(true);
+      const updatedUser = await res.json();
+      if (typeof updateUser === "function") updateUser(updatedUser);
       router.refresh();
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {

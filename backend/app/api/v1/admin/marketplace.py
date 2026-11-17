@@ -31,6 +31,13 @@ from app.schemas.marketplace import (
     ProductUpdate,
 )
 
+import os
+from supabase import create_client, Client
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+
 router = APIRouter(
     prefix="/admin/marketplace",
     tags=["admin:marketplace"],
@@ -389,12 +396,7 @@ async def upload_gallery_image(
     import cloudinary.uploader
     
     import cloudinary
-    import os
-    from supabase import create_client, Client
-
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
-    supabase: Client = create_client(supabase_url, supabase_key)
+    supabase = supabase_client
 
     import uuid
     ext = file.filename.split(".")[-1].lower() if file.filename else "jpg"
