@@ -81,13 +81,19 @@ async def upload_avatar(
     filename = f"{uuid.uuid4().hex}{ext}"
     storage_path = f"avatars/{current_user.id}/{filename}"
 
+    if supabase is None:
+        raise HTTPException(status_code=500, detail="Storage is not configured")
+
+    bucket = supabase.storage.from_("ibrant-images")
     try:
-        supabase.storage.from_("ibrant-images").upload(
+        await run_in_threadpool(
+            bucket.upload,
             path=storage_path,
             file=content,
-            file_options={"content-type": file.content_type, "upsert": "true"}
+            file_options={"content-type": file.content_type, "upsert": "true"},
         )
-        current_user.avatar_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path).rstrip("?")
+        public_url = await run_in_threadpool(bucket.get_public_url, storage_path)
+        current_user.avatar_url = public_url.rstrip("?")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Supabase avatar upload failed: {str(e)}")
     await db.commit()

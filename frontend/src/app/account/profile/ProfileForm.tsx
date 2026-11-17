@@ -26,36 +26,50 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Avatar must be under 2 MB");
-      return;
-    }
+    if (file.size > 2 * 1024 * 1024) { setError("Avatar must be under 2 MB"); return; }
 
     setUploading(true);
     setError(null);
 
-    try {
+    const attemptUpload = async (signal: AbortSignal) => {
       const fd = new FormData();
       fd.append("file", file);
-
       const res = await fetch(`${API_BASE}/users/me/avatar`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
+        signal,
       });
-
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setAvatarUrl(data.avatar_url);
-      if (typeof updateUser === "function") updateUser(data);
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to upload avatar");
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
+      return res.json();
+    };
+
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const data = await attemptUpload(controller.signal);
+        clearTimeout(timer);
+        setAvatarUrl(data.avatar_url);
+        if (typeof updateUser === "function") updateUser(data);
+        router.refresh();
+        setUploading(false);
+        if (fileRef.current) fileRef.current.value = "";
+        return;
+      } catch (err) {
+        clearTimeout(timer);
+        lastErr = err;
+        const isNetworkLayerFailure = err instanceof TypeError;
+        if (!isNetworkLayerFailure || attempt === 2) break;
+        await new Promise((r) => setTimeout(r, 800));
+      }
     }
+
+    const msg = lastErr instanceof Error ? lastErr.message : "Failed to upload avatar";
+    setError(msg === "Failed to fetch" ? "Couldn't reach the server — check your connection and try again." : msg);
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const handleSaveName = async () => {

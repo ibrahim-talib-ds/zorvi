@@ -7,6 +7,7 @@ from typing import Annotated
 import cloudinary
 import cloudinary.uploader
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -403,13 +404,19 @@ async def upload_gallery_image(
     filename = f"{uuid.uuid4().hex}.{ext}"
     storage_path = f"products/{product_id}/{filename}"
 
+    if supabase is None:
+        raise HTTPException(status_code=500, detail="Storage is not configured")
+
+    bucket = supabase.storage.from_("ibrant-images")
     try:
-        supabase.storage.from_("ibrant-images").upload(
+        await run_in_threadpool(
+            bucket.upload,
             path=storage_path,
             file=contents,
-            file_options={"content-type": file.content_type, "upsert": "true"}
+            file_options={"content-type": file.content_type, "upsert": "true"},
         )
-        image_url = supabase.storage.from_("ibrant-images").get_public_url(storage_path).rstrip("?")
+        image_url = await run_in_threadpool(bucket.get_public_url, storage_path)
+        image_url = image_url.rstrip("?")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Supabase upload failed: {str(e)}")
 
