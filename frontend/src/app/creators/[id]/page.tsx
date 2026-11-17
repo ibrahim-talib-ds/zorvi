@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, User, Package, Calendar } from "lucide-react";
+import { ArrowLeft, Package, Calendar } from "lucide-react";
 
 import { API_BASE } from "@/lib/api/client";
+import { Avatar } from "@/components/ui/Avatar";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -72,13 +73,7 @@ export default async function CreatorPage({ params }: PageProps) {
 
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12 pb-10 border-b border-white/5">
-          <div className="w-24 h-24 rounded-full bg-[#7559E8]/20 border border-[#7559E8]/30 flex items-center justify-center overflow-hidden shrink-0">
-            {creator.avatar_url ? (
-              <img src={`${creator.avatar_url}`} alt={creator.full_name} className="w-full h-full object-cover" />
-            ) : (
-              <User size={40} className="text-[#A78BFA]" />
-            )}
-          </div>
+          <Avatar name={creator.full_name} size={96} className="shrink-0" />
           <div>
             <p className="text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-2">
               {creator.role.replace("_", " ")}

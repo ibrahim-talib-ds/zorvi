@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Star, ArrowRight, Sparkles, Play, Filter } from "lucide-react";
 import { cn } from "@/lib/design-system/cn";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface Product {
   id: string;
@@ -236,13 +237,7 @@ function ProductCard({ product }: { product: Product }) {
 
         {product.creator_name && (
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-4 h-4 rounded-full bg-[#7559E8]/20 overflow-hidden flex items-center justify-center shrink-0">
-              {product.creator_avatar_url ? (
-                <img src={`${product.creator_avatar_url}`} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[8px] font-bold text-[#A78BFA]">{product.creator_name.charAt(0)}</span>
-              )}
-            </div>
+            <Avatar name={product.creator_name} size={16} />
             <span className="text-[9px] text-[#7A8199] truncate">{product.creator_name}</span>
           </div>
         )}

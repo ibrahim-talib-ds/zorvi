@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Star, Download, User, Play, Check, Clock } from "lucide-react";
+import { ArrowLeft, Star, Download, Play, Check, Clock } from "lucide-react";
 import { BuyButton } from "./BuyButton";
 import { ProductGallery } from "./ProductGallery";
 import { ProductTabs } from "./ProductTabs";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FreeDownloadButton } from "./FreeDownloadButton";
+import { Avatar } from "@/components/ui/Avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -83,13 +84,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 href={`/creators/${product.creator_id}`}
                 className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#7559E8]/40 transition"
               >
-                <div className="w-12 h-12 rounded-full bg-[#7559E8]/20 border border-[#7559E8]/30 flex items-center justify-center overflow-hidden shrink-0">
-                  {product.creator_avatar_url ? (
-                    <img src={`${product.creator_avatar_url}`} alt={product.creator_name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={22} className="text-[#A78BFA]" />
-                  )}
-                </div>
+                <Avatar name={product.creator_name} size={48} className="shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-[#7A8199] uppercase tracking-wider font-mono">Built by</p>
                   <p className="text-white font-semibold truncate">{product.creator_name}</p>

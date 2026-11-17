@@ -7,6 +7,7 @@ import { ArrowLeft, Mail, Calendar, Shield, Package, GraduationCap, CheckCircle2
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 import { ProfileForm } from "./ProfileForm";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface Role {
   id: string;
@@ -87,7 +88,6 @@ export default function ProfilePage() {
   });
 
   const displayName = user.full_name || user.email.split("@")[0];
-  const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#0B0F1D] py-16">
@@ -104,11 +104,7 @@ export default function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#7559E8]/10 blur-[80px] rounded-full pointer-events-none" />
 
           <div className="relative flex items-start gap-6">
-            <div className="w-24 h-24 rounded-full border-2 border-[#7559E8]/30 overflow-hidden bg-[#7559E8]/20 flex-shrink-0">
-              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[#A78BFA] bg-[#7559E8]/20">
-                    {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
-                </div>
-            </div>
+            <Avatar name={displayName} size={96} className="border-2 border-[#7559E8]/30" />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1 flex-wrap">
