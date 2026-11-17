@@ -325,15 +325,9 @@ export function Header() {
                     className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 pl-1.5 pr-2 py-1.5 hover:bg-white/10 transition"
                   >
                     <div className="w-7 h-7 rounded-full bg-[#7559E8]/30 border border-[#7559E8]/40 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {user.avatar_url ? (
-                        <img
-                          src={`${user.avatar_url}`}
-                          alt={displayName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-[10px] font-bold text-[#A78BFA]">{initials}</span>
-                      )}
+                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#A78BFA] bg-[#7559E8]/20">
+                        {user.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
+                    </div>
                     </div>
                     <span className="hidden xl:inline text-sm font-medium text-white max-w-[120px] truncate">
                       {displayName}

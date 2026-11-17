@@ -105,17 +105,9 @@ export default function ProfilePage() {
 
           <div className="relative flex items-start gap-6">
             <div className="w-24 h-24 rounded-full border-2 border-[#7559E8]/30 overflow-hidden bg-[#7559E8]/20 flex-shrink-0">
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="flex items-center justify-center w-full h-full font-display text-3xl font-bold text-[#A78BFA]">
-                  {initials}
-                </span>
-              )}
+              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[#A78BFA] bg-[#7559E8]/20">
+                    {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
+                </div>
             </div>
 
             <div className="flex-1 min-w-0">
