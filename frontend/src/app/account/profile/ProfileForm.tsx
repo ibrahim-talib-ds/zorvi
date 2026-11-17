@@ -21,7 +21,11 @@ export function ProfileForm({ initialName, initialAvatarUrl }: Props) {
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const initials = initialName 
+    ? initialName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() 
+    : "U";
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
