@@ -7,18 +7,16 @@ import { API_BASE } from "@/lib/api/client";
 
 interface Props {
   initialName: string;
-  initialAvatarUrl: string | null;
   token: string;
 }
 
-export function ProfileForm({ initialName, initialAvatarUrl, token }: Props) {
+export function ProfileForm({ initialName, token }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate initials (e.g., "Ibrahim Talib" -> "IT")
   const initials = name.trim()
     ? name.trim().split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
     : "U";
@@ -50,10 +48,9 @@ export function ProfileForm({ initialName, initialAvatarUrl, token }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* Elegant Initials Avatar */}
       <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
-        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] flex items-center justify-center shadow-lg shadow-[#7559E8]/20 border-2 border-white/10">
-          <span className="text-4xl font-display font-extrabold text-white tracking-widest">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] flex items-center justify-center shadow-lg shadow-[#7559E8]/20 border-2 border-white/10">
+          <span className="text-3xl font-display font-extrabold text-white tracking-widest">
             {initials}
           </span>
         </div>
