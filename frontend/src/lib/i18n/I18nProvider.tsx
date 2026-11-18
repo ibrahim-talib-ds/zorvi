@@ -49,7 +49,7 @@ export function I18nProvider({ children, messages = {} }: { children: ReactNode;
     for (let i = 0; i < texts.length; i += MAX_BATCH) {
       const chunk = texts.slice(i, i + MAX_BATCH);
       try {
-        const res = await fetch(`${API_BASE}/api/translate`, {
+        const res = await fetch(`${API_BASE}/translate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ texts: chunk, target: targetLang }),
