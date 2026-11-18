@@ -25,6 +25,13 @@ export function LanguageSelector() {
   const handleSelect = (lang: typeof locales[number]) => {
     setLocale(lang.code);
     setIsOpen(false);
+    
+    // Automatically trigger Google Translate
+    const selectElement = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    if (selectElement) {
+      selectElement.value = lang.code;
+      selectElement.dispatchEvent(new Event('change'));
+    }
   };
 
   return (

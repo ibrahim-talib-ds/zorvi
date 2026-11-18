@@ -80,3 +80,9 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Hide Google Translate UI */
+#google_translate_element { display: none !important; }
+.goog-te-banner-frame { display: none !important; }
+body { top: 0 !important; }
