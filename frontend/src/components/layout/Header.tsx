@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageSelector } from "./LanguageSelector";
+import { useLanguage } from "@/i18n/LanguageProvider";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -39,6 +40,7 @@ interface Notification {
 }
 
 export function Header() {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const { user, token, isAuthenticated, isLoading, logout } = useAuth();

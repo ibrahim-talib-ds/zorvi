@@ -3,10 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Globe, ChevronDown } from "lucide-react";
 import { locales } from "@/i18n/config";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 export function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState(locales[0]);
+  const { locale, setLocale } = useLanguage();
+  const currentLang = locales.find(l => l.code === locale) || locales[0];
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -21,11 +23,8 @@ export function LanguageSelector() {
   }, []);
 
   const handleSelect = (lang: typeof locales[number]) => {
-    setCurrentLang(lang);
+    setLocale(lang.code);
     setIsOpen(false);
-    // Here you will later set the cookie/localStorage and call the backend
-    localStorage.setItem("ibrant_lang", lang.code);
-    window.location.reload(); // Reload to apply translations
   };
 
   return (

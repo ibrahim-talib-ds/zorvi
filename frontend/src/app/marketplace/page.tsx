@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchFeaturedProducts } from "@/features/marketplace/api";
 import { MarketplaceGrid } from "./MarketplaceGrid";
+import { useLanguage } from "@/i18n/LanguageProvider";
 import { API_BASE } from "@/lib/api/client";
 
 export const dynamic = "force-dynamic";
@@ -39,9 +40,9 @@ export default async function MarketplacePage() {
           </Link>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white mb-3">Explore Projects</h1>
+              <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white mb-3">{t("marketplace.title")}</h1>
               <p className="text-base text-[#B7BDD0] max-w-2xl">
-                Production-ready software you can buy or download. Every project is a complete application with source code and documentation.
+                {t("marketplace.subtitle")}
               </p>
             </div>
             <div className="text-sm text-[#7A8199] font-mono whitespace-nowrap">

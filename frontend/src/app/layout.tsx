@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/Providers";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 
 export const metadata: Metadata = {
   title: "IBRANT — Learn. Create. Launch.",
@@ -13,11 +14,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased min-h-screen flex flex-col bg-[#0B0F1D]">
+        <LanguageProvider>
         <Providers>
           <Header />
           <main className="flex-1 pt-16 md:pt-[76px]">{children}</main>
           <Footer />
         </Providers>
+        </LanguageProvider>
       </body>
     </html>
   );
