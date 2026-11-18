@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from app.translation.service import translate_many
 
-router = APIRouter(prefix="/api/translate", tags=["translation"])
+router = APIRouter(prefix="/api/v1/translate", tags=["translation"])
 SUPPORTED_LANGS = {"en", "sw", "fr", "ru", "ar", "es", "de", "pt", "zh", "hi"}
 
 class TranslateIn(BaseModel):

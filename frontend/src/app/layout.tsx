@@ -1,3 +1,4 @@
+import { AutoTranslate } from "@/components/i18n/AutoTranslate";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
       suppressHydrationWarning className="antialiased min-h-screen flex flex-col bg-[#0B0F1D]">
         <I18nProvider messages={en}>
+          <AutoTranslate />
         <Providers>
           <Header />
           <main className="flex-1 pt-16 md:pt-[76px]"><GoogleTranslate />
