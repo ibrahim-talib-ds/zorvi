@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LanguageSelector } from "./LanguageSelector";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";

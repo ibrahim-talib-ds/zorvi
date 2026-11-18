@@ -13,6 +13,7 @@
     "lucide-react": "^0.460.0",
     "motion": "^11.18.2",
     "next": "15.5.29",
+    "next-intl": "^4.15.1",
     "prism-react-renderer": "^2.4.1",
     "prismjs": "^1.30.0",
     "pyodide": "^314.0.7",
