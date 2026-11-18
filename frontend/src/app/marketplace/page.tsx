@@ -1,7 +1,7 @@
+import { Tr } from "@/components/i18n/Tr";
 import Link from "next/link";
 import { fetchFeaturedProducts } from "@/features/marketplace/api";
 import { MarketplaceGrid } from "./MarketplaceGrid";
-import { useLanguage } from "@/i18n/LanguageProvider";
 import { API_BASE } from "@/lib/api/client";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,6 @@ async function fetchCategories() {
 }
 
 export default async function MarketplacePage() {
-  const { t } = useLanguage();
 
   const [products, categories] = await Promise.all([
     fetchFeaturedProducts(100),
@@ -42,9 +41,9 @@ export default async function MarketplacePage() {
           </Link>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white mb-3">{t("marketplace.title")}</h1>
+              <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white mb-3"><Tr k="marketplace.title" /></h1>
               <p className="text-base text-[#B7BDD0] max-w-2xl">
-                {t("marketplace.subtitle")}
+                <Tr k="marketplace.subtitle" />
               </p>
             </div>
             <div className="text-sm text-[#7A8199] font-mono whitespace-nowrap">

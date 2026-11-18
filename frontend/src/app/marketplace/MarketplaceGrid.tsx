@@ -1,5 +1,6 @@
-import { useTranslatedList } from "@/lib/i18n/hooks";
 "use client";
+
+import { useTranslatedList } from "@/lib/i18n/hooks";
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
