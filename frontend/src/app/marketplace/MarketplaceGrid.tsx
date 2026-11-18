@@ -1,3 +1,4 @@
+import { useTranslatedList } from "@/lib/i18n/hooks";
 "use client";
 
 import { useState, useMemo } from "react";
@@ -41,6 +42,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 };
 
 export function MarketplaceGrid({ products, categories }: Props) {
+  const translatedProducts = useTranslatedList(products, ["title", "short_description"]);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");

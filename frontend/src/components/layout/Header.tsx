@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageSelector } from "./LanguageSelector";
+import { T } from "@/lib/i18n/hooks";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";

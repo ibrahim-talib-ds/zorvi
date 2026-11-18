@@ -41,6 +41,8 @@ app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(marketplace.router, prefix="/api/v1", tags=["marketplace"])
 app.include_router(orders.router, prefix="/api/v1", tags=["orders"])
+from app.translation.router import router as translate_router
+app.include_router(translate_router)
 app.include_router(courses.router, prefix="/api/v1", tags=["courses"])
 app.include_router(courses.my_router, prefix="/api/v1", tags=["my-courses"])
 app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])

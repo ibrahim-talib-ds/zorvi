@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Globe, ChevronDown } from "lucide-react";
 import { locales } from "@/i18n/config";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useLanguage } from "@/i18n/LanguageProvider";
 
 export function LanguageSelector() {

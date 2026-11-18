@@ -22,6 +22,8 @@ async function fetchCategories() {
 }
 
 export default async function MarketplacePage() {
+  const { t } = useLanguage();
+
   const [products, categories] = await Promise.all([
     fetchFeaturedProducts(100),
     fetchCategories(),

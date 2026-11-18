@@ -10,11 +10,6 @@
   },
   "marketplace": {
     "title": "Explore Projects",
-    "subtitle": "Production-ready software you can buy or download.",
-    "search": "Search projects...",
-    "categories": "All Categories",
-    "levels": "All levels",
-    "sort": "Newest first",
-    "available": "projects available"
+    "subtitle": "Production-ready software you can buy or download."
   }
 }
