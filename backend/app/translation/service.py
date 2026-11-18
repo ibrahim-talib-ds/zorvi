@@ -54,13 +54,19 @@ async def _translate_chunk(client: httpx.AsyncClient, chunk: str, source: str, t
     if MYMEMORY_EMAIL:
         params["de"] = MYMEMORY_EMAIL
 
-    resp = await client.get(MYMEMORY_URL, params=params)
+    try:
+        resp = await client.get(MYMEMORY_URL, params=params)
+    except httpx.HTTPError as exc:
+        logger.error("MyMemory network error: %r", exc)
+        return None
+
     if resp.status_code != 200:
+        logger.error("MyMemory HTTP %s: %s", resp.status_code, resp.text[:200])
         return None
 
     data = resp.json()
     if str(data.get("responseStatus")) != "200":
-        logger.warning("MyMemory rejected request: %s", data.get("responseDetails"))
+        logger.error("MyMemory status %s: %s", data.get("responseStatus"), data.get("responseDetails"))
         return None
 
     translated = data.get("responseData", {}).get("translatedText", "").strip()
