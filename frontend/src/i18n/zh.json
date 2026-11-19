@@ -1,5 +1,6 @@
 {
   "nav": {
+    "home": "首页",
     "dashboard": "仪表板",
     "marketplace": "市场",
     "academy": "学院",
@@ -16,5 +17,27 @@
     "levels": "所有级别",
     "sort": "最新优先",
     "available": "个可用项目"
+  },
+  "home": {
+    "hero_title": "创造非凡之作。",
+    "hero_subtitle": "学习现代开发，构建完整的软件项目，将你的创意变成可以发布、展示或销售的产品。",
+    "badge": "你的创意值得成为现实",
+    "title_1": "不要只学习技术。",
+    "title_2": "创造非凡之作。",
+    "subtitle": "学习现代开发，构建完整的软件项目，将你的创意变成可以发布、展示或销售的产品。",
+    "btn_academy": "探索学院",
+    "btn_projects": "探索项目",
+    "feat_1": "完整的全栈项目",
+    "feat_2": "真实的开发技能",
+    "feat_3": "面向生产的学习",
+    "footer_text": "从你的第一个想法到你的第一个真正的产品。"
+  },
+  "footer": {
+    "learn_create_launch": "学习。创造。发布。",
+    "turn_ideas": "把你的想法变成真正的软件产品。",
+    "platform": "平台",
+    "resources": "资源",
+    "account": "账户",
+    "legal": "法律条款"
   }
 }

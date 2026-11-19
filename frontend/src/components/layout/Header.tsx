@@ -4,6 +4,8 @@ import Link from "next/link";
 import { LanguageSelector } from "./LanguageSelector";
 import { T } from "@/lib/i18n/hooks";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { Tr } from "@/components/i18n/Tr";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -16,11 +18,11 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 
 const BASE_NAV = [
-  { href: "/", label: "Home" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/courses", label: "Academy" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/about", label: "About" },
+  { href: "/", label: "nav.home" },
+  { href: "/marketplace", label: "nav.marketplace" },
+  { href: "/courses", label: "nav.academy" },
+  { href: "/pricing", label: "nav.pricing" },
+  { href: "/about", label: "nav.about" },
 ];
 
 const LANGUAGES = [
@@ -42,6 +44,8 @@ interface Notification {
 
 export function Header() {
   const { t } = useLanguage();
+  const { lang, setLang } = useI18n();
+  const currentLang = lang;
   const pathname = usePathname();
   const router = useRouter();
   const { user, token, isAuthenticated, isLoading, logout } = useAuth();
@@ -50,7 +54,7 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState("en");
+  
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,11 +72,6 @@ export function Header() {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
-
-  useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("ibrant_lang") : null;
-    if (stored && LANGUAGES.find((l) => l.code === stored)) setCurrentLang(stored);
-  }, []);
 
   // Fetch notifications
   useEffect(() => {
@@ -118,15 +117,14 @@ export function Header() {
   };
 
   const handleLangChange = (code: string) => {
-    setCurrentLang(code);
-    if (typeof window !== "undefined") localStorage.setItem("ibrant_lang", code);
+    setLang(code);
     setLangOpen(false);
   };
 
   const isAdmin = user?.roles?.some((r) => r.name === "admin" || r.name === "super_admin") ?? false;
   const displayName = user?.full_name || user?.email?.split("@")[0] || "User";
   const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const activeLang = LANGUAGES.find((l) => l.code === currentLang) || LANGUAGES[0];
+  const activeLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
   const visibleNotifications = notifications.filter(n => !dismissedIds.includes(n.id));
   const unreadCount = visibleNotifications.filter((n) => n.unread).length;
   
@@ -135,7 +133,7 @@ export function Header() {
   };
 
   const navLinks = isAuthenticated
-    ? [{ href: isAdmin ? "/admin" : "/account", label: "Dashboard" }, ...BASE_NAV.slice(1)]
+    ? [{ href: isAdmin ? "/admin" : "/account", label: "nav.dashboard" }, ...BASE_NAV.slice(1)]
     : BASE_NAV;
 
   return (
@@ -172,7 +170,7 @@ export function Header() {
                     isActive ? "text-white" : "text-[#B7BDD0]"
                   )}
                 >
-                  {l.label}
+                  <Tr k={l.label} />
                   {isActive && (
                     <span className="absolute -bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7559E8] to-[#A78BFA] rounded-full" />
                   )}
@@ -450,7 +448,7 @@ export function Header() {
                           : "text-[#B7BDD0] hover:text-white hover:bg-white/5 border-transparent"
                       }`}
                     >
-                      {l.label}
+                      <Tr k={l.label} />
                     </Link>
                   );
                 })}

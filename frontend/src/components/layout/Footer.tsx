@@ -1,5 +1,6 @@
-import { Tr } from "@/components/i18n/Tr";
 "use client";
+
+import { Tr } from "@/components/i18n/Tr";
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthContext";

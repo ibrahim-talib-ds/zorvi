@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "marketplace": "Marktplatz",
+    "academy": "Akademie",
+    "pricing": "Preise",
+    "about": "Über uns",
+    "login": "Anmelden",
+    "get_started": "Loslegen"
+  },
+  "marketplace": {
+    "title": "Projekte erkunden",
+    "subtitle": "Produktionsreife Software, die Sie kaufen oder herunterladen können.",
+    "search": "Projekte suchen...",
+    "categories": "Alle Kategorien",
+    "levels": "Alle Stufen",
+    "sort": "Neueste zuerst",
+    "available": "Projekte verfügbar"
+  }
+}

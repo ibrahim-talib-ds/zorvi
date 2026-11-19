@@ -1,5 +1,6 @@
 {
   "nav": {
+    "home": "Startseite",
     "dashboard": "Dashboard",
     "marketplace": "Marktplatz",
     "academy": "Akademie",
@@ -16,5 +17,27 @@
     "levels": "Alle Stufen",
     "sort": "Neueste zuerst",
     "available": "Projekte verfügbar"
+  },
+  "home": {
+    "hero_title": "Etwas Außergewöhnliches erschaffen.",
+    "hero_subtitle": "Lernen Sie moderne Entwicklung, erstellen Sie komplette Softwareprojekte und verwandeln Sie Ihre Ideen in Produkte, die Sie veröffentlichen, präsentieren oder verkaufen können.",
+    "badge": "Ihre Ideen verdienen es, Realität zu werden",
+    "title_1": "Lernen Sie nicht nur Technologie.",
+    "title_2": "Etwas Außergewöhnliches erschaffen.",
+    "subtitle": "Lernen Sie moderne Entwicklung, erstellen Sie komplette Softwareprojekte und verwandeln Sie Ihre Ideen in Produkte, die Sie veröffentlichen, präsentieren oder verkaufen können.",
+    "btn_academy": "Die Akademie entdecken",
+    "btn_projects": "Projekte entdecken",
+    "feat_1": "Vollständige Full-Stack-Projekte",
+    "feat_2": "Praxisnahe Entwicklungskompetenzen",
+    "feat_3": "Produktionsorientiertes Lernen",
+    "footer_text": "Von der ersten Idee zum ersten echten Produkt."
+  },
+  "footer": {
+    "learn_create_launch": "Lernen. Erschaffen. Starten.",
+    "turn_ideas": "Verwandeln Sie Ihre Ideen in echte Softwareprodukte.",
+    "platform": "Plattform",
+    "resources": "Ressourcen",
+    "account": "Konto",
+    "legal": "Rechtliches"
   }
 }

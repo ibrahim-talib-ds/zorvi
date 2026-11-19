@@ -17,6 +17,9 @@ CONCURRENCY = 4            # Limit concurrent requests to free API
 PROVIDER = "mymemory"
 MYMEMORY_EMAIL = os.getenv("MYMEMORY_EMAIL")
 
+# MyMemory needs region codes for some languages ("zh" alone is rejected)
+MYMEMORY_LANG_MAP = {"zh": "zh-CN"}
+
 
 def _hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -50,6 +53,8 @@ def _split(value: str) -> list[str]:
 
 
 async def _translate_chunk(client: httpx.AsyncClient, chunk: str, source: str, target: str) -> str | None:
+    source = MYMEMORY_LANG_MAP.get(source, source)
+    target = MYMEMORY_LANG_MAP.get(target, target)
     params = {"q": chunk, "langpair": f"{source}|{target}"}
     if MYMEMORY_EMAIL:
         params["de"] = MYMEMORY_EMAIL

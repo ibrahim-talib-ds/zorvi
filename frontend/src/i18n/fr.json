@@ -1,5 +1,6 @@
 {
   "nav": {
+    "home": "Accueil",
     "dashboard": "Tableau de bord",
     "marketplace": "Marché",
     "academy": "Académie",
@@ -16,5 +17,27 @@
     "levels": "Tous les niveaux",
     "sort": "Plus récents",
     "available": "projets disponibles"
+  },
+  "home": {
+    "hero_title": "Créez quelque chose d’extraordinaire.",
+    "hero_subtitle": "Apprenez le développement moderne, créez des projets logiciels complets et transformez vos idées en produits que vous pouvez lancer, présenter ou vendre.",
+    "badge": "Vos idées méritent de devenir réalité",
+    "title_1": "Ne vous contentez pas d’apprendre la technologie.",
+    "title_2": "Créez quelque chose d’extraordinaire.",
+    "subtitle": "Apprenez le développement moderne, créez des projets logiciels complets et transformez vos idées en produits que vous pouvez lancer, présenter ou vendre.",
+    "btn_academy": "Explorer l’Académie",
+    "btn_projects": "Explorer les projets",
+    "feat_1": "Projets full-stack complets",
+    "feat_2": "Compétences de développement concrètes",
+    "feat_3": "Apprentissage orienté production",
+    "footer_text": "De votre première idée à votre premier vrai produit."
+  },
+  "footer": {
+    "learn_create_launch": "Apprendre. Créer. Lancer.",
+    "turn_ideas": "Transformez vos idées en véritables produits logiciels.",
+    "platform": "Plateforme",
+    "resources": "Ressources",
+    "account": "Compte",
+    "legal": "Mentions légales"
   }
 }

@@ -5,7 +5,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/Providers";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
-import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
 
 export const metadata: Metadata = {
   title: "IBRANT — Learn. Create. Launch.",
@@ -19,12 +18,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning className="antialiased min-h-screen flex flex-col bg-[#0B0F1D]">
         <I18nProvider>
           <AutoTranslate />
-        <Providers>
-          <Header />
-          <main className="flex-1 pt-16 md:pt-[76px]"><GoogleTranslate />
-        {children}</main>
-          <Footer />
-        </Providers>
+          <Providers>
+            <Header />
+            <main className="flex-1 pt-16 md:pt-[76px]">
+              {children}
+            </main>
+            <Footer />
+          </Providers>
         </I18nProvider>
       </body>
     </html>
