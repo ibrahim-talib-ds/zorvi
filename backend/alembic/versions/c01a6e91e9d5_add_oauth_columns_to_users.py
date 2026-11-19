@@ -22,7 +22,6 @@ def upgrade() -> None:
     op.drop_index('ix_messages_receiver_id', table_name='messages')
     op.drop_index('ix_messages_sender_id', table_name='messages')
     op.drop_table('messages')
-    op.drop_index('idx_translation_cache_lookup', table_name='translation_cache')
     op.drop_index('ix_instructor_applications_status', table_name='instructor_applications')
     op.drop_index('ix_notifications_created_at', table_name='notifications')
     op.drop_index('ix_notifications_read_at', table_name='notifications')
