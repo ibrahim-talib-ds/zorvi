@@ -11,3 +11,4 @@ __pycache__/
 backend/.venv/
 
 .env*.local
+backup_language_fix_*/
