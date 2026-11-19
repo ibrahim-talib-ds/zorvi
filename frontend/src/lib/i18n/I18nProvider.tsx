@@ -3,12 +3,22 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import en from "@/i18n/en.json";
 import sw from "@/i18n/sw.json";
+import en from "@/i18n/en.json";
+import sw from "@/i18n/sw.json";
 import ru from "@/i18n/ru.json";
+import fr from "@/i18n/fr.json";
+import ar from "@/i18n/ar.json";
+import es from "@/i18n/es.json";
+import zh from "@/i18n/zh.json";
+import hi from "@/i18n/hi.json";
+import pt from "@/i18n/pt.json";
+import de from "@/i18n/de.json";
+
 
 const SOURCE_LANG = "en";
 const STORAGE_KEY = "ibrant_lang";
 
-const dictionaries: Record<string, any> = { en, sw, ru };
+const dictionaries: Record<string, any> = { en, sw, ru, fr, ar, es, zh, hi, pt, de };
 
 type I18nContextValue = {
   lang: string;

@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "dashboard": "仪表板",
+    "marketplace": "市场",
+    "academy": "学院",
+    "pricing": "定价",
+    "about": "关于",
+    "login": "登录",
+    "get_started": "开始使用"
+  },
+  "marketplace": {
+    "title": "探索项目",
+    "subtitle": "可购买或下载的生产就绪软件。",
+    "search": "搜索项目...",
+    "categories": "所有类别",
+    "levels": "所有级别",
+    "sort": "最新优先",
+    "available": "个可用项目"
+  }
+}
