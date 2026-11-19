@@ -50,7 +50,7 @@ export function MarketplaceGrid({ products, categories }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const filtered = useMemo(() => {
-    let result = [...products];
+    let result = [...translatedProducts];
 
     if (search.trim()) {
       const q = search.toLowerCase();

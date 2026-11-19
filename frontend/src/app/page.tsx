@@ -1,3 +1,4 @@
+import { Tr } from "@/components/i18n/Tr";
 import { HeroSection } from "@/components/home/HeroSection";
 import { TheExperienceSection } from "@/components/home/TheExperienceSection";
 import { WebSection } from "@/components/home/WebSection";

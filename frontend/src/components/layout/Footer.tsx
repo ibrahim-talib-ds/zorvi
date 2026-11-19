@@ -1,3 +1,4 @@
+import { Tr } from "@/components/i18n/Tr";
 "use client";
 
 import Link from "next/link";
@@ -25,7 +26,7 @@ export function Footer() {
 
           {/* Column 2: Platform */}
           <div>
-            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Platform</h4>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4"><Tr k="footer.platform" /></h4>
             <ul className="space-y-3 text-sm text-[#B7BDD0]">
               <li><Link href="/courses" className="hover:text-[#8B70FF] transition">Academy</Link></li>
               <li><Link href="/marketplace" className="hover:text-[#8B70FF] transition">Project Marketplace</Link></li>
@@ -36,7 +37,7 @@ export function Footer() {
 
           {/* Column 3: Resources */}
           <div>
-            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Resources</h4>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4"><Tr k="footer.resources" /></h4>
             <ul className="space-y-3 text-sm text-[#B7BDD0]">
               <li><Link href="/documentation" className="hover:text-[#8B70FF] transition">Documentation</Link></li>
               <li><Link href="/guides" className="hover:text-[#8B70FF] transition">Learning Guides</Link></li>
@@ -47,7 +48,7 @@ export function Footer() {
 
           {/* Column 4: Account & Legal */}
           <div>
-            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4">Account</h4>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4"><Tr k="footer.account" /></h4>
             <ul className="space-y-3 text-sm text-[#B7BDD0] mb-6">
               {!isAuthenticated ? (
                 <>
@@ -63,7 +64,7 @@ export function Footer() {
               )}
             </ul>
             
-            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4 mt-6">Legal</h4>
+            <h4 className="text-sm font-bold text-white tracking-wider uppercase mb-4 mt-6"><Tr k="footer.legal" /></h4>
             <ul className="space-y-3 text-sm text-[#B7BDD0]">
               <li><Link href="/terms" className="hover:text-[#8B70FF] transition">Terms of Service</Link></li>
               <li><Link href="/privacy" className="hover:text-[#8B70FF] transition">Privacy Policy</Link></li>
