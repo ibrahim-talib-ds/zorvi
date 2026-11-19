@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "dashboard": "Dashibodi",
+    "marketplace": "Soko",
+    "academy": "Chuo",
+    "pricing": "Bei",
+    "about": "Kuhusu",
+    "login": "Ingia",
+    "get_started": "Anza Sasa"
+  },
+  "marketplace": {
+    "title": "Gundua Miradi",
+    "subtitle": "Programu tayari kwa matumizi unazoweza kununua au kupakua.",
+    "search": "Tafuta miradi...",
+    "categories": "Kategoria Zote",
+    "levels": "Ngazi zote",
+    "sort": "Mpya kwanza",
+    "available": "miradi inapatikana"
+  }
+}
