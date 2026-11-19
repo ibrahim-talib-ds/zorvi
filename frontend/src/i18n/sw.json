@@ -16,5 +16,17 @@
     "levels": "Ngazi zote",
     "sort": "Mpya kwanza",
     "available": "miradi inapatikana"
+  },
+  "home": {
+    "hero_title": "Jenga kitu cha kushangaza.",
+    "hero_subtitle": "Jifunze maendeleo ya kisasa, tengeneza miradi kamili ya programu, na ugeuze mawazo yako kuwa bidhaa unazoweza kuzindua, kuonyesha, au kuuza."
+  },
+  "footer": {
+    "learn_create_launch": "Jifunze. Tengeneza. Zindua.",
+    "turn_ideas": "Badilisha mawazo yako kuwa bidhaa halisi za programu.",
+    "platform": "Jukwaa",
+    "resources": "Rasilimali",
+    "account": "Akaunti",
+    "legal": "Kisheria"
   }
 }
