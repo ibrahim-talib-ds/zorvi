@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "home": "Início",
+    "dashboard": "Painel",
+    "marketplace": "Mercado",
+    "academy": "Academia",
+    "pricing": "Preços",
+    "about": "Sobre",
+    "login": "Entrar",
+    "get_started": "Começar"
+  },
+  "marketplace": {
+    "title": "Explorar Projetos",
+    "subtitle": "Software pronto para produção que você pode comprar ou baixar.",
+    "search": "Pesquisar projetos...",
+    "categories": "Todas as categorias",
+    "levels": "Todos os níveis",
+    "sort": "Mais recentes",
+    "available": "projetos disponíveis"
+  },
+  "home": {
+    "hero_title": "Crie algo extraordinário.",
+    "hero_subtitle": "Aprenda desenvolvimento moderno, crie projetos de software completos e transforme suas ideias em produtos que você pode lançar, exibir ou vender.",
+    "badge": "Suas ideias merecem se tornar realidade",
+    "title_1": "Não aprenda apenas tecnologia.",
+    "title_2": "Crie algo extraordinário.",
+    "subtitle": "Aprenda desenvolvimento moderno, crie projetos de software completos e transforme suas ideias em produtos que você pode lançar, exibir ou vender.",
+    "btn_academy": "Explorar a Academia",
+    "btn_projects": "Explorar projetos",
+    "feat_1": "Projetos full-stack completos",
+    "feat_2": "Habilidades de desenvolvimento reais",
+    "feat_3": "Aprendizado focado em produção",
+    "footer_text": "Da sua primeira ideia ao seu primeiro produto real."
+  },
+  "footer": {
+    "learn_create_launch": "Aprenda. Crie. Lance.",
+    "turn_ideas": "Transforme suas ideias em produtos de software reais.",
+    "platform": "Plataforma",
+    "resources": "Recursos",
+    "account": "Conta",
+    "legal": "Jurídico"
+  }
+}

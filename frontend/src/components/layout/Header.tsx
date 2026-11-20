@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { LanguageSelector } from "./LanguageSelector";
-import { T } from "@/lib/i18n/hooks";
-import { useLanguage } from "@/i18n/LanguageProvider";
-import { useI18n } from "@/lib/i18n/I18nProvider";
-import { Tr } from "@/components/i18n/Tr";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Menu, X, User as UserIcon, LogOut, Package, GraduationCap, Shield,
-  ChevronDown, Settings, LayoutDashboard, Bell, Globe,
+  ChevronDown, Settings, LayoutDashboard, Bell, Globe, Check,
 } from "lucide-react";
 import { cn } from "@/lib/design-system/cn";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { API_BASE } from "@/lib/api/client";
+import { locales } from "@/i18n/config";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { Tr } from "@/components/i18n/Tr";
 
 const BASE_NAV = [
   { href: "/", label: "nav.home" },
@@ -23,13 +20,6 @@ const BASE_NAV = [
   { href: "/courses", label: "nav.academy" },
   { href: "/pricing", label: "nav.pricing" },
   { href: "/about", label: "nav.about" },
-];
-
-const LANGUAGES = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "sw", label: "Kiswahili", flag: "🇹🇿" },
-  { code: "ru", label: "Русский", flag: "🇷🇺" },
-  { code: "tg", label: "Тоҷикӣ", flag: "🇹🇯" },
 ];
 
 interface Notification {
@@ -43,9 +33,7 @@ interface Notification {
 }
 
 export function Header() {
-  const { t } = useLanguage();
-  const { lang, setLang } = useI18n();
-  const currentLang = lang;
+  const { lang, setLang, t } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
   const { user, token, isAuthenticated, isLoading, logout } = useAuth();
@@ -54,7 +42,7 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -83,7 +71,7 @@ export function Header() {
       try {
         const { fetchMyNotifications } = await import("@/lib/api/notifications");
         const real = await fetchMyNotifications(token);
-        const notes: Notification[] = real.map(n => ({
+        const notes: Notification[] = real.map((n) => ({
           id: n.id,
           title: n.title,
           message: n.message,
@@ -116,20 +104,14 @@ export function Header() {
     router.push("/");
   };
 
-  const handleLangChange = (code: string) => {
-    setLang(code);
-    setLangOpen(false);
-  };
-
   const isAdmin = user?.roles?.some((r) => r.name === "admin" || r.name === "super_admin") ?? false;
   const displayName = user?.full_name || user?.email?.split("@")[0] || "User";
-  const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const activeLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
-  const visibleNotifications = notifications.filter(n => !dismissedIds.includes(n.id));
+  const activeLang = locales.find((l) => l.code === lang) || locales[0];
+  const visibleNotifications = notifications.filter((n) => !dismissedIds.includes(n.id));
   const unreadCount = visibleNotifications.filter((n) => n.unread).length;
-  
+
   const handleDismiss = (id: string) => {
-    setDismissedIds(prev => [...prev, id]);
+    setDismissedIds((prev) => [...prev, id]);
   };
 
   const navLinks = isAuthenticated
@@ -143,22 +125,22 @@ export function Header() {
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
           "bg-gradient-to-b from-[#0F1428] via-[#0B0F1D] to-[#0B0F1D]",
           "border-b border-white/5",
-          scrolled ? "h-16 shadow-lg shadow-black/30" : "h-[72px]"
+          scrolled ? "h-16 shadow-lg shadow-black/30" : "h-16"
         )}
       >
         <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 gap-2">
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">
             <img
               src="/images/logo/ibrant-mark.png"
-              alt="IBRANT Icon"
-              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              alt="IBRANT"
+              className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
             />
-            <span className="font-display text-2xl font-extrabold tracking-tight text-[#8B70FF]">
+            <span className="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-[#8B70FF]">
               IBRANT
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+          <nav className="hidden lg:flex items-center gap-7 flex-1 justify-center">
             {navLinks.map((l) => {
               const isActive = pathname === l.href;
               return (
@@ -179,15 +161,18 @@ export function Header() {
             })}
           </nav>
 
-          <div className="flex items-center gap-0.5 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1.5 flex-shrink-0">
             {/* Language */}
-            <div className="relative" ref={langRef}>
+            <div className="relative" ref={langRef} data-no-translate>
               <button
                 onClick={() => setLangOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition"
+                className="flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition"
+                aria-label={t("nav.menu")}
               >
                 <Globe size={16} />
-                <span className="hidden md:inline text-xs">{activeLang.code.toUpperCase()}</span>
+                <span className="hidden md:inline text-xs">
+                  {activeLang.flag} {activeLang.code.toUpperCase()}
+                </span>
                 <ChevronDown size={12} className={cn("transition-transform hidden md:inline", langOpen && "rotate-180")} />
               </button>
               <AnimatePresence>
@@ -197,26 +182,29 @@ export function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                    className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-52 rounded-lg border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
                   >
-                    {LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => handleLangChange(lang.code)}
-                        className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition",
-                          currentLang === lang.code
-                            ? "bg-[#7559E8]/15 text-white"
-                            : "text-[#B7BDD0] hover:bg-white/5 hover:text-white"
-                        )}
-                      >
-                        <span>{lang.flag}</span>
-                        <span className="flex-1">{lang.label}</span>
-                        {currentLang === lang.code && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#7559E8]" />
-                        )}
-                      </button>
-                    ))}
+                    <div className="max-h-80 overflow-y-auto">
+                      {locales.map((l) => (
+                        <button
+                          key={l.code}
+                          onClick={() => {
+                            setLang(l.code);
+                            setLangOpen(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition",
+                            lang === l.code
+                              ? "bg-[#7559E8]/15 text-white"
+                              : "text-[#B7BDD0] hover:bg-white/5 hover:text-white"
+                          )}
+                        >
+                          <span className="text-base">{l.flag}</span>
+                          <span className="flex-1">{l.name}</span>
+                          {lang === l.code && <Check size={14} className="text-[#8B70FF]" />}
+                        </button>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -232,7 +220,7 @@ export function Header() {
                     href="/admin"
                     className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-[#F5A623]/40 bg-[#F5A623]/10 px-3 py-1.5 text-sm font-semibold text-[#F5A623] hover:bg-[#F5A623]/20 transition"
                   >
-                    <Shield size={14} /> Admin
+                    <Shield size={14} /> <Tr k="nav.admin" />
                   </Link>
                 )}
 
@@ -241,7 +229,7 @@ export function Header() {
                   <button
                     onClick={() => setNotifOpen((v) => !v)}
                     className="relative p-2 rounded-md text-[#B7BDD0] hover:text-white hover:bg-white/5 transition"
-                    aria-label="Notifications"
+                    aria-label={t("nav.notifications")}
                   >
                     <Bell size={18} />
                     {unreadCount > 0 && (
@@ -257,21 +245,21 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-80 max-w-[calc(100vw-32px)] rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
                       >
                         <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                          <h3 className="text-sm font-semibold text-white"><Tr k="nav.notifications" /></h3>
                           {unreadCount > 0 && (
                             <span className="text-xs text-[#A78BFA]">
-                              {unreadCount} new
+                              {unreadCount} <Tr k="nav.new_suffix" />
                             </span>
                           )}
                         </div>
                         <div className="max-h-96 overflow-y-auto">
-                          {notifications.length === 0 ? (
+                          {visibleNotifications.length === 0 ? (
                             <div className="p-6 text-center">
                               <Bell size={24} className="text-[#7A8199] mx-auto mb-2" />
-                              <p className="text-sm text-[#B7BDD0]">No notifications</p>
+                              <p className="text-sm text-[#B7BDD0]"><Tr k="nav.no_notifications" /></p>
                             </div>
                           ) : (
                             visibleNotifications.map((n) => (
@@ -284,17 +272,11 @@ export function Header() {
                                   onClick={() => setNotifOpen(false)}
                                   className="flex items-start gap-2 flex-1 min-w-0"
                                 >
-                                  <div className={`mt-1 w-1.5 h-1.5 rounded-full ${n.unread ? "bg-[#7559E8]" : "bg-transparent"} flex-shrink-0`} />
+                                  <div className={"mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 " + (n.unread ? "bg-[#7559E8]" : "bg-transparent")} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-white truncate">
-                                      {n.title}
-                                    </p>
-                                    <p className="text-xs text-[#B7BDD0] truncate mt-0.5">
-                                      {n.message}
-                                    </p>
-                                    <p className="text-[10px] text-[#7A8199] mt-1">
-                                      {n.time}
-                                    </p>
+                                    <p className="text-sm font-medium text-white truncate">{n.title}</p>
+                                    <p className="text-xs text-[#B7BDD0] truncate mt-0.5">{n.message}</p>
+                                    <p className="text-[10px] text-[#7A8199] mt-1">{n.time}</p>
                                   </div>
                                 </Link>
                                 <button
@@ -304,7 +286,7 @@ export function Header() {
                                     handleDismiss(n.id);
                                   }}
                                   className="flex-shrink-0 p-1 rounded hover:bg-[#F05D70]/20 text-[#7A8199] hover:text-[#F05D70] transition opacity-0 group-hover:opacity-100"
-                                  title="Dismiss"
+                                  title={t("nav.dismiss")}
                                 >
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -329,7 +311,7 @@ export function Header() {
                     <div className="w-7 h-7 rounded-full bg-[#7559E8]/30 border border-[#7559E8]/40 flex items-center justify-center overflow-hidden flex-shrink-0">
                       <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#A78BFA] bg-[#7559E8]/20">
                         {user.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
-                    </div>
+                      </div>
                     </div>
                     <span className="hidden xl:inline text-sm font-medium text-white max-w-[120px] truncate">
                       {displayName}
@@ -344,7 +326,7 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
                       >
                         <div className="p-3 border-b border-white/5">
                           <p className="text-sm font-medium text-white truncate">{displayName}</p>
@@ -352,25 +334,25 @@ export function Header() {
                         </div>
                         <div className="p-1.5">
                           <Link href="/account" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-[#A78BFA] hover:bg-[#7559E8]/15 hover:text-white transition">
-                            <LayoutDashboard size={16} /> My Dashboard
+                            <LayoutDashboard size={16} /> <Tr k="nav.my_dashboard" />
                           </Link>
                           <div className="my-1 border-t border-white/5" />
                           <Link href="/account/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
-                            <UserIcon size={16} /> Profile
+                            <UserIcon size={16} /> <Tr k="nav.profile" />
                           </Link>
                           <Link href="/account/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
-                            <Settings size={16} /> Settings
+                            <Settings size={16} /> <Tr k="nav.settings" />
                           </Link>
                           <Link href="/account/orders" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
-                            <Package size={16} /> My Orders
+                            <Package size={16} /> <Tr k="nav.my_orders" />
                           </Link>
                           <Link href="/courses" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
-                            <GraduationCap size={16} /> Browse Courses
+                            <GraduationCap size={16} /> <Tr k="nav.browse_courses" />
                           </Link>
                         </div>
                         <div className="p-1.5 border-t border-white/5">
                           <button onClick={handleLogout} className="w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#F05D70] hover:bg-[#F05D70]/10 transition">
-                            <LogOut size={16} /> Log Out
+                            <LogOut size={16} /> <Tr k="nav.logout" />
                           </button>
                         </div>
                       </motion.div>
@@ -380,19 +362,19 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/login" className="inline-flex items-center gap-1 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition">
-                  Log In
+                <Link href="/login" className="inline-flex items-center rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition">
+                  <Tr k="nav.login" />
                 </Link>
-                <Link href="/register" className="rounded-md bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-white hover:brightness-110 transition whitespace-nowrap">
-                  Get Started
+                <Link href="/register" className="rounded-md bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:brightness-110 transition whitespace-nowrap">
+                  <Tr k="nav.get_started" />
                 </Link>
               </>
             )}
 
             <button
               onClick={() => setOpen((v) => !v)}
-              className="lg:hidden text-white p-1"
-              aria-label="Toggle menu"
+              className="lg:hidden text-white p-1.5 rounded-md hover:bg-white/5 transition"
+              aria-label={t("nav.toggle_menu")}
             >
               {open ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -419,15 +401,15 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              className="fixed top-[68px] right-3 w-[280px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-100px)] bg-[#11152A] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 lg:hidden flex flex-col overflow-hidden"
+              className="fixed top-20 right-3 w-[300px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-110px)] bg-[#11152A] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 lg:hidden flex flex-col overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
-                <span className="font-display text-lg font-extrabold text-white">Menu</span>
+                <span className="font-display text-lg font-extrabold text-white"><Tr k="nav.menu" /></span>
                 <button
                   onClick={() => setOpen(false)}
                   className="p-1.5 rounded-lg text-[#7A8199] hover:text-white hover:bg-white/5 transition"
-                  aria-label="Close menu"
+                  aria-label={t("nav.close_menu")}
                 >
                   <X size={18} />
                 </button>
@@ -442,17 +424,36 @@ export function Header() {
                       key={l.href}
                       href={l.href}
                       onClick={() => setOpen(false)}
-                      className={`block px-4 py-2.5 text-sm font-medium transition border-l-2 ${
+                      className={"block px-4 py-3 text-sm font-medium transition border-l-2 " + (
                         isActive
                           ? "text-white bg-[#7559E8]/10 border-[#7559E8]"
                           : "text-[#B7BDD0] hover:text-white hover:bg-white/5 border-transparent"
-                      }`}
+                      )}
                     >
                       <Tr k={l.label} />
                     </Link>
                   );
                 })}
               </nav>
+
+              {/* Language grid */}
+              <div className="grid grid-cols-2 gap-1.5 p-2.5 border-t border-white/5" data-no-translate>
+                {locales.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => setLang(l.code)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-2 py-2 text-xs transition",
+                      lang === l.code
+                        ? "bg-[#7559E8]/15 text-white"
+                        : "text-[#B7BDD0] hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    <span>{l.flag}</span>
+                    <span className="truncate">{l.name}</span>
+                  </button>
+                ))}
+              </div>
 
               {/* Auth Section */}
               <div className="border-t border-white/5 p-2.5 space-y-1.5 flex-shrink-0">
@@ -462,30 +463,30 @@ export function Header() {
                       <Link
                         href="/admin"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 rounded-lg bg-[#F5A623]/10 border border-[#F5A623]/30 px-3 py-2 text-sm font-semibold text-[#F5A623] hover:bg-[#F5A623]/20 transition"
+                        className="flex items-center gap-2 rounded-lg bg-[#F5A623]/10 border border-[#F5A623]/30 px-3 py-2.5 text-sm font-semibold text-[#F5A623] hover:bg-[#F5A623]/20 transition"
                       >
-                        <Shield size={14} /> Admin Panel
+                        <Shield size={14} /> <Tr k="nav.admin_panel" />
                       </Link>
                     )}
                     <Link
                       href="/account"
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
                     >
-                      <UserIcon size={14} /> My Profile
+                      <UserIcon size={14} /> <Tr k="nav.my_profile" />
                     </Link>
                     <Link
                       href="/account/orders"
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
                     >
-                      <Package size={14} /> My Orders
+                      <Package size={14} /> <Tr k="nav.my_orders" />
                     </Link>
                     <button
                       onClick={() => { handleLogout(); setOpen(false); }}
-                      className="w-full flex items-center gap-2 rounded-lg bg-[#F05D70]/10 border border-[#F05D70]/20 px-3 py-2 text-sm font-medium text-[#F05D70] hover:bg-[#F05D70]/20 transition"
+                      className="w-full flex items-center gap-2 rounded-lg bg-[#F05D70]/10 border border-[#F05D70]/20 px-3 py-2.5 text-sm font-medium text-[#F05D70] hover:bg-[#F05D70]/20 transition"
                     >
-                      <LogOut size={14} /> Log Out
+                      <LogOut size={14} /> <Tr k="nav.logout" />
                     </button>
                   </>
                 ) : (
@@ -493,16 +494,16 @@ export function Header() {
                     <Link
                       href="/login"
                       onClick={() => setOpen(false)}
-                      className="block text-center rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="block text-center rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
                     >
-                      Log In
+                      <Tr k="nav.login" />
                     </Link>
                     <Link
                       href="/register"
                       onClick={() => setOpen(false)}
-                      className="block text-center rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-sm font-semibold text-white hover:brightness-110 transition"
+                      className="block text-center rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2.5 text-sm font-semibold text-white hover:brightness-110 transition"
                     >
-                      Get Started
+                      <Tr k="nav.get_started" />
                     </Link>
                   </>
                 )}

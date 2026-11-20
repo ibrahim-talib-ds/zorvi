@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, ArrowRight, Sparkles, Star } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
+import { Tr } from "@/components/i18n/Tr";
 
 interface Product {
   id: string;
@@ -32,7 +33,7 @@ export function ProjectsSection() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/marketplace/products?limit=3`);
+        const res = await fetch(API_BASE + "/marketplace/products?limit=3");
         if (res.ok) {
           const data = await res.json();
           setProjects(Array.isArray(data) ? data.slice(0, 3) : []);
@@ -46,23 +47,27 @@ export function ProjectsSection() {
   }, []);
 
   return (
-    <section className="relative py-20 bg-[#0B0F1D]">
+    <section className="relative py-16 sm:py-20 bg-[#0B0F1D]">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-[#7559E8]/5 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-6 mb-8 sm:mb-10">
           <div>
-            <p className="text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-3">Featured Projects</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-white">Production-ready software.</h2>
-            <p className="text-[#B7BDD0] mt-3 max-w-xl">
-              Skip months of setup. Buy complete, fully-documented source code built by expert developers.
+            <p className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-2 sm:mb-3">
+              <Tr k="projects.eyebrow" />
+            </p>
+            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white leading-tight">
+              <Tr k="projects.title" />
+            </h2>
+            <p className="text-sm sm:text-base text-[#B7BDD0] mt-2 sm:mt-3 max-w-xl">
+              <Tr k="projects.subtitle" />
             </p>
           </div>
           <Link
             href="/marketplace"
-            className="inline-flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition shrink-0"
+            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition shrink-0"
           >
-            Explore all <ArrowRight size={16} />
+            <Tr k="projects.explore_all" /> <ArrowRight size={16} />
           </Link>
         </div>
 
@@ -71,13 +76,13 @@ export function ProjectsSection() {
             <Loader2 className="animate-spin text-[#7559E8]" size={32} />
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 text-[#7A8199]">Projects are being prepared. Check back soon.</div>
+          <div className="text-center py-12 text-sm text-[#7A8199]"><Tr k="projects.empty" /></div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((p) => (
               <Link
                 key={p.id}
-                href={`/marketplace/${p.slug}`}
+                href={"/marketplace/" + p.slug}
                 className="group flex flex-col rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden hover:border-[#7559E8]/40 hover:bg-white/[0.04] transition"
               >
                 {/* Cover */}
@@ -93,19 +98,19 @@ export function ProjectsSection() {
                   )}
                   {p.is_featured && (
                     <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F5A623] text-[9px] font-bold uppercase tracking-wider text-black">
-                      <Sparkles size={9} /> Featured
+                      <Sparkles size={9} /> <Tr k="projects.badge_featured" />
                     </span>
                   )}
                   {p.is_free && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#22C58B] text-[9px] font-bold uppercase tracking-wider text-black">
-                      Free
+                      <Tr k="projects.badge_free" />
                     </span>
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="p-4 flex flex-col flex-1">
-                  <span className={`self-start inline-block rounded text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 border mb-2 ${DIFFICULTY_COLORS[p.difficulty] || DIFFICULTY_COLORS.beginner}`}>
+                  <span className={"self-start inline-block rounded text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 border mb-2 " + (DIFFICULTY_COLORS[p.difficulty] || DIFFICULTY_COLORS.beginner)}>
                     {p.difficulty}
                   </span>
 
@@ -120,14 +125,14 @@ export function ProjectsSection() {
                   <div className="flex items-center gap-1 mb-2">
                     <Star size={11} className="fill-[#F5A623] text-[#F5A623]" />
                     <span className="text-[10px] text-[#7A8199]">5.0</span>
-                    <span className="text-[10px] text-[#7A8199] ml-1">(New)</span>
+                    <span className="text-[10px] text-[#7A8199] ml-1">(<Tr k="projects.new_rating" />)</span>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-white/5">
                     <div>
-                      <p className="text-[9px] text-[#7A8199] font-mono uppercase tracking-wider">From</p>
+                      <p className="text-[9px] text-[#7A8199] font-mono uppercase tracking-wider"><Tr k="projects.from" /></p>
                       <p className="text-sm font-bold text-white">
-                        {p.is_free ? "Free" : `$${(p.starting_price_cents / 100).toFixed(0)}`}
+                        {p.is_free ? <Tr k="projects.badge_free" /> : "$" + (p.starting_price_cents / 100).toFixed(0)}
                       </p>
                     </div>
                     <div className="w-6 h-6 rounded-full bg-white/5 group-hover:bg-[#7559E8] flex items-center justify-center transition">
