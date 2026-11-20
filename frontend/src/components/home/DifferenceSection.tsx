@@ -9,23 +9,23 @@ const REASONS = [
 
 export function DifferenceSection() {
   return (
-    <section className="relative bg-[#0B0F1D] py-16 sm:py-20 lg:py-28 border-t border-white/5">
+    <section className="relative bg-bg-deep py-12 sm:py-14 lg:py-20 border-t border-white/5">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto">
           <p className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-3 sm:mb-4">
             <Tr k="diff.eyebrow" />
           </p>
-          <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-text-primary leading-tight">
             <Tr k="diff.title" />
           </h2>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 lg:gap-5 sm:grid-cols-2">
           {REASONS.map((r) => (
-            <div key={r.n} className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 sm:p-8">
+            <div key={r.n} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5 lg:p-6">
               <span className="font-mono text-xs text-[#A78BFA] mb-2 sm:mb-3 block">{r.n}</span>
-              <h3 className="font-display text-lg sm:text-xl font-bold text-white mb-2"><Tr k={r.titleKey} /></h3>
-              <p className="text-sm text-[#B7BDD0] leading-relaxed"><Tr k={r.descKey} /></p>
+              <h3 className="font-display text-lg sm:text-lg lg:text-xl font-bold text-text-primary mb-2"><Tr k={r.titleKey} /></h3>
+              <p className="text-sm text-text-secondary leading-relaxed"><Tr k={r.descKey} /></p>
             </div>
           ))}
         </div>

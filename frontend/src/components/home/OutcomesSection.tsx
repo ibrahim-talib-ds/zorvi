@@ -12,13 +12,13 @@ const OUTCOMES = [
 
 export function OutcomesSection() {
   return (
-    <section className="relative bg-[#0B0F1D] py-16 sm:py-20 lg:py-28 border-t border-white/5">
+    <section className="relative bg-bg-deep py-12 sm:py-14 lg:py-20 border-t border-white/5">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto">
           <p className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#22C58B] mb-3 sm:mb-4">
             <Tr k="outcomes.eyebrow" />
           </p>
-          <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-text-primary leading-tight">
             <Tr k="outcomes.title" />
           </h2>
         </div>
@@ -27,11 +27,11 @@ export function OutcomesSection() {
           {OUTCOMES.map((o) => (
             <div
               key={o.titleKey}
-              className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-6 hover:bg-white/[0.04] hover:border-white/10 transition"
+              className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5 hover:bg-white/[0.04] hover:border-white/10 transition"
             >
               <o.icon size={22} className="text-[#A78BFA] mb-3 sm:mb-4" />
-              <h3 className="font-display text-base sm:text-lg font-bold text-white mb-2"><Tr k={o.titleKey} /></h3>
-              <p className="text-sm text-[#B7BDD0] leading-relaxed"><Tr k={o.descKey} /></p>
+              <h3 className="font-display text-base sm:text-base lg:text-lg font-bold text-text-primary mb-2"><Tr k={o.titleKey} /></h3>
+              <p className="text-sm text-text-secondary leading-relaxed"><Tr k={o.descKey} /></p>
             </div>
           ))}
         </div>

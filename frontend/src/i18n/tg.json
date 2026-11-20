@@ -190,5 +190,71 @@
     "subtitle": "Таҳияро ёд гиред, аввалин барномаи худро созед ё маҳсулоти пурраи нармафзорро кашф кунед — IBRANT ҷойи оғоз медиҳад.",
     "start": "Омӯзишро оғоз кунед",
     "tagline": "Ёд гиред. Бисозед. Оғоз кунед. Сафари шумо бо як идея оғоз меёбад."
+  },
+  "theme": {
+    "light": "Равшан",
+    "dark": "Торик",
+    "system": "Система",
+    "toggle": "Мавзуъ"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Панели идора",
+      "myCourses": "Курсҳои ман",
+      "orders": "Фармоишҳо",
+      "certificates": "Шаҳодатномаҳо",
+      "notifications": "Огоҳиномаҳо",
+      "profile": "Профил",
+      "settings": "Танзимот",
+      "admin": "Админ",
+      "courses": "Курсҳо",
+      "newCourse": "Курси нав",
+      "categories": "Категорияҳо",
+      "products": "Маҳсулотҳо",
+      "newProduct": "Маҳсулоти нав",
+      "messages": "Паёмҳо",
+      "instructorApps": "Дархостҳои омӯзгорон",
+      "site": "Ба сайт баргаштан"
+    },
+    "search": {
+      "placeholder": "Ҷустуҷуи курсҳо, маҳсулотҳо...",
+      "pages": "Ҷустуҷи саҳифаҳо..."
+    },
+    "group": {
+      "manage": "Идора",
+      "account": "Ҳисоб",
+      "content": "Мундариҷа",
+      "operations": "Амалиёт",
+      "administration": "Идоракунӣ",
+      "overview": "Гузариш",
+      "system": "Система"
+    },
+    "menu": "Меню",
+    "page": {
+      "adminTitle": "Панели администратор",
+      "welcomeBack": "Боз хуш омадед",
+      "platformActivity": "Ин имрӯз дар платформаи шумо рӯй медиҳад.",
+      "recentOrders": "Фармоишҳои охирин",
+      "quickActions": "Амалҳои тез",
+      "viewAll": "Дидани ҳама",
+      "noOrders": "Ҳоло фармоиш нест.",
+      "customers": "Муштариён",
+      "revenue": "Даромад",
+      "myOrders": "Фармоишҳои ман",
+      "lessonsCompleted": "Дарсҳои иҷрошуда",
+      "learningProgress": "Ин пешрафти омӯзиш ва фаъолияти охирины шумост.",
+      "notEnrolled": "Ҳоло ба ягон курс сабт намешудаед.",
+      "lessons": "дарс",
+      "editProfile": "Таҳрири профил",
+      "editProfileSub": "Ном, аватар",
+      "settingsSub": "Парол, амният",
+      "browseCourses": "Тамошои курсҳо",
+      "browseCoursesSub": "Маҳоратҳои нав ёфтан",
+      "newProductSub": "Бор кардани лоиҳа",
+      "manageOrdersSub": "Тасдиқи пардохтҳо",
+      "instructorAppsSub": "Баррасии дархостҳо",
+      "project": "Лоиҳа",
+      "logout": "Баромадан"
+    }
   }
 }

@@ -190,5 +190,71 @@
     "subtitle": "Учитесь разработке, создавайте первое приложение или изучайте готовые продукты — IBRANT даёт вам точку старта.",
     "start": "Начать учиться",
     "tagline": "Учись. Создавай. Запускай. Твой путь начинается с одной идеи."
+  },
+  "theme": {
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "system": "Система",
+    "toggle": "Тема"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Панель",
+      "myCourses": "Мои курсы",
+      "orders": "Заказы",
+      "certificates": "Сертификаты",
+      "notifications": "Уведомления",
+      "profile": "Профиль",
+      "settings": "Настройки",
+      "admin": "Админ",
+      "courses": "Курсы",
+      "newCourse": "Новый курс",
+      "categories": "Категории",
+      "products": "Товары",
+      "newProduct": "Новый товар",
+      "messages": "Сообщения",
+      "instructorApps": "Заявки преподавателей",
+      "site": "Вернуться на сайт"
+    },
+    "search": {
+      "placeholder": "Поиск курсов, товаров...",
+      "pages": "Поиск по страницам..."
+    },
+    "group": {
+      "manage": "Управление",
+      "account": "Аккаунт",
+      "content": "Контент",
+      "operations": "Операции",
+      "administration": "Администрирование",
+      "overview": "Обзор",
+      "system": "Система"
+    },
+    "menu": "Меню",
+    "page": {
+      "adminTitle": "Панель администратора",
+      "welcomeBack": "С возвращением",
+      "platformActivity": "Вот что происходит на вашей платформе сегодня.",
+      "recentOrders": "Недавние заказы",
+      "quickActions": "Быстрые действия",
+      "viewAll": "Смотреть все",
+      "noOrders": "Заказов пока нет.",
+      "customers": "Клиенты",
+      "revenue": "Выручка",
+      "myOrders": "Мои заказы",
+      "lessonsCompleted": "Пройденные уроки",
+      "learningProgress": "Ваш прогресс обучения и недавняя активность.",
+      "notEnrolled": "Вы пока не записаны ни на один курс.",
+      "lessons": "уроков",
+      "editProfile": "Редактировать профиль",
+      "editProfileSub": "Имя, аватар",
+      "settingsSub": "Пароль, безопасность",
+      "browseCourses": "Смотреть курсы",
+      "browseCoursesSub": "Найти новые навыки",
+      "newProductSub": "Загрузить проект",
+      "manageOrdersSub": "Подтвердить платежи",
+      "instructorAppsSub": "Рассмотреть заявки",
+      "project": "Проект",
+      "logout": "Выйти"
+    }
   }
 }

@@ -86,3 +86,203 @@ body {
 #google_translate_element { display: none !important; }
 .goog-te-banner-frame { display: none !important; }
 body { top: 0 !important; }
+
+/* ===== ZORVI THEME TOKENS (v4) =====
+   Dark is the default. Light overrides via html.light. The no-flash blocker
+   script in layout.tsx sets .light/.dark on <html> before paint. */
+:root,
+html.dark {
+  --bg-deep: #0B0F1D;
+  --bg-surface: #171B33;
+  --bg-elevated: #1D2340;
+  --bg-border: #2A3150;
+  --text-primary: #F8F8FC;
+  --text-secondary: #B7BDD0;
+  --text-muted: #7A8199;
+  color-scheme: dark;
+}
+html.light {
+  --bg-deep: #F7F8FB;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F0F2F8;
+  --bg-border: #E2E5EF;
+  --text-primary: #0B0F1D;
+  --text-secondary: #4A5168;
+  --text-muted: #6B7280;
+  color-scheme: light;
+}
+/* ===== END ZORVI THEME TOKENS ===== */
+
+
+
+
+/* ===== ZORVI LIGHT OVERRIDES (v6) - generated 2026-11-20 ===== */
+/* Remaps hardcoded dark-palette classes to theme tokens under html.light.
+   v8: status text darkened same-hue (pills stay colored), vivid bgs and
+   borders kept, text contrast fixed, gradients flip. */
+html.light .bg-\[\#0B0F1D\] { background-color: var(--bg-deep) !important; }
+html.light .bg-\[\#0B0F1D\]\/80 { background-color: var(--bg-deep) !important; }
+html.light .bg-\[\#0B0F1D\]\/95 { background-color: var(--bg-deep) !important; }
+html.light .bg-\[\#0F1428\] { background-color: var(--bg-deep) !important; }
+html.light .bg-\[\#11152A\] { background-color: var(--bg-surface) !important; }
+html.light .bg-\[\#151A2D\] { background-color: var(--bg-surface) !important; }
+html.light .bg-\[\#171B33\] { background-color: var(--bg-surface) !important; }
+html.light .bg-\[\#1D2340\] { background-color: var(--bg-elevated) !important; }
+html.light .bg-\[\#1E1E1E\] { background-color: var(--bg-surface) !important; }
+html.light .bg-\[\#2A3150\] { background-color: var(--bg-border) !important; }
+html.light .bg-\[\#2D2D2D\] { background-color: var(--bg-surface) !important; }
+html.light .bg-\[\#7A8199\] { background-color: var(--text-muted) !important; }
+html.light .bg-\[\#B7BDD0\] { background-color: var(--text-secondary) !important; }
+html.light .bg-\[\#F8F8FC\] { background-color: var(--text-primary) !important; }
+html.light .border-\[\#0B0F1D\] { border-color: var(--bg-deep) !important; }
+html.light .border-\[\#0F1428\] { border-color: var(--bg-deep) !important; }
+html.light .border-\[\#11152A\] { border-color: var(--bg-surface) !important; }
+html.light .border-\[\#151A2D\] { border-color: var(--bg-surface) !important; }
+html.light .border-\[\#171B33\] { border-color: var(--bg-surface) !important; }
+html.light .border-\[\#1D2340\] { border-color: var(--bg-elevated) !important; }
+html.light .border-\[\#2A3150\] { border-color: var(--bg-border) !important; }
+html.light .border-\[\#404040\] { border-color: var(--bg-border) !important; }
+html.light .border-\[\#7A8199\] { border-color: var(--text-muted) !important; }
+html.light .border-\[\#B7BDD0\] { border-color: var(--text-secondary) !important; }
+html.light .border-\[\#F8F8FC\] { border-color: var(--text-primary) !important; }
+html.light .divide-\[\#0B0F1D\] { border-color: var(--bg-deep) !important; }
+html.light .divide-\[\#0F1428\] { border-color: var(--bg-deep) !important; }
+html.light .divide-\[\#11152A\] { border-color: var(--bg-surface) !important; }
+html.light .divide-\[\#151A2D\] { border-color: var(--bg-surface) !important; }
+html.light .divide-\[\#171B33\] { border-color: var(--bg-surface) !important; }
+html.light .divide-\[\#1D2340\] { border-color: var(--bg-elevated) !important; }
+html.light .divide-\[\#2A3150\] { border-color: var(--bg-border) !important; }
+html.light .divide-\[\#7A8199\] { border-color: var(--text-muted) !important; }
+html.light .divide-\[\#B7BDD0\] { border-color: var(--text-secondary) !important; }
+html.light .divide-\[\#F8F8FC\] { border-color: var(--text-primary) !important; }
+html.light .from-\[\#0B0F1D\] { --tw-gradient-from: var(--bg-deep) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#0F1428\] { --tw-gradient-from: var(--bg-deep) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#11152A\] { --tw-gradient-from: var(--bg-surface) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#151A2D\] { --tw-gradient-from: var(--bg-surface) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#171B33\] { --tw-gradient-from: var(--bg-surface) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#171B33\]\/80 { --tw-gradient-from: var(--bg-surface) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#1D2340\] { --tw-gradient-from: var(--bg-elevated) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#2A3150\] { --tw-gradient-from: var(--bg-border) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#7A8199\] { --tw-gradient-from: var(--text-muted) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#B7BDD0\] { --tw-gradient-from: var(--text-secondary) var(--tw-gradient-from-position) !important; }
+html.light .from-\[\#F8F8FC\] { --tw-gradient-from: var(--text-primary) var(--tw-gradient-from-position) !important; }
+html.light .placeholder-\[\#0B0F1D\] { color: var(--bg-deep) !important; }
+html.light .placeholder-\[\#0F1428\] { color: var(--bg-deep) !important; }
+html.light .placeholder-\[\#11152A\] { color: var(--bg-surface) !important; }
+html.light .placeholder-\[\#151A2D\] { color: var(--bg-surface) !important; }
+html.light .placeholder-\[\#171B33\] { color: var(--bg-surface) !important; }
+html.light .placeholder-\[\#1D2340\] { color: var(--bg-elevated) !important; }
+html.light .placeholder-\[\#2A3150\] { color: var(--bg-border) !important; }
+html.light .placeholder-\[\#7A8199\] { color: var(--text-muted) !important; }
+html.light .placeholder-\[\#B7BDD0\] { color: var(--text-secondary) !important; }
+html.light .placeholder-\[\#F8F8FC\] { color: var(--text-primary) !important; }
+html.light .ring-\[\#0B0F1D\] { --tw-ring-color: var(--bg-deep) !important; }
+html.light .ring-\[\#0F1428\] { --tw-ring-color: var(--bg-deep) !important; }
+html.light .ring-\[\#11152A\] { --tw-ring-color: var(--bg-surface) !important; }
+html.light .ring-\[\#151A2D\] { --tw-ring-color: var(--bg-surface) !important; }
+html.light .ring-\[\#171B33\] { --tw-ring-color: var(--bg-surface) !important; }
+html.light .ring-\[\#1D2340\] { --tw-ring-color: var(--bg-elevated) !important; }
+html.light .ring-\[\#2A3150\] { --tw-ring-color: var(--bg-border) !important; }
+html.light .ring-\[\#7A8199\] { --tw-ring-color: var(--text-muted) !important; }
+html.light .ring-\[\#B7BDD0\] { --tw-ring-color: var(--text-secondary) !important; }
+html.light .ring-\[\#F8F8FC\] { --tw-ring-color: var(--text-primary) !important; }
+html.light .text-\[\#0B0F1D\] { color: var(--bg-deep) !important; }
+html.light .text-\[\#0F1428\] { color: var(--bg-deep) !important; }
+html.light .text-\[\#11152A\] { color: var(--bg-surface) !important; }
+html.light .text-\[\#151A2D\] { color: var(--bg-surface) !important; }
+html.light .text-\[\#171B33\] { color: var(--bg-surface) !important; }
+html.light .text-\[\#1D2340\] { color: var(--bg-elevated) !important; }
+html.light .text-\[\#22C58B\] { color: #15803D !important; }
+html.light .text-\[\#2A3150\] { color: var(--bg-border) !important; }
+html.light .text-\[\#5B9EFF\] { color: #1D4ED8 !important; }
+html.light .text-\[\#7559E8\] { color: #6D28D9 !important; }
+html.light .text-\[\#7559E8\]\/20 { color: #6D28D9 !important; }
+html.light .text-\[\#7559E8\]\/30 { color: #6D28D9 !important; }
+html.light .text-\[\#7559E8\]\/50 { color: #6D28D9 !important; }
+html.light .text-\[\#7A8199\] { color: var(--text-muted) !important; }
+html.light .text-\[\#8B70FF\] { color: #6D28D9 !important; }
+html.light .text-\[\#A78BFA\] { color: #6D28D9 !important; }
+html.light .text-\[\#A9B7C6\] { color: var(--text-primary) !important; }
+html.light .text-\[\#B7BDD0\] { color: var(--text-secondary) !important; }
+html.light .text-\[\#D97706\] { color: #B45309 !important; }
+html.light .text-\[\#F05D70\] { color: #DC2626 !important; }
+html.light .text-\[\#F05D70\]\/70 { color: #DC2626 !important; }
+html.light .text-\[\#F5A623\] { color: #B45309 !important; }
+html.light .text-\[\#F5A623\]\/80 { color: #B45309 !important; }
+html.light .text-\[\#F8F8FC\] { color: var(--text-primary) !important; }
+html.light .to-\[\#0B0F1D\] { --tw-gradient-to: var(--bg-deep) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#0F1428\] { --tw-gradient-to: var(--bg-deep) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#11152A\] { --tw-gradient-to: var(--bg-surface) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#151A2D\] { --tw-gradient-to: var(--bg-surface) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#171B33\] { --tw-gradient-to: var(--bg-surface) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#1D2340\] { --tw-gradient-to: var(--bg-elevated) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#2A3150\] { --tw-gradient-to: var(--bg-border) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#7A8199\] { --tw-gradient-to: var(--text-muted) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#B7BDD0\] { --tw-gradient-to: var(--text-secondary) var(--tw-gradient-to-position) !important; }
+html.light .to-\[\#F8F8FC\] { --tw-gradient-to: var(--text-primary) var(--tw-gradient-to-position) !important; }
+html.light .via-\[\#0B0F1D\] { --tw-gradient-via: var(--bg-deep) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#0F1428\] { --tw-gradient-via: var(--bg-deep) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#11152A\] { --tw-gradient-via: var(--bg-surface) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#151A2D\] { --tw-gradient-via: var(--bg-surface) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#171B33\] { --tw-gradient-via: var(--bg-surface) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#1D2340\] { --tw-gradient-via: var(--bg-elevated) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#2A3150\] { --tw-gradient-via: var(--bg-border) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#7A8199\] { --tw-gradient-via: var(--text-muted) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#B7BDD0\] { --tw-gradient-via: var(--text-secondary) var(--tw-gradient-via-position) !important; }
+html.light .via-\[\#F8F8FC\] { --tw-gradient-via: var(--text-primary) var(--tw-gradient-via-position) !important; }
+html.light .text-white { color: var(--text-primary) !important; }
+html.light .text-gray-500 { color: var(--text-muted) !important; }
+html.light .text-white\/20 { color: var(--text-primary) !important; }
+html.light .text-white\/80 { color: var(--text-primary) !important; }
+html.light .text-white\/90 { color: var(--text-primary) !important; }
+html.light .bg-\[\#1EA877\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#1EA877\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#22C58B\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#22C58B\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#27C93F\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#27C93F\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#3FD9A2\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#3FD9A2\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#5B9EFF\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#5B9EFF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#7559E8\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#7559E8\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#7BB5FF\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#7BB5FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#8B70FF\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#A78BFA\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#A78BFA\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#E04A5F\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#E04A5F\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#E04C5F\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#E04C5F\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#E09520\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#E09520\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#F05D70\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#F05D70\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#F5A623\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#F5A623\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#F5B84D\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#F5B84D\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#FF5F56\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#FF5F56\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .bg-\[\#FFBD2E\].text-white { color: #FFFFFF !important; }
+html.light .bg-\[\#FFBD2E\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .from-\[\#22C58B\].text-white { color: #FFFFFF !important; }
+html.light .from-\[\#22C58B\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .from-\[\#5B9EFF\].text-white { color: #FFFFFF !important; }
+html.light .from-\[\#5B9EFF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .from-\[\#7559E8\].text-white { color: #FFFFFF !important; }
+html.light .from-\[\#7559E8\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .from-\[\#8B70FF\].text-white { color: #FFFFFF !important; }
+html.light .from-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .from-\[\#F5A623\].text-white { color: #FFFFFF !important; }
+html.light .from-\[\#F5A623\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .to-\[\#1EA877\].text-white { color: #FFFFFF !important; }
+html.light .to-\[\#1EA877\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .to-\[\#8B70FF\].text-white { color: #FFFFFF !important; }
+html.light .to-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+html.light .to-\[\#A78BFA\].text-white { color: #FFFFFF !important; }
+html.light .to-\[\#A78BFA\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
+/* ===== END ZORVI LIGHT OVERRIDES ===== */

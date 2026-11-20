@@ -190,5 +190,71 @@
     "subtitle": "تعلّم التطوير، أو ابنِ تطبيقك الأول، أو استكشف منتجات برمجية كاملة — IBRANT يمنحك مكاناً للبدء.",
     "start": "ابدأ التعلم",
     "tagline": "تعلّم. أنشئ. أطلق. رحلتك تبدأ بفكرة واحدة."
+  },
+  "theme": {
+    "light": "فاتح",
+    "dark": "داكن",
+    "system": "النظام",
+    "toggle": "المظهر"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "myCourses": "دوراتي",
+      "orders": "الطلبات",
+      "certificates": "الشهادات",
+      "notifications": "الإشعارات",
+      "profile": "الملف الشخصي",
+      "settings": "الإعدادات",
+      "admin": "لوحة المدير",
+      "courses": "الدورات",
+      "newCourse": "دورة جديدة",
+      "categories": "الفئات",
+      "products": "المنتجات",
+      "newProduct": "منتج جديد",
+      "messages": "الرسائل",
+      "instructorApps": "طلبات المدربين",
+      "site": "العودة إلى الموقع"
+    },
+    "search": {
+      "placeholder": "ابحث عن دورات، منتجات...",
+      "pages": "ابحث في الصفحات..."
+    },
+    "group": {
+      "manage": "الإدارة",
+      "account": "الحساب",
+      "content": "المحتوى",
+      "operations": "العمليات",
+      "administration": "الإدارة العامة",
+      "overview": "نظرة عامة",
+      "system": "النظام"
+    },
+    "menu": "القائمة",
+    "page": {
+      "adminTitle": "لوحة تحكم المسؤول",
+      "welcomeBack": "مرحبًا بعودتك",
+      "platformActivity": "إليك ما يحدث على منصتك اليوم.",
+      "recentOrders": "الطلبات الأخيرة",
+      "quickActions": "إجراءات سريعة",
+      "viewAll": "عرض الكل",
+      "noOrders": "لا توجد طلبات بعد.",
+      "customers": "العملاء",
+      "revenue": "الإيرادات",
+      "myOrders": "طلباتي",
+      "lessonsCompleted": "الدروس المكتملة",
+      "learningProgress": "إليك تقدمك في التعلم ونشاطك الأخير.",
+      "notEnrolled": "لم تسجل في أي دورة بعد.",
+      "lessons": "دروس",
+      "editProfile": "تعديل الملف الشخصي",
+      "editProfileSub": "الاسم، الصورة الرمزية",
+      "settingsSub": "كلمة المرور، الأمان",
+      "browseCourses": "استكشف الدورات",
+      "browseCoursesSub": "اكتشف مهارات جديدة",
+      "newProductSub": "رفع مشروع",
+      "manageOrdersSub": "الموافقة على المدفوعات",
+      "instructorAppsSub": "مراجعة الطلبات",
+      "project": "مشروع",
+      "logout": "تسجيل الخروج"
+    }
   }
 }

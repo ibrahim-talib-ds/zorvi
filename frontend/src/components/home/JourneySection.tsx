@@ -15,16 +15,16 @@ const STAGES = [
 
 export function JourneySection() {
   return (
-    <section className="relative bg-[#0B0F1D] py-16 sm:py-20 lg:py-28 border-t border-white/5">
+    <section className="relative bg-bg-deep py-12 sm:py-14 lg:py-20 border-t border-white/5">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto">
           <p className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-3 sm:mb-4">
             <Tr k="journey.eyebrow" />
           </p>
-          <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-3 leading-tight">
+          <h2 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-text-primary mb-3 leading-tight">
             <Tr k="journey.title" />
           </h2>
-          <p className="text-base sm:text-lg text-[#B7BDD0]">
+          <p className="text-base sm:text-base lg:text-lg text-text-secondary">
             <Tr k="journey.subtitle" />
           </p>
         </div>
@@ -38,11 +38,11 @@ export function JourneySection() {
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <span className="font-mono text-xs text-[#A78BFA]">{stage.n}</span>
                 {i < STAGES.length - 1 && (
-                  <ArrowRight size={12} className="text-[#2A3150] hidden sm:block" />
+                  <ArrowRight size={12} className="text-bg-border hidden sm:block" />
                 )}
               </div>
-              <h3 className="font-display font-bold text-white mb-1.5"><Tr k={stage.titleKey} /></h3>
-              <p className="text-xs text-[#B7BDD0] leading-relaxed"><Tr k={stage.descKey} /></p>
+              <h3 className="font-display font-bold text-text-primary mb-1.5"><Tr k={stage.titleKey} /></h3>
+              <p className="text-xs text-text-secondary leading-relaxed"><Tr k={stage.descKey} /></p>
             </div>
           ))}
         </div>
@@ -50,7 +50,7 @@ export function JourneySection() {
         <div className="text-center mt-8 sm:mt-12">
           <Link
             href="/courses"
-            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-md border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-md border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-text-primary transition hover:bg-white/10"
           >
             <Tr k="journey.cta" /> <ArrowRight size={16} />
           </Link>

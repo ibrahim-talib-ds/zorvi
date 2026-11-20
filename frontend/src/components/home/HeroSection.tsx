@@ -4,7 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="relative bg-[#0B0F1D] pt-24 sm:pt-32 lg:pt-40 pb-14 sm:pb-20 lg:pb-28 overflow-hidden">
+    <section className="relative bg-bg-deep pt-16 sm:pt-20 lg:pt-28 pb-10 sm:pb-14 lg:pb-20 overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] bg-[#7559E8]/15 blur-[120px] rounded-full" />
         <div
@@ -25,40 +25,40 @@ export function HeroSection() {
           </span>
         </div>
 
-        <h1 className="font-display text-[2rem] leading-[1.12] sm:text-5xl sm:leading-[1.05] lg:text-6xl font-extrabold tracking-tight text-white mb-5 sm:mb-6">
+        <h1 className="font-display text-[1.7rem] leading-[1.18] sm:text-3xl sm:leading-[1.12] md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-text-primary mb-5 sm:mb-6">
           <Tr k="home.title_1" />{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B70FF] to-[#A78BFA]">
             <Tr k="home.title_2" />
           </span>
         </h1>
 
-        <p className="text-base sm:text-lg text-[#B7BDD0] max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+        <p className="text-base sm:text-base lg:text-lg text-text-secondary max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
           <Tr k="home.subtitle" />
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-10">
           <Link
             href="/courses"
-            className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-[#7559E8] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#8B70FF] hover:shadow-[0_0_24px_rgba(139,112,255,0.4)]"
+            className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-[#7559E8] px-8 py-3.5 text-sm font-semibold text-text-primary transition-all hover:bg-[#8B70FF] hover:shadow-[0_0_24px_rgba(139,112,255,0.4)]"
           >
             <Tr k="home.btn_academy" />
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
             href="/marketplace"
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md border border-white/10 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-white/10"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md border border-white/10 bg-white/5 px-8 py-3.5 text-sm font-semibold text-text-primary transition-all hover:bg-white/10"
           >
             <Tr k="home.btn_projects" />
           </Link>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-[#7A8199]">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-text-muted">
           <span className="flex items-center gap-1.5"><Check size={14} className="text-[#22C58B]" /> <Tr k="home.feat_1" /></span>
           <span className="flex items-center gap-1.5"><Check size={14} className="text-[#22C58B]" /> <Tr k="home.feat_2" /></span>
           <span className="flex items-center gap-1.5"><Check size={14} className="text-[#22C58B]" /> <Tr k="home.feat_3" /></span>
         </div>
 
-        <p className="mt-8 sm:mt-10 text-xs sm:text-sm text-[#7A8199] font-mono">
+        <p className="mt-8 sm:mt-10 text-xs sm:text-sm text-text-muted font-mono">
           <Tr k="home.footer_text" />
         </p>
       </div>

@@ -190,5 +190,71 @@
     "subtitle": "Jifunze usanidi, jenga programu yako ya kwanza, au chunguza bidhaa kamili za programu — IBRANT inakupa mahali pa kuanza.",
     "start": "Anza Kujifunza",
     "tagline": "Jifunza. Tengeneza. Zindua. Safari yako inaanza kwa wazo moja."
+  },
+  "theme": {
+    "light": "Mwanga",
+    "dark": "Giza",
+    "system": "Mfumo",
+    "toggle": "Mandhari"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Dashibodi",
+      "myCourses": "Kozi Zangu",
+      "orders": "Oda",
+      "certificates": "Cheti",
+      "notifications": "Arifa",
+      "profile": "Wasifu",
+      "settings": "Mipangilio",
+      "admin": "Msimamizi",
+      "courses": "Kozi",
+      "newCourse": "Kozi Mpya",
+      "categories": "Makundi",
+      "products": "Bidhaa",
+      "newProduct": "Bidhaa Mpya",
+      "messages": "Ujumbe",
+      "instructorApps": "Maombi ya Mkufunzi",
+      "site": "Rudi kwenye tovuti"
+    },
+    "search": {
+      "placeholder": "Tafuta kozi, bidhaa...",
+      "pages": "Tafuta kurasa..."
+    },
+    "group": {
+      "manage": "Simamia",
+      "account": "Akaunti",
+      "content": "Maudhui",
+      "operations": "Shughuli",
+      "administration": "Utawala",
+      "overview": "Muhtasari",
+      "system": "Mfumo"
+    },
+    "menu": "Menyu",
+    "page": {
+      "adminTitle": "Dashibodi ya Msimamizi",
+      "welcomeBack": "Karibu tena",
+      "platformActivity": "Hii ndiyo inayotokea kwenye jukwaa lako leo.",
+      "recentOrders": "Oda za Karibuni",
+      "quickActions": "Vitendo vya Haraka",
+      "viewAll": "Angalia zote",
+      "noOrders": "Bado huna oda.",
+      "customers": "Wateja",
+      "revenue": "Mapato",
+      "myOrders": "Oda Zangu",
+      "lessonsCompleted": "Masomo Yaliyokamilika",
+      "learningProgress": "Hii ni maendeleo yako ya kujifunza na shughuli za karibuni.",
+      "notEnrolled": "Bado hujaandikisha kozi yoyote.",
+      "lessons": "masomo",
+      "editProfile": "Hariri Wasifu",
+      "editProfileSub": "Jina, picha",
+      "settingsSub": "Nenosiri, usalama",
+      "browseCourses": "Vinjari Kozi",
+      "browseCoursesSub": "Tafuta ujuzi mpya",
+      "newProductSub": "Pakia mradi",
+      "manageOrdersSub": "Idhinisha malipo",
+      "instructorAppsSub": "Kagua maombi",
+      "project": "Mradi",
+      "logout": "Toka"
+    }
   }
 }

@@ -190,5 +190,71 @@
     "subtitle": "डेवलपमेंट सीखें, अपना पहला ऐप बनाएँ या पूर्ण सॉफ्टवेयर उत्पाद देखें — IBRANT आपको शुरुआत देता है।",
     "start": "सीखना शुरू करें",
     "tagline": "सीखें। बनाएँ। लॉन्च करें। आपकी यात्रा एक आइडिया से शुरू होती है।"
+  },
+  "theme": {
+    "light": "लाइट",
+    "dark": "डार्क",
+    "system": "सिस्टम",
+    "toggle": "थीम"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "डेशबोर्ड",
+      "myCourses": "मेरे कोर्स",
+      "orders": "ऑर्डर",
+      "certificates": "प्रमाणपत्र",
+      "notifications": "सूचनाएँ",
+      "profile": "प्रोफ़ाइल",
+      "settings": "सेटिंग्स",
+      "admin": "एडमिन",
+      "courses": "कोर्स",
+      "newCourse": "नया कोर्स",
+      "categories": "श्रेणियाँ",
+      "products": "उत्पाद",
+      "newProduct": "नया उत्पाद",
+      "messages": "संदेश",
+      "instructorApps": "इंस्ट्रक्टर आवेदन",
+      "site": "साइट पर वापस"
+    },
+    "search": {
+      "placeholder": "कोर्स, उत्पाद खोजें...",
+      "pages": "पेज खोजें..."
+    },
+    "group": {
+      "manage": "प्रबंधिंत",
+      "account": "खाता",
+      "content": "सामग्री",
+      "operations": "संचालन",
+      "administration": "प्रशासन",
+      "overview": "अवलोकन",
+      "system": "सिस्टम"
+    },
+    "menu": "मेनू",
+    "page": {
+      "adminTitle": "एडमिन डैशबोर्ड",
+      "welcomeBack": "वापस स्वागत है",
+      "platformActivity": "आज आपके प्लेटफ़ॉर्म पर क्या हो रहा है।",
+      "recentOrders": "हाल के ऑर्डर",
+      "quickActions": "त्वरित क्रियाएँ",
+      "viewAll": "सभी देखें",
+      "noOrders": "अभी कोई ऑर्डर नहीं है।",
+      "customers": "ग्राहक",
+      "revenue": "राजस्व",
+      "myOrders": "मेरे ऑर्डर",
+      "lessonsCompleted": "पूर्ण हुए पाठ",
+      "learningProgress": "यहाँ आपकी सीखने की प्रगति और हाल की गतिविधि है।",
+      "notEnrolled": "अभी किसी कोर्स में नामांकित नहीं हैं।",
+      "lessons": "पाठ",
+      "editProfile": "प्रोफ़ाइल संपादित करें",
+      "editProfileSub": "नाम, अवतार",
+      "settingsSub": "पासवर्ड, सुरक्षा",
+      "browseCourses": "कोर्स ब्राउज़ करें",
+      "browseCoursesSub": "नए कौशल खोजें",
+      "newProductSub": "प्रोजेक्ट अपलोड करें",
+      "manageOrdersSub": "भुगतान मंज़ूर करें",
+      "instructorAppsSub": "अनुरोध समीक्षा करें",
+      "project": "प्रोजेक्ट",
+      "logout": "लॉग आउट"
+    }
   }
 }

@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { locales } from "@/i18n/config";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { Tr } from "@/components/i18n/Tr";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const BASE_NAV = [
   { href: "/", label: "nav.home" },
@@ -123,7 +124,7 @@ export function Header() {
       <header
         className={cn(
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          "bg-gradient-to-b from-[#0F1428] via-[#0B0F1D] to-[#0B0F1D]",
+          "bg-gradient-to-b from-bg-deep via-bg-deep to-bg-deep",
           "border-b border-white/5",
           scrolled ? "h-16 shadow-lg shadow-black/30" : "h-16"
         )}
@@ -148,8 +149,8 @@ export function Header() {
                   key={l.href}
                   href={l.href}
                   className={cn(
-                    "relative text-[15px] font-medium transition-colors hover:text-white whitespace-nowrap",
-                    isActive ? "text-white" : "text-[#B7BDD0]"
+                    "relative text-[15px] font-medium transition-colors hover:text-text-primary whitespace-nowrap px-3 py-2 rounded-md hover:bg-bg-border/40",
+                    isActive ? "text-text-primary" : "text-text-secondary"
                   )}
                 >
                   <Tr k={l.label} />
@@ -166,7 +167,7 @@ export function Header() {
             <div className="relative" ref={langRef} data-no-translate>
               <button
                 onClick={() => setLangOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition"
+                className="flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
                 aria-label={t("nav.menu")}
               >
                 <Globe size={16} />
@@ -182,7 +183,7 @@ export function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-52 rounded-lg border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                    className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-52 rounded-lg border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
                   >
                     <div className="max-h-80 overflow-y-auto">
                       {locales.map((l) => (
@@ -195,8 +196,8 @@ export function Header() {
                           className={cn(
                             "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition",
                             lang === l.code
-                              ? "bg-[#7559E8]/15 text-white"
-                              : "text-[#B7BDD0] hover:bg-white/5 hover:text-white"
+                              ? "bg-[#7559E8]/15 text-text-primary"
+                              : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
                           )}
                         >
                           <span className="text-base">{l.flag}</span>
@@ -209,6 +210,9 @@ export function Header() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Theme */}
+            <ThemeToggle compact />
 
             {isLoading ? (
               <div className="w-20 h-9 rounded-lg bg-white/5 animate-pulse" />
@@ -228,12 +232,12 @@ export function Header() {
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => setNotifOpen((v) => !v)}
-                    className="relative p-2 rounded-md text-[#B7BDD0] hover:text-white hover:bg-white/5 transition"
+                    className="relative p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
                     aria-label={t("nav.notifications")}
                   >
                     <Bell size={18} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#F05D70] text-[9px] font-bold text-white flex items-center justify-center border border-[#0B0F1D]">
+                      <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#F05D70] text-[9px] font-bold text-text-primary flex items-center justify-center border border-bg-deep">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
@@ -245,10 +249,10 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-80 max-w-[calc(100vw-32px)] rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-80 max-w-[calc(100vw-32px)] rounded-xl border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
                       >
                         <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white"><Tr k="nav.notifications" /></h3>
+                          <h3 className="text-sm font-semibold text-text-primary"><Tr k="nav.notifications" /></h3>
                           {unreadCount > 0 && (
                             <span className="text-xs text-[#A78BFA]">
                               {unreadCount} <Tr k="nav.new_suffix" />
@@ -258,8 +262,8 @@ export function Header() {
                         <div className="max-h-96 overflow-y-auto">
                           {visibleNotifications.length === 0 ? (
                             <div className="p-6 text-center">
-                              <Bell size={24} className="text-[#7A8199] mx-auto mb-2" />
-                              <p className="text-sm text-[#B7BDD0]"><Tr k="nav.no_notifications" /></p>
+                              <Bell size={24} className="text-text-muted mx-auto mb-2" />
+                              <p className="text-sm text-text-secondary"><Tr k="nav.no_notifications" /></p>
                             </div>
                           ) : (
                             visibleNotifications.map((n) => (
@@ -274,9 +278,9 @@ export function Header() {
                                 >
                                   <div className={"mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 " + (n.unread ? "bg-[#7559E8]" : "bg-transparent")} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-white truncate">{n.title}</p>
-                                    <p className="text-xs text-[#B7BDD0] truncate mt-0.5">{n.message}</p>
-                                    <p className="text-[10px] text-[#7A8199] mt-1">{n.time}</p>
+                                    <p className="text-sm font-medium text-text-primary truncate">{n.title}</p>
+                                    <p className="text-xs text-text-secondary truncate mt-0.5">{n.message}</p>
+                                    <p className="text-[10px] text-text-muted mt-1">{n.time}</p>
                                   </div>
                                 </Link>
                                 <button
@@ -285,7 +289,7 @@ export function Header() {
                                     e.stopPropagation();
                                     handleDismiss(n.id);
                                   }}
-                                  className="flex-shrink-0 p-1 rounded hover:bg-[#F05D70]/20 text-[#7A8199] hover:text-[#F05D70] transition opacity-0 group-hover:opacity-100"
+                                  className="flex-shrink-0 p-1 rounded hover:bg-[#F05D70]/20 text-text-muted hover:text-[#F05D70] transition opacity-0 group-hover:opacity-100"
                                   title={t("nav.dismiss")}
                                 >
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -313,10 +317,10 @@ export function Header() {
                         {user.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
                       </div>
                     </div>
-                    <span className="hidden xl:inline text-sm font-medium text-white max-w-[120px] truncate">
+                    <span className="hidden xl:inline text-sm font-medium text-text-primary max-w-[120px] truncate">
                       {displayName}
                     </span>
-                    <ChevronDown size={12} className={cn("text-[#7A8199] transition-transform", dropdownOpen && "rotate-180")} />
+                    <ChevronDown size={12} className={cn("text-text-muted transition-transform", dropdownOpen && "rotate-180")} />
                   </button>
 
                   <AnimatePresence>
@@ -326,27 +330,27 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-[#171B33] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
                       >
                         <div className="p-3 border-b border-white/5">
-                          <p className="text-sm font-medium text-white truncate">{displayName}</p>
-                          <p className="text-xs text-[#7A8199] truncate">{user.email}</p>
+                          <p className="text-sm font-medium text-text-primary truncate">{displayName}</p>
+                          <p className="text-xs text-text-muted truncate">{user.email}</p>
                         </div>
                         <div className="p-1.5">
-                          <Link href="/account" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-[#A78BFA] hover:bg-[#7559E8]/15 hover:text-white transition">
+                          <Link href="/account" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-[#A78BFA] hover:bg-[#7559E8]/15 hover:text-text-primary transition">
                             <LayoutDashboard size={16} /> <Tr k="nav.my_dashboard" />
                           </Link>
                           <div className="my-1 border-t border-white/5" />
-                          <Link href="/account/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
+                          <Link href="/account/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-white/5 hover:text-text-primary transition">
                             <UserIcon size={16} /> <Tr k="nav.profile" />
                           </Link>
-                          <Link href="/account/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
+                          <Link href="/account/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-white/5 hover:text-text-primary transition">
                             <Settings size={16} /> <Tr k="nav.settings" />
                           </Link>
-                          <Link href="/account/orders" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
+                          <Link href="/account/orders" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-white/5 hover:text-text-primary transition">
                             <Package size={16} /> <Tr k="nav.my_orders" />
                           </Link>
-                          <Link href="/courses" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5 hover:text-white transition">
+                          <Link href="/courses" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-white/5 hover:text-text-primary transition">
                             <GraduationCap size={16} /> <Tr k="nav.browse_courses" />
                           </Link>
                         </div>
@@ -362,10 +366,10 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/login" className="inline-flex items-center rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-[#B7BDD0] hover:text-white hover:bg-white/5 transition">
+                <Link href="/login" className="inline-flex items-center rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition">
                   <Tr k="nav.login" />
                 </Link>
-                <Link href="/register" className="rounded-md bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:brightness-110 transition whitespace-nowrap">
+                <Link href="/register" className="rounded-md bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-text-primary hover:brightness-110 transition whitespace-nowrap">
                   <Tr k="nav.get_started" />
                 </Link>
               </>
@@ -373,7 +377,7 @@ export function Header() {
 
             <button
               onClick={() => setOpen((v) => !v)}
-              className="lg:hidden text-white p-1.5 rounded-md hover:bg-white/5 transition"
+              className="lg:hidden text-text-primary p-1.5 rounded-md hover:bg-white/5 transition"
               aria-label={t("nav.toggle_menu")}
             >
               {open ? <X size={24} /> : <Menu size={24} />}
@@ -401,14 +405,14 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              className="fixed top-20 right-3 w-[300px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-110px)] bg-[#11152A] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 lg:hidden flex flex-col overflow-hidden"
+              className="fixed top-20 right-3 w-[300px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-110px)] bg-bg-surface border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 lg:hidden flex flex-col overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
-                <span className="font-display text-lg font-extrabold text-white"><Tr k="nav.menu" /></span>
+                <span className="font-display text-lg font-extrabold text-text-primary"><Tr k="nav.menu" /></span>
                 <button
                   onClick={() => setOpen(false)}
-                  className="p-1.5 rounded-lg text-[#7A8199] hover:text-white hover:bg-white/5 transition"
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition"
                   aria-label={t("nav.close_menu")}
                 >
                   <X size={18} />
@@ -426,8 +430,8 @@ export function Header() {
                       onClick={() => setOpen(false)}
                       className={"block px-4 py-3 text-sm font-medium transition border-l-2 " + (
                         isActive
-                          ? "text-white bg-[#7559E8]/10 border-[#7559E8]"
-                          : "text-[#B7BDD0] hover:text-white hover:bg-white/5 border-transparent"
+                          ? "text-text-primary bg-[#7559E8]/10 border-[#7559E8]"
+                          : "text-text-secondary hover:text-text-primary hover:bg-white/5 border-transparent"
                       )}
                     >
                       <Tr k={l.label} />
@@ -445,14 +449,19 @@ export function Header() {
                     className={cn(
                       "flex items-center gap-1.5 rounded-md px-2 py-2 text-xs transition",
                       lang === l.code
-                        ? "bg-[#7559E8]/15 text-white"
-                        : "text-[#B7BDD0] hover:bg-white/5 hover:text-white"
+                        ? "bg-[#7559E8]/15 text-text-primary"
+                        : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
                     )}
                   >
                     <span>{l.flag}</span>
                     <span className="truncate">{l.name}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* Theme */}
+              <div className="px-2.5 pt-2.5 border-t border-bg-border/60">
+                <ThemeToggle />
               </div>
 
               {/* Auth Section */}
@@ -471,14 +480,14 @@ export function Header() {
                     <Link
                       href="/account"
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-white/10 transition"
                     >
                       <UserIcon size={14} /> <Tr k="nav.my_profile" />
                     </Link>
                     <Link
                       href="/account/orders"
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-white/10 transition"
                     >
                       <Package size={14} /> <Tr k="nav.my_orders" />
                     </Link>
@@ -494,14 +503,14 @@ export function Header() {
                     <Link
                       href="/login"
                       onClick={() => setOpen(false)}
-                      className="block text-center rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
+                      className="block text-center rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-white/10 transition"
                     >
                       <Tr k="nav.login" />
                     </Link>
                     <Link
                       href="/register"
                       onClick={() => setOpen(false)}
-                      className="block text-center rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2.5 text-sm font-semibold text-white hover:brightness-110 transition"
+                      className="block text-center rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2.5 text-sm font-semibold text-text-primary hover:brightness-110 transition"
                     >
                       <Tr k="nav.get_started" />
                     </Link>

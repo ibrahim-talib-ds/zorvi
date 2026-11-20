@@ -190,5 +190,71 @@
     "subtitle": "Learn development, build your first application, or explore complete software products — IBRANT gives you a place to begin.",
     "start": "Start Learning",
     "tagline": "Learn. Create. Launch. Your journey starts with one idea."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "toggle": "Theme"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "myCourses": "My Courses",
+      "orders": "Orders",
+      "certificates": "Certificates",
+      "notifications": "Notifications",
+      "profile": "Profile",
+      "settings": "Settings",
+      "admin": "Admin",
+      "courses": "Courses",
+      "newCourse": "New Course",
+      "categories": "Categories",
+      "products": "Products",
+      "newProduct": "New Product",
+      "messages": "Messages",
+      "instructorApps": "Instructor Applications",
+      "site": "Back to site"
+    },
+    "search": {
+      "placeholder": "Search courses, products...",
+      "pages": "Search pages..."
+    },
+    "group": {
+      "manage": "Manage",
+      "account": "Account",
+      "content": "Content",
+      "operations": "Operations",
+      "administration": "Administration",
+      "overview": "Overview",
+      "system": "System"
+    },
+    "menu": "Menu",
+    "page": {
+      "adminTitle": "Admin Dashboard",
+      "welcomeBack": "Welcome back",
+      "platformActivity": "Here's what's happening across your platform today.",
+      "recentOrders": "Recent Orders",
+      "quickActions": "Quick Actions",
+      "viewAll": "View all",
+      "noOrders": "No orders yet.",
+      "customers": "Customers",
+      "revenue": "Revenue",
+      "myOrders": "My Orders",
+      "lessonsCompleted": "Lessons Completed",
+      "learningProgress": "Here's your learning progress and recent activity.",
+      "notEnrolled": "Not enrolled in any courses yet.",
+      "lessons": "lessons",
+      "editProfile": "Edit Profile",
+      "editProfileSub": "Name, avatar",
+      "settingsSub": "Password, security",
+      "browseCourses": "Browse Courses",
+      "browseCoursesSub": "Find new skills",
+      "newProductSub": "Upload a project",
+      "manageOrdersSub": "Approve payments",
+      "instructorAppsSub": "Review requests",
+      "project": "Project",
+      "logout": "Log Out"
+    }
   }
 }

@@ -190,5 +190,71 @@
     "subtitle": "学习开发、构建你的第一个应用，或探索完整的软件产品——IBRANT 为你提供起点。",
     "start": "开始学习",
     "tagline": "学习。创造。发布。你的旅程从一个想法开始。"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "toggle": "主题"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "仪表板",
+      "myCourses": "我的课程",
+      "orders": "订单",
+      "certificates": "证书",
+      "notifications": "通知",
+      "profile": "个人资料",
+      "settings": "设置",
+      "admin": "管理后台",
+      "courses": "课程",
+      "newCourse": "新建课程",
+      "categories": "分类",
+      "products": "产品",
+      "newProduct": "新建产品",
+      "messages": "消息",
+      "instructorApps": "讲师申请",
+      "site": "返回网站"
+    },
+    "search": {
+      "placeholder": "搜索课程、产品...",
+      "pages": "搜索页面..."
+    },
+    "group": {
+      "manage": "管理",
+      "account": "账户",
+      "content": "内容",
+      "operations": "运营",
+      "administration": "管理",
+      "overview": "概览",
+      "system": "系统"
+    },
+    "menu": "菜单",
+    "page": {
+      "adminTitle": "管理后台",
+      "welcomeBack": "欢迎回来",
+      "platformActivity": "以下是您的平台今日动态。",
+      "recentOrders": "最近订单",
+      "quickActions": "快捷操作",
+      "viewAll": "查看全部",
+      "noOrders": "暂无订单。",
+      "customers": "客户",
+      "revenue": "收入",
+      "myOrders": "我的订单",
+      "lessonsCompleted": "已完成课程",
+      "learningProgress": "这是您的学习进度和最近动态。",
+      "notEnrolled": "尚未加入任何课程。",
+      "lessons": "节课",
+      "editProfile": "编辑资料",
+      "editProfileSub": "姓名、头像",
+      "settingsSub": "密码、安全",
+      "browseCourses": "浏览课程",
+      "browseCoursesSub": "发现新技能",
+      "newProductSub": "上传项目",
+      "manageOrdersSub": "批准付款",
+      "instructorAppsSub": "审核申请",
+      "project": "项目",
+      "logout": "退出登录"
+    }
   }
 }

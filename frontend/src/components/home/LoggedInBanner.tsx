@@ -17,7 +17,7 @@ export function LoggedInBanner() {
   const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="border-b border-white/5 bg-gradient-to-r from-[#7559E8]/10 via-[#0B0F1D] to-[#0B0F1D]">
+    <div className="border-b border-white/5 bg-gradient-to-r from-[#7559E8]/10 via-bg-deep to-bg-deep">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-full bg-[#7559E8]/30 border border-[#7559E8]/40 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -28,16 +28,16 @@ export function LoggedInBanner() {
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm text-white truncate">
+            <p className="text-sm text-text-primary truncate">
               {t("banner.welcome_back")} <span className="font-semibold">{displayName}</span>
             </p>
-            <p className="text-xs text-[#7A8199] truncate hidden sm:block">{user.email}</p>
+            <p className="text-xs text-text-muted truncate hidden sm:block">{user.email}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/account"
-            className="inline-flex items-center gap-2 rounded-md bg-[#7559E8] px-3 sm:px-4 py-2 text-sm font-semibold text-white hover:bg-[#8B70FF] transition whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-md bg-[#7559E8] px-3 sm:px-4 py-2 text-sm font-semibold text-text-primary hover:bg-[#8B70FF] transition whitespace-nowrap"
           >
             <LayoutDashboard size={14} /> <Tr k="nav.dashboard" />
           </Link>

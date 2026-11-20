@@ -190,5 +190,71 @@
     "subtitle": "Aprende desarrollo, crea tu primera aplicación o explora productos de software completos — IBRANT te da un lugar para empezar.",
     "start": "Empezar a aprender",
     "tagline": "Aprende. Crea. Lanza. Tu viaje empieza con una idea."
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "toggle": "Tema"
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Panel",
+      "myCourses": "Mis cursos",
+      "orders": "Pedidos",
+      "certificates": "Certificados",
+      "notifications": "Notificaciones",
+      "profile": "Perfil",
+      "settings": "Ajustes",
+      "admin": "Admin",
+      "courses": "Cursos",
+      "newCourse": "Nuevo curso",
+      "categories": "Categorías",
+      "products": "Productos",
+      "newProduct": "Nuevo producto",
+      "messages": "Mensajes",
+      "instructorApps": "Solicitudes de instructores",
+      "site": "Volver al sitio"
+    },
+    "search": {
+      "placeholder": "Buscar cursos, productos...",
+      "pages": "Buscar páginas..."
+    },
+    "group": {
+      "manage": "Gestionar",
+      "account": "Cuenta",
+      "content": "Contenido",
+      "operations": "Operaciones",
+      "administration": "Administración",
+      "overview": "Resumen",
+      "system": "Sistema"
+    },
+    "menu": "Menú",
+    "page": {
+      "adminTitle": "Panel de administración",
+      "welcomeBack": "Bienvenido de nuevo",
+      "platformActivity": "Esto es lo que ocurre en tu plataforma hoy.",
+      "recentOrders": "Pedidos recientes",
+      "quickActions": "Acciones rápidas",
+      "viewAll": "Ver todo",
+      "noOrders": "Aún no hay pedidos.",
+      "customers": "Clientes",
+      "revenue": "Ingresos",
+      "myOrders": "Mis pedidos",
+      "lessonsCompleted": "Lecciones completadas",
+      "learningProgress": "Aquí está tu progreso de aprendizaje y actividad reciente.",
+      "notEnrolled": "Aún no estás inscrito en ningún curso.",
+      "lessons": "lecciones",
+      "editProfile": "Editar perfil",
+      "editProfileSub": "Nombre, avatar",
+      "settingsSub": "Contraseña, seguridad",
+      "browseCourses": "Explorar cursos",
+      "browseCoursesSub": "Encuentra nuevas habilidades",
+      "newProductSub": "Subir un proyecto",
+      "manageOrdersSub": "Aprobar pagos",
+      "instructorAppsSub": "Revisar solicitudes",
+      "project": "Proyecto",
+      "logout": "Cerrar sesión"
+    }
   }
 }
