@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from app.translation.service import translate_many
 
 router = APIRouter(prefix="/api/v1/translate", tags=["translation"])
-SUPPORTED_LANGS = {"en", "sw", "fr", "ru", "ar", "es", "de", "pt", "zh", "hi"}
+SUPPORTED_LANGS = {"en", "sw", "fr", "ru", "ar", "es", "de", "pt", "zh", "hi", "tg"}
 
 class TranslateIn(BaseModel):
     texts: list[str] = Field(min_length=1, max_length=200)

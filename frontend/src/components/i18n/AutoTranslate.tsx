@@ -10,14 +10,53 @@ const HAS_LETTER = /\p{L}/u;
 const MAX_BATCH = 200;
 const MAX_CHARS = 1900;
 
+// Translations are persisted in localStorage per language, so a page that was
+// translated once never needs the network again - switching back to a seen
+// language is instant and works offline. The in-memory cache serves the
+// current session; localStorage serves all future sessions.
+const LS_PREFIX = "ibrant_tr_v1_";
+const MAX_STORED = 1500; // per language; keeps us well inside the ~5MB budget
+
 const cache = new Map<string, string>();
 const inFlight = new Set<string>();
+const store: Record<string, Record<string, string>> = {};
+const persistTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+// NUL character as the lang/text key separator - collision-proof and never
+// part of real text.
+const SEP = String.fromCharCode(0);
+const keyOf = (lang: string, text: string) => lang + SEP + text;
+
+function hydrateStore(lang: string) {
+  if (store[lang]) return;
+  let saved: Record<string, string> = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(LS_PREFIX + lang) || "{}");
+  } catch {
+    saved = {};
+  }
+  store[lang] = saved;
+  for (const [text, value] of Object.entries(saved)) cache.set(keyOf(lang, text), value);
+}
+
+function persistStore(lang: string) {
+  clearTimeout(persistTimers[lang]);
+  persistTimers[lang] = setTimeout(() => {
+    try {
+      const entries = Object.entries(store[lang]);
+      const trimmed =
+        entries.length > MAX_STORED ? entries.slice(entries.length - MAX_STORED) : entries;
+      store[lang] = Object.fromEntries(trimmed);
+      localStorage.setItem(LS_PREFIX + lang, JSON.stringify(store[lang]));
+    } catch {
+      // localStorage full or unavailable - the session cache still works
+    }
+  }, 400);
+}
 
 const textOrig = new WeakMap<Text, { orig: string; last: string }>();
 type AttrState = { orig: string; last: string };
 const attrOrig = new WeakMap<Element, Record<string, AttrState>>();
-
-const keyOf = (lang: string, text: string) => `${lang}\u0000${text}`;
 
 function skipped(el: Element | null): boolean {
   for (let e: Element | null = el; e; e = e.parentElement) {
@@ -50,7 +89,7 @@ function collect(root: Element): Item[] {
     if (core && core.length <= MAX_CHARS) items.push({ kind: "text", node, core, lead, trail, orig });
   }
 
-  for (const el of Array.from(root.querySelectorAll(ATTRS.map((a) => `[${a}]`).join(",")))) {
+  for (const el of Array.from(root.querySelectorAll(ATTRS.map((a) => "[" + a + "]").join(",")))) {
     if (skipped(el)) continue;
     const states = attrOrig.get(el) ?? {};
     for (const attr of ATTRS) {
@@ -73,14 +112,19 @@ async function fetchMissing(lang: string, texts: string[]) {
     const chunk = need.slice(i, i + MAX_BATCH);
     chunk.forEach((t) => inFlight.add(keyOf(lang, t)));
     try {
-      const res = await fetch(`${API_BASE}/translate`, {
+      const res = await fetch(API_BASE + "/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ texts: chunk, target: lang }),
       });
-      if (!res.ok) throw new Error(`translate ${res.status}`);
+      if (!res.ok) throw new Error("translate " + res.status);
       const { translations } = (await res.json()) as { translations: string[] };
-      chunk.forEach((t, idx) => cache.set(keyOf(lang, t), translations[idx] ?? t));
+      chunk.forEach((t, idx) => {
+        const out = translations[idx] ?? t;
+        cache.set(keyOf(lang, t), out);
+        store[lang][t] = out;
+      });
+      persistStore(lang);
     } catch (err) {
       console.warn("Auto-translate failed; page stays in English for these strings", err);
     } finally {
@@ -104,6 +148,7 @@ export function AutoTranslate() {
 
     const run = async () => {
       const my = ++gen;
+      hydrateStore(lang);
       const items = collect(root);
       if (lang !== "en") await fetchMissing(lang, items.map((i) => i.core));
       if (my !== gen) return;
