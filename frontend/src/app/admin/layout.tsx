@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { Loader2 } from "lucide-react";
+import { useScrollKeeper } from "@/components/admin/ScrollKeeper";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  useScrollKeeper();
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 

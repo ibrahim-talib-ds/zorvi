@@ -13,3 +13,6 @@ backend/.venv/
 .env*.local
 backup_language_fix_*/
 .aider*
+backup_courses_v*
+scroll_report_
+scroll_report_*.log
