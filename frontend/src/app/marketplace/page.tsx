@@ -1,16 +1,19 @@
 "use client";
 
-// app/marketplace/page.tsx - IBRANT Marketplace (v12)
+// app/marketplace/page.tsx - IBRANT Marketplace (v15)
 //
 // ONE-FILE redesign: replaces only the marketplace page. Site header, layout,
 // everything else untouched. No new npm dependencies.
 //
-// Data: your real public endpoint - GET /marketplace/products (the same one
-// your home ProjectsSection already uses). Fields are mapped defensively;
-// anything the API does not provide (badges, ratings, downloads) is omitted,
-// never faked. Category chips + Popular rail are computed from the real list.
-// Search / sort / pagination run client-side on the fetched products.
-// Wishlist hearts are a local toggle (no backend wishlist endpoint yet).
+// v15 changes:
+//  - COMPACT cards: 2 columns on phones, 3 on small tablets, 4 on tablets,
+//    5 on laptops, 6 on desktops. Smaller covers (h-28), tighter padding.
+//  - Hearts now PERSIST: localStorage key IBRANT_SAVED_V1 (snapshot map),
+//    synced across tabs. The /account/saved page reads the same key.
+//
+// Data: your real public endpoint - GET /marketplace/products. Anything the
+// API does not provide is omitted, never faked. Search / sort / pagination
+// run client-side.
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -33,6 +36,7 @@ import {
   Smartphone,
   Star,
   Tag,
+  Terminal,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
@@ -41,6 +45,33 @@ import { API_BASE } from "@/lib/api/client";
 // CONFIG: detail route (apply script auto-detects this from your old page)
 // ============================================================================
 const DETAIL_BASE = "/marketplace";
+
+// wishlist contract: same key as app/account/saved/page.tsx
+const SAVED_KEY = "IBRANT_SAVED_V1";
+interface SavedSnap {
+  id: string;
+  title: string;
+  slug: string;
+  price_cents: number | null;
+  original_price_cents: number | null;
+  cover: string;
+  category: string;
+  author: string;
+  rating: number;
+  reviews: number | null;
+  saved_at: string;
+}
+function readSavedMap(): Record<string, SavedSnap> {
+  try {
+    const v = JSON.parse(localStorage.getItem(SAVED_KEY) || "{}");
+    return v && typeof v === "object" ? (v as Record<string, SavedSnap>) : {};
+  } catch {
+    return {};
+  }
+}
+function writeSavedMap(m: Record<string, SavedSnap>) {
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
 
 // ============================================================================
 // types + helpers
@@ -82,9 +113,6 @@ function firstStr(p: Product, keys: string[]): string {
   return "";
 }
 function priceOf(p: Product): { cents: number | null; originalCents: number | null } {
-  // _cents fields are trusted; bare `price` fields: >= 1000 treated as cents,
-  // otherwise treated as dollars. Delete this comment-scale line once the API
-  // confirms one convention.
   let cents = firstNum(p, ["price_cents", "listing_price_cents", "amount_cents"]);
   if (cents === null && typeof p.price === "number") cents = (p.price as number) >= 1000 ? (p.price as number) : (p.price as number) * 100;
   let originalCents = firstNum(p, ["original_price_cents", "compare_at_price_cents"]);
@@ -124,25 +152,42 @@ function ratingOf(p: Product): { rating: number; reviews: number | null } {
 function downloadsOf(p: Product): number | null {
   return firstNum(p, ["downloads_count", "downloads", "purchase_count", "sales_count"]);
 }
-function createdAtOf(p: Product): string {
-  return firstStr(p, ["created_at", "published_at"]) || "";
-}
 function isFeatured(p: Product): boolean {
   return p.featured === true || p.is_featured === true;
 }
+function slugOf(p: Product): string {
+  return str(p.slug) || str(p.id) || "";
+}
 function detailHref(p: Product): string {
-  return `${DETAIL_BASE}/${str(p.slug) || str(p.id) || ""}`;
+  return `${DETAIL_BASE}/${slugOf(p)}`;
+}
+function snapshotOf(p: Product): SavedSnap {
+  const { cents, originalCents } = priceOf(p);
+  const { rating, reviews } = ratingOf(p);
+  return {
+    id: str(p.id) || titleOf(p),
+    title: titleOf(p),
+    slug: slugOf(p),
+    price_cents: cents,
+    original_price_cents: originalCents,
+    cover: coverOf(p),
+    category: categoryOf(p),
+    author: authorOf(p),
+    rating,
+    reviews,
+    saved_at: new Date().toISOString(),
+  };
 }
 function categoryIcon(cat: string): ReactNode {
   const c = cat.toLowerCase();
-  if (c.includes("web") || c.includes("site")) return <Globe size={14} />;
-  if (c.includes("mobile") || c.includes("app")) return <Smartphone size={14} />;
-  if (c.includes("educat") || c.includes("course") || c.includes("learn")) return <GraduationCap size={14} />;
-  if (c.includes("business") || c.includes("finance")) return <Briefcase size={14} />;
-  if (c.includes("market") || c.includes("seo")) return <Megaphone size={14} />;
-  if (c.includes("design") || c.includes("ui")) return <Palette size={14} />;
-  if (c.includes("ai") || c.includes("data") || c.includes("ml")) return <Brain size={14} />;
-  return <Tag size={14} />;
+  if (c.includes("web") || c.includes("site")) return <Globe size={13} />;
+  if (c.includes("mobile") || c.includes("app")) return <Smartphone size={13} />;
+  if (c.includes("educat") || c.includes("course") || c.includes("learn")) return <GraduationCap size={13} />;
+  if (c.includes("business") || c.includes("finance")) return <Briefcase size={13} />;
+  if (c.includes("market") || c.includes("seo")) return <Megaphone size={13} />;
+  if (c.includes("design") || c.includes("ui")) return <Palette size={13} />;
+  if (c.includes("ai") || c.includes("data") || c.includes("ml")) return <Brain size={13} />;
+  return <Tag size={13} />;
 }
 
 // ============================================================================
@@ -175,12 +220,12 @@ function ErrorBox({ onRetry }: { onRetry: () => void }) {
 }
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-4" aria-busy="true">
-      <div className="h-36 rounded-xl bg-white/[0.04]" />
-      <div className="mt-4 h-4 w-3/4 rounded bg-white/[0.04]" />
+    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-3" aria-busy="true">
+      <div className="h-28 rounded-xl bg-white/[0.04]" />
+      <div className="mt-3 h-3.5 w-3/4 rounded bg-white/[0.04]" />
       <div className="mt-2 h-3 w-full rounded bg-white/[0.04]" />
       <div className="mt-1 h-3 w-2/3 rounded bg-white/[0.04]" />
-      <div className="mt-4 h-9 rounded-lg bg-white/[0.04]" />
+      <div className="mt-3 h-8 rounded-lg bg-white/[0.04]" />
     </div>
   );
 }
@@ -191,12 +236,13 @@ function CardSkeleton() {
 const SIDE_LINKS = [
   { label: "Back to Home", href: "/", icon: <Home size={16} /> },
   { label: "My Dashboard", href: "/account", icon: <LayoutGrid size={16} /> },
-  { label: "My Courses", href: "/account/courses", icon: <GraduationCap size={16} /> },
+  { label: "Saved Projects", href: "/account/saved", icon: <Heart size={16} /> },
   { label: "My Purchases", href: "/account/orders", icon: <ShoppingBag size={16} /> },
+  { label: "Code Playground", href: "/playground", icon: <Terminal size={16} /> },
 ];
 function PageSidebar({ name, email }: { name: string; email: string }) {
   return (
-    <aside className="hidden w-60 flex-shrink-0 xl:block">
+    <aside className="hidden w-56 flex-shrink-0 xl:block">
       <nav className="sticky top-8 space-y-1">
         {SIDE_LINKS.map((l) => (
           <Link
@@ -255,12 +301,10 @@ function HeroIllustration() {
         </radialGradient>
       </defs>
       <circle cx="150" cy="90" r="110" fill="url(#mkGlow)" />
-      {/* floating app icons */}
       <rect x="150" y="18" width="34" height="34" rx="9" fill="#8B70FF" transform="rotate(8 167 35)" />
       <circle cx="167" cy="35" r="8" fill="#E9E5FF" />
       <rect x="128" y="58" width="30" height="30" rx="8" fill="#22C58B" transform="rotate(-10 143 73)" />
       <path d="M136 66 L143 80 L150 66" stroke="#0B0F1D" strokeWidth="3" fill="none" strokeLinecap="round" />
-      {/* laptop */}
       <rect x="60" y="46" width="104" height="68" rx="8" fill="url(#mkLap)" stroke="#7559E8" strokeWidth="2" />
       <rect x="68" y="54" width="88" height="52" rx="4" fill="#12102E" />
       <text x="112" y="90" textAnchor="middle" fill="#A78BFA" fontSize="26" fontWeight="800" style={{ fontFamily: "monospace" }}>
@@ -274,7 +318,7 @@ function HeroIllustration() {
 }
 function Hero({ query, onQuery, onSubmit }: { query: string; onQuery: (v: string) => void; onSubmit: () => void }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#241B5E] via-[#171338] to-[#0B0F1D] px-6 py-8 lg:px-10 lg:py-12">
+    <section className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#241B5E] via-[#171338] to-[#0B0F1D] px-5 py-7 lg:px-10 lg:py-10">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -288,14 +332,14 @@ function Hero({ query, onQuery, onSubmit }: { query: string; onQuery: (v: string
           <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-[#7559E8]/30">
             <LayoutGrid size={12} /> Marketplace
           </span>
-          <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Explore <span className="bg-gradient-to-r from-[#A78BFA] to-[#8B70FF] bg-clip-text text-transparent">Projects</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-[#B7BDD0] sm:text-base">
             Production-ready software you can buy or download.
           </p>
           <form
-            className="mt-6 flex max-w-2xl items-center gap-2 rounded-2xl border border-white/10 bg-[#0B0F1D]/80 p-2 backdrop-blur focus-within:border-[#7559E8]/60"
+            className="mt-5 flex max-w-2xl items-center gap-2 rounded-2xl border border-white/10 bg-[#0B0F1D]/80 p-2 backdrop-blur focus-within:border-[#7559E8]/60"
             onSubmit={(e) => {
               e.preventDefault();
               onSubmit();
@@ -318,7 +362,7 @@ function Hero({ query, onQuery, onSubmit }: { query: string; onQuery: (v: string
             </button>
           </form>
         </div>
-        <div className="hidden h-36 flex-shrink-0 lg:block xl:h-44">
+        <div className="hidden h-32 flex-shrink-0 lg:block xl:h-40">
           <HeroIllustration />
         </div>
       </div>
@@ -327,7 +371,7 @@ function Hero({ query, onQuery, onSubmit }: { query: string; onQuery: (v: string
 }
 
 // ============================================================================
-// product card
+// product card (compact)
 // ============================================================================
 function ProductCard({
   p,
@@ -336,7 +380,7 @@ function ProductCard({
 }: {
   p: Product;
   saved: boolean;
-  onToggleSave: (id: string) => void;
+  onToggleSave: (p: Product) => void;
 }) {
   const title = titleOf(p);
   const { cents, originalCents } = priceOf(p);
@@ -344,14 +388,13 @@ function ProductCard({
   const downloads = downloadsOf(p);
   const author = authorOf(p);
   const cover = coverOf(p);
-  const id = str(p.id) || title;
   const discount = originalCents !== null && cents !== null ? Math.round((1 - cents / originalCents) * 100) : null;
   const initial = title.trim().charAt(0).toUpperCase();
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
-        <span className="font-display text-5xl font-extrabold text-[#A78BFA]/50">{initial}</span>
+      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+        <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -364,76 +407,78 @@ function ProductCard({
           />
         )}
         {isFeatured(p) && (
-          <span className="absolute left-3 top-3 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-2 top-2 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             ⭐ Featured
           </span>
         )}
         {discount !== null && discount > 0 && (
-          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-2 top-2 rounded-lg bg-[#F05D70] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             {discount}% OFF
           </span>
         )}
         <button
-          onClick={() => onToggleSave(id)}
+          onClick={() => onToggleSave(p)}
           aria-pressed={saved}
-          title={saved ? "Saved (local wishlist)" : "Save to wishlist (local)"}
-          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur transition ${
+          title={saved ? "Remove from saved" : "Save to wishlist"}
+          className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 backdrop-blur transition ${
             saved ? "bg-[#F05D70] text-white" : "bg-[#0B0F1D]/70 text-[#B7BDD0] hover:text-white"
           }`}
         >
-          <Heart size={14} fill={saved ? "currentColor" : "none"} />
+          <Heart size={13} fill={saved ? "currentColor" : "none"} />
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="truncate font-display text-lg font-bold text-white">{title}</h3>
-        {descOf(p) && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#929CBD]">{descOf(p)}</p>}
+      <div className="flex flex-1 flex-col p-3">
+        <h3 className="truncate text-sm font-bold text-white sm:text-base">{title}</h3>
+        {descOf(p) && <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#929CBD]">{descOf(p)}</p>}
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-1.5">
           {author && (
             <>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] text-[10px] font-bold text-white">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] text-[9px] font-bold text-white">
                 {author.charAt(0).toUpperCase()}
               </span>
-              <span className="truncate text-xs text-[#B7BDD0]">{author}</span>
+              <span className="truncate text-[11px] text-[#B7BDD0]">{author}</span>
             </>
           )}
           {rating > 0 && (
-            <span className="ml-auto flex flex-shrink-0 items-center gap-1 text-xs text-[#B7BDD0]">
-              <Star size={12} className="text-[#F5A623]" fill="#F5A623" />
+            <span className="ml-auto flex flex-shrink-0 items-center gap-1 text-[11px] text-[#B7BDD0]">
+              <Star size={11} className="text-[#F5A623]" fill="#F5A623" />
               <span className="font-bold text-white">{rating.toFixed(1)}</span>
               {reviews !== null && <span className="text-[#7A8199]">({fmtCompact(reviews)})</span>}
             </span>
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           {downloads !== null ? (
-            <span className="flex items-center gap-1.5 text-xs text-[#7A8199]">
-              <Download size={12} /> {fmtCompact(downloads)} downloads
+            <span className="flex items-center gap-1 text-[11px] text-[#7A8199]">
+              <Download size={11} /> {fmtCompact(downloads)}
             </span>
           ) : (
-            <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#929CBD]">
+            <span className="truncate rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[#929CBD]">
               {categoryOf(p)}
             </span>
           )}
-          <span className="text-right">
+          <span className="ml-auto text-right">
             {cents !== null ? (
               <>
-                {originalCents !== null && <span className="mr-1.5 text-xs text-[#7A8199] line-through">{fmtMoney(originalCents)}</span>}
-                <span className="font-display text-lg font-extrabold text-white">{cents === 0 ? "Free" : fmtMoney(cents)}</span>
+                {originalCents !== null && <span className="mr-1 text-[10px] text-[#7A8199] line-through">{fmtMoney(originalCents)}</span>}
+                <span className={`font-display text-base font-extrabold ${cents === 0 ? "text-[#22C58B]" : "text-white"}`}>
+                  {cents === 0 ? "Free" : fmtMoney(cents)}
+                </span>
               </>
             ) : (
-              <span className="text-sm font-semibold text-[#929CBD]">Price on request</span>
+              <span className="text-xs font-semibold text-[#929CBD]">See details</span>
             )}
           </span>
         </div>
 
         <Link
           href={detailHref(p)}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
         >
-          View Details <ArrowRight size={14} />
+          View Details <ArrowRight size={12} />
         </Link>
       </div>
     </div>
@@ -465,7 +510,15 @@ export default function MarketplacePage() {
   const [category, setCategory] = useState("All Categories");
   const [sort, setSort] = useState<Sort>("Popular");
   const [visible, setVisible] = useState(PAGE_SIZE);
-  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [savedMap, setSavedMap] = useState<Record<string, SavedSnap>>({});
+
+  // load + cross-tab sync of the persistent wishlist
+  useEffect(() => {
+    setSavedMap(readSavedMap());
+    const on = () => setSavedMap(readSavedMap());
+    window.addEventListener("storage", on);
+    return () => window.removeEventListener("storage", on);
+  }, []);
 
   const load = useCallback(async () => {
     setState("loading");
@@ -479,6 +532,17 @@ export default function MarketplacePage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const toggleSave = useCallback((p: Product) => {
+    setSavedMap((prev) => {
+      const id = str(p.id) || titleOf(p);
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = snapshotOf(p);
+      writeSavedMap(next);
+      return next;
+    });
+  }, []);
 
   // categories derived from the real product list
   const categories = useMemo(() => {
@@ -508,7 +572,7 @@ export default function MarketplacePage() {
     const rate = (p: Product) => ratingOf(p).rating;
     list = [...list];
     if (sort === "Popular") list.sort((a, b) => dl(b) - dl(a) || rate(b) - rate(a));
-    else if (sort === "Newest") list.sort((a, b) => new Date(createdAtOf(b) || 0).getTime() - new Date(createdAtOf(a) || 0).getTime());
+    else if (sort === "Newest") list.sort((a, b) => new Date(str(a.created_at) || 0).getTime() - new Date(str(b.created_at) || 0).getTime());
     else if (sort === "Price: Low to High") list.sort((a, b) => price(a) - price(b));
     else if (sort === "Price: High to Low") list.sort((a, b) => price(b) - price(a));
     else if (sort === "Top Rated") list.sort((a, b) => rate(b) - rate(a));
@@ -517,14 +581,6 @@ export default function MarketplacePage() {
 
   useEffect(() => setVisible(PAGE_SIZE), [appliedQuery, category, sort]);
   const shown = filtered.slice(0, visible);
-
-  const toggleSave = (id: string) =>
-    setSaved((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   // popular rail: real metric only (downloads, else rating)
   const popular = useMemo(() => {
@@ -535,8 +591,10 @@ export default function MarketplacePage() {
     return { items: list.slice(0, 5), metric: hasDl ? ("downloads" as const) : ("rating" as const) };
   }, [products]);
 
+  const savedCount = Object.keys(savedMap).length;
+
   return (
-    <div className="flex gap-8">
+    <div className="flex gap-6">
       <PageSidebar name={displayName} email={email} />
 
       <div className="min-w-0 flex-1 space-y-6">
@@ -556,7 +614,7 @@ export default function MarketplacePage() {
               <button
                 key={c}
                 onClick={() => setCategory(c)}
-                className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-medium transition ${
+                className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
                   category === c
                     ? "border-transparent bg-gradient-to-r from-[#7559E8] to-[#8B70FF] text-white shadow-lg shadow-[#7559E8]/25"
                     : "border-white/10 bg-white/[0.03] text-[#B7BDD0] hover:border-white/20 hover:text-white"
@@ -600,24 +658,30 @@ export default function MarketplacePage() {
               </>
             )}
           </p>
-          {saved.size > 0 && (
-            <p className="text-xs text-[#7A8199]">
-              <Heart size={11} className="mr-1 inline text-[#F05D70]" fill="#F05D70" />
-              {saved.size} saved locally
-            </p>
+          {savedCount > 0 && (
+            <Link href="/account/saved" className="flex items-center gap-1.5 text-xs text-[#B7BDD0] transition hover:text-white">
+              <Heart size={11} className="text-[#F05D70]" fill="#F05D70" />
+              {savedCount} saved
+            </Link>
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 2xl:grid-cols-4">
+        {/* compact grid: 2 phones / 3 sm / 4 tablet / 5 laptop / 6 desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {state === "loading" &&
-            Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
+            Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)}
           {state === "error" && (
-            <div className="lg:col-span-3 2xl:col-span-4">
+            <div className="col-span-2 sm:col-span-3 md:col-span-4 xl:col-span-5 2xl:col-span-6">
               <ErrorBox onRetry={load} />
             </div>
           )}
           {state === "ready" && shown.map((p) => (
-            <ProductCard key={str(p.id) || titleOf(p)} p={p} saved={saved.has(str(p.id) || titleOf(p))} onToggleSave={toggleSave} />
+            <ProductCard
+              key={str(p.id) || titleOf(p)}
+              p={p}
+              saved={!!savedMap[str(p.id) || titleOf(p)]}
+              onToggleSave={toggleSave}
+            />
           ))}
         </div>
 
@@ -650,16 +714,16 @@ export default function MarketplacePage() {
           </div>
         )}
 
-        {/* Popular Projects rail */}
+        {/* Popular Projects rail (compact) */}
         {state === "ready" && popular.items.length > 0 && (
-          <section className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 sm:p-6">
+          <section className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5">
             <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-white">
               <span aria-hidden="true">🔥</span> Popular Projects
               {popular.metric === "rating" && (
                 <span className="text-[10px] font-medium text-[#7A8199]">(by rating — downloads not provided yet)</span>
               )}
             </h2>
-            <ol className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+            <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {popular.items.map((p, i) => {
                 const dl = downloadsOf(p);
                 const r = ratingOf(p).rating;
@@ -669,11 +733,11 @@ export default function MarketplacePage() {
                   <li key={str(p.id) || title}>
                     <Link
                       href={detailHref(p)}
-                      className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3 transition hover:border-[#7559E8]/40 hover:bg-[#7559E8]/[0.06]"
+                      className="group flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/[0.03] p-2.5 transition hover:border-[#7559E8]/40 hover:bg-[#7559E8]/[0.06]"
                     >
-                      <span className="font-display text-lg font-extrabold text-[#7A8199]">{i + 1}</span>
-                      <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/5 bg-gradient-to-br from-[#1B2347] to-[#10162E]">
-                        <span className="text-sm font-extrabold text-[#A78BFA]/60">{title.charAt(0).toUpperCase()}</span>
+                      <span className="font-display text-base font-extrabold text-[#7A8199]">{i + 1}</span>
+                      <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/5 bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+                        <span className="text-xs font-extrabold text-[#A78BFA]/60">{title.charAt(0).toUpperCase()}</span>
                         {cover && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -688,7 +752,7 @@ export default function MarketplacePage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-white">{title}</span>
-                        <span className="block text-[11px] text-[#7A8199]">
+                        <span className="block text-[10px] text-[#7A8199]">
                           {popular.metric === "downloads" && dl !== null
                             ? `${fmtCompact(dl)} downloads`
                             : r > 0
@@ -696,7 +760,7 @@ export default function MarketplacePage() {
                               : categoryOf(p)}
                         </span>
                       </span>
-                      <ArrowRight size={14} className="flex-shrink-0 text-[#7A8199] transition group-hover:text-[#A78BFA]" />
+                      <ArrowRight size={13} className="flex-shrink-0 text-[#7A8199] transition group-hover:text-[#A78BFA]" />
                     </Link>
                   </li>
                 );
@@ -706,8 +770,8 @@ export default function MarketplacePage() {
         )}
 
         <p className="pb-2 text-center text-[11px] text-[#7A8199]">
-          Live data from your marketplace API — badges, ratings and downloads appear only where the data exists. Wishlist
-          hearts are saved locally for now.
+          Live data from your marketplace API — badges, ratings and downloads appear only where the data exists. Hearts
+          save locally and show up on your Saved page.
         </p>
       </div>
     </div>

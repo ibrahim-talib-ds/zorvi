@@ -1,10 +1,11 @@
 import { AutoTranslate } from "@/components/i18n/AutoTranslate";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+
+
 import { Providers } from "@/components/Providers";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
+import { ClientShellWrapper } from "@/components/layout/ClientShellWrapper";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 
 export const metadata: Metadata = {
@@ -36,10 +37,12 @@ export default function RootLayout({
           <I18nProvider>
             <AutoTranslate />
             <Providers>
-              <Header />
-              <main className="flex-1 pt-16 md:pt-[76px]">{children}</main>
-              <Footer />
-            </Providers>
+          <ClientShellWrapper>
+
+              {children}
+
+            </ClientShellWrapper>
+        </Providers>
           </I18nProvider>
         </ThemeProvider>
       </body>

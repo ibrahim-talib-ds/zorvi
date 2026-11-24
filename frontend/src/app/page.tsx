@@ -1,5 +1,4 @@
 "use client";
-"use client";
 
 // app/page.tsx - IBRANT Home (v14)
 //
@@ -14,7 +13,7 @@
 // depend on missing data degrade gracefully, never fake numbers.
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -183,8 +182,8 @@ function GridError({ onRetry }: { onRetry: () => void }) {
 }
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-4" aria-busy="true">
-      <div className="h-36 rounded-xl bg-white/[0.04]" />
+    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-3" aria-busy="true">
+      <div className="h-28 rounded-xl bg-white/[0.04]" />
       <div className="mt-4 h-4 w-3/4 rounded bg-white/[0.04]" />
       <div className="mt-2 h-3 w-2/3 rounded bg-white/[0.04]" />
       <div className="mt-4 h-9 rounded-lg bg-white/[0.04]" />
@@ -214,8 +213,8 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
-        <span className="font-display text-5xl font-extrabold text-[#A78BFA]/50">{initial}</span>
+      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+        <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -228,18 +227,18 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
           />
         )}
         {isFeatured(x) && (
-          <span className="absolute left-3 top-3 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-3 top-3 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             ⭐ Featured
           </span>
         )}
         {discount !== null && discount > 0 && (
-          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             {discount}% OFF
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="truncate font-display text-lg font-bold text-white">{title}</h3>
+      <div className="flex flex-1 flex-col p-3">
+        <h3 className="truncate text-sm font-bold text-white sm:text-base">{title}</h3>
         {desc && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#929CBD]">{desc}</p>}
         <div className="mt-3 flex items-center gap-2">
           {person && (
@@ -279,7 +278,7 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
         </div>
         <Link
           href={href}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
         >
           {ctaLabel} <ArrowRight size={14} />
         </Link>
@@ -403,6 +402,12 @@ const HOME_STEPS = [
     title: "Grow your portfolio",
     body: "Every course finished and project shipped strengthens your portfolio — track it all from your personal dashboard.",
     icon: <Rocket size={20} />,
+  },
+  {
+    n: "04",
+    title: "Create & earn",
+    body: "Turn your skills into income — publish your own projects and courses on the marketplace and get paid for every sale.",
+    icon: <Sparkles size={20} />,
   },
 ];
 const WHY_CARDS = [
@@ -528,16 +533,16 @@ export default function HomePage() {
         viewAllLabel="View all projects"
       >
         {projectsState === "loading" ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : projectsState === "error" ? (
           <GridError onRetry={loadProjects} />
         ) : projects.length === 0 ? (
           <EmptyStrip label="No projects published yet — check back soon." />
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {projects.slice(0, 3).map((p) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+            {projects.slice(0, 6).map((p) => (
               <ItemCard key={str(p.id) || titleOf(p)} x={p} href={`${MARKET_BASE}/${str(p.slug) || str(p.id) || ""}`} ctaLabel="View Details" />
             ))}
           </div>
@@ -553,16 +558,16 @@ export default function HomePage() {
         viewAllLabel="View all courses"
       >
         {coursesState === "loading" ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : coursesState === "error" ? (
           <GridError onRetry={loadCourses} />
         ) : courses.length === 0 ? (
           <EmptyStrip label="No courses published yet — check back soon." />
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {courses.slice(0, 3).map((c) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+            {courses.slice(0, 6).map((c) => (
               <ItemCard key={str(c.id) || titleOf(c)} x={c} href={`${COURSES_BASE}/${str(c.slug) || str(c.course_slug) || str(c.id) || ""}`} ctaLabel="View Course" />
             ))}
           </div>
@@ -575,7 +580,7 @@ export default function HomePage() {
         title="How IBRANT Works"
         subtitle="Three steps from where you are now to a portfolio you're proud of."
       >
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
           {HOME_STEPS.map((s) => (
             <div key={s.n} className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-6 transition hover:border-[#7559E8]/40">
               <span className="pointer-events-none absolute -right-2 -top-6 font-display text-7xl font-extrabold text-white/[0.04]" aria-hidden="true">

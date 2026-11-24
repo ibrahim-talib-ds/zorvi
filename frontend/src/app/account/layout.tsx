@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { AppShell } from "@/components/navigation/AppShell";
 import { Loader2 } from "lucide-react";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -22,5 +22,5 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     );
   if (!isAuthenticated) return null;
 
-  return <DashboardShell variant="user">{children}</DashboardShell>;
+  return <AppShell variant="student">{children}</AppShell>;
 }

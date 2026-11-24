@@ -261,7 +261,7 @@ export default function AdminCourseEditPage() {
   if (!isAuthenticated || !course) return null;
 
   return (
-    <div className="py-10 px-6 lg:px-10">
+    <div className="py-6 sm:py-8 lg:py-10 px-4 sm:px-6 lg:px-10">
       <Link
         href="/admin/courses"
         className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -270,7 +270,7 @@ export default function AdminCourseEditPage() {
       </Link>
 
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h1 className="font-display text-3xl font-extrabold text-white">{course.title}</h1>
@@ -288,7 +288,7 @@ export default function AdminCourseEditPage() {
           </div>
           <p className="text-sm text-[#7A8199] font-mono">/courses/{course.slug}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
           <Link
             href={`/courses/${course.slug}`}
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
@@ -309,8 +309,8 @@ export default function AdminCourseEditPage() {
       </div>
 
       {/* Course details */}
-      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 mb-6">
-        <div className="flex items-center justify-between mb-5">
+      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h2 className="font-display text-lg font-bold text-white">Course details</h2>
           <button
             onClick={saveCourse}
@@ -358,7 +358,7 @@ export default function AdminCourseEditPage() {
               className="w-full bg-[#0B0F1D] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#7559E8] resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#B7BDD0] mb-2">Difficulty</label>
               <select
@@ -385,7 +385,7 @@ export default function AdminCourseEditPage() {
       </div>
 
       {/* Modules & Lessons */}
-      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
+      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="font-display text-lg font-bold text-white">Course curriculum</h2>
@@ -439,7 +439,7 @@ export default function AdminCourseEditPage() {
           <div className="space-y-4">
             {course.modules.map((module, mIdx) => (
               <div key={module.id} className="rounded-xl border border-white/10 bg-[#0B0F1D] overflow-hidden">
-                <div className="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+                <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-8 h-8 rounded-lg bg-[#7559E8]/15 flex items-center justify-center text-sm font-bold text-[#A78BFA] flex-shrink-0">
                       {mIdx + 1}
@@ -451,7 +451,7 @@ export default function AdminCourseEditPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <span className="text-xs text-[#7A8199]">
                       {module.lessons.length} {module.lessons.length === 1 ? "lesson" : "lessons"}
                     </span>
@@ -508,7 +508,7 @@ export default function AdminCourseEditPage() {
                         />
                         <span className="text-xs text-[#B7BDD0]">Free preview</span>
                       </label>
-                      <div className="ml-auto flex gap-2">
+                      <div className="w-full sm:w-auto sm:ml-auto flex gap-2 justify-end">
                         <button
                           onClick={() => setShowLessonForm(null)}
                           className="px-3 py-1.5 text-xs text-[#7A8199] hover:text-white transition"
@@ -537,12 +537,12 @@ export default function AdminCourseEditPage() {
                     {module.lessons.map((lesson, lIdx) => (
                       <div
                         key={lesson.id}
-                        className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition"
+                        className="flex flex-wrap sm:flex-nowrap items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition"
                       >
                         <span className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-xs text-[#7A8199] flex-shrink-0">
                           {lIdx + 1}
                         </span>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-[140px]">
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-white truncate">{lesson.title}</p>
                             {lesson.is_free_preview && (

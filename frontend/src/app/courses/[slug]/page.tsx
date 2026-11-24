@@ -107,7 +107,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               </div>
               {(course.cover_image_url || course.thumbnail_url) ? (
                 <img 
-                  src={course.cover_image_url || course.thumbnail_url || ""} 
+                  src={course.cover_image_url || course.thumbnail_url || undefined}
                   alt={course.title} 
                   className="relative max-w-md max-h-full object-contain p-6" 
                 />

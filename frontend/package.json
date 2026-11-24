@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
+    "monaco-editor": "^0.58.0",
     "motion": "^11.18.2",
     "next": "15.5.29",
     "next-intl": "^4.15.1",

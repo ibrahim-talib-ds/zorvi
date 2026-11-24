@@ -1,4 +1,6 @@
 "use client";
+
+import { cn } from "@/lib/design-system/cn";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -87,6 +89,8 @@ const ICON_PATHS: Record<string, string> = {
   chevron: "M9 5l7 7-7 7",
   globe: "M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18",
   logout: "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9",
+  chevronsLeft: "M11 17l-5-5 5-5M18 17l-5-5 5-5",
+  chevronsRight: "M13 17l5-5-5-5M6 17l5-5-5-5",
 };
 
 function Icon({ name, className }: { name: string; className?: string }) {
@@ -144,6 +148,14 @@ export function DashboardShell({
   const router = useRouter();
   const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Auto-collapse on small screens (tablet/mobile)
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setIsCollapsed(true);
+    }
+  }, []);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -275,11 +287,11 @@ export function DashboardShell({
         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
           <Avatar name={user?.full_name} size={32} />
         </div>
-        <div className="hidden min-w-0 flex-1 lg:block">
+        <div className={`hidden min-w-0 flex-1 ${isCollapsed ? "lg:hidden" : "lg:block"}`}>
           <p className="truncate text-sm font-medium text-text-primary">
-            {user?.full_name || (admin ? "Admin" : "Account")}
+            {user ? (user.full_name || "User") : "Guest"}
           </p>
-          <p className="truncate text-xs text-text-muted">{user?.email}</p>
+          {user && <p className="truncate text-xs text-text-muted">{user.email}</p>}
         </div>
       </div>
       <Link
@@ -294,19 +306,34 @@ export function DashboardShell({
           <Tr k="dashboard.nav.site" />
         </span>
       </Link>
-      <button
-        type="button"
-        onClick={handleLogout}
-        className={
-          "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#F05D70] transition-colors hover:bg-[#F05D70]/10 " +
-          (inDrawer ? "" : "md:justify-center lg:justify-start")
-        }
-      >
-        <Icon name="logout" />
-        <span className={inDrawer ? "" : "hidden lg:inline"}>
-          <Tr k="dashboard.page.logout" />
-        </span>
-      </button>
+      {user ? (
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={
+            "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#F05D70] transition-colors hover:bg-[#F05D70]/10 " +
+            (inDrawer ? "" : "md:justify-center lg:justify-start")
+          }
+        >
+          <Icon name="logout" />
+          <span className={inDrawer ? "" : (isCollapsed ? "hidden" : "hidden lg:inline")}>
+            <Tr k="dashboard.page.logout" />
+          </span>
+        </button>
+      ) : (
+        <Link
+          href="/login"
+          className={
+            "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#8B70FF] transition-colors hover:bg-bg-elevated " +
+            (inDrawer ? "" : "md:justify-center lg:justify-start")
+          }
+        >
+          <Icon name="user" />
+          <span className={inDrawer ? "" : (isCollapsed ? "hidden" : "hidden lg:inline")}>
+            Log In
+          </span>
+        </Link>
+      )}
     </div>
   );
 
@@ -386,8 +413,22 @@ export function DashboardShell({
   return (
     <div className="min-h-full">
       {/* Sidebar: icon rail on tablet (md), full on desktop (lg+) */}
-      <aside className="fixed bottom-0 left-0 top-16 z-20 hidden w-[68px] flex-col overflow-y-auto border-r border-bg-border bg-bg-surface px-2 py-4 md:top-[76px] md:flex lg:w-64 lg:px-3">
-        <Brand />
+      <aside className={cn(
+        "fixed bottom-0 left-0 top-16 z-20 hidden flex-col overflow-y-auto border-r border-bg-border bg-bg-surface px-2 py-4 md:top-[76px] md:flex transition-all duration-300",
+        isCollapsed ? "w-[68px] px-2" : "w-64 px-3"
+      )}>
+        <div className="flex items-center justify-between w-full mb-2">
+          {!isCollapsed && <Brand />}
+          {isCollapsed && <div className="w-full flex justify-center"><img src="/images/logo/ibrant-mark.png" className="h-8 w-8 object-contain" alt="" /></div>}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex items-center justify-center w-full py-2 mb-4 rounded-lg bg-bg-elevated text-text-muted hover:text-text-primary transition-all"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Icon name={isCollapsed ? "chevronsRight" : "chevronsLeft"} />
+            {!isCollapsed && <span className="ml-2 text-xs font-semibold">Collapse Sidebar</span>}
+          </button>
+        </div>
         <nav className="mt-3 space-y-5" aria-label={admin ? "Admin" : "Account"}>
           {navGroups}
         </nav>
@@ -491,137 +532,10 @@ export function DashboardShell({
         </div>
       )}
 
-      {/* Topbar */}
-      <div className="sticky top-16 z-30 border-b border-bg-border bg-bg-deep/85 backdrop-blur md:top-[76px]">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4">
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Menu"
-            aria-expanded={drawerOpen}
-            className="rounded-md p-2 text-text-secondary hover:bg-bg-elevated hover:text-text-primary md:hidden"
-          >
-            <Icon name="menu" />
-          </button>
-
-          <div className="hidden min-w-0 items-center gap-1.5 text-sm text-text-muted sm:flex">
-            <span className="truncate">
-              <Tr k={admin ? "dashboard.nav.admin" : "dashboard.nav.dashboard"} />
-            </span>
-            {current && !current.exact && (
-              <>
-                <Icon name="chevron" className="h-3.5 w-3.5 opacity-50" />
-                <span className="truncate font-medium text-text-primary">
-                  <Tr k={current.k} />
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Search pill -> command palette */}
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="ml-auto hidden w-full max-w-xs items-center gap-2 rounded-full border border-bg-border bg-bg-surface px-3 py-1.5 text-sm text-text-muted transition-colors hover:border-[#A78BFA]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]/40 sm:flex"
-          >
-            <Icon name="search" className="h-3.5 w-3.5" />
-            <span className="flex-1 truncate text-left">
-              <Tr k="dashboard.search.pages" />
-            </span>
-            <kbd className="hidden rounded border border-bg-border px-1.5 text-[10px] lg:inline">
-              Ctrl K
-            </kbd>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            aria-label="Search"
-            className="rounded-md p-2 text-text-secondary hover:bg-bg-elevated hover:text-text-primary sm:hidden"
-          >
-            <Icon name="search" />
-          </button>
-
-          <Link
-            href={base + "/notifications"}
-            className="relative rounded-md p-2 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
-            aria-label="Notifications"
-          >
-            <Icon name="bell" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#A78BFA]" />
-          </Link>
-
-          <ThemeToggle />
-
-          {/* Profile dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setProfileOpen((v) => !v)}
-              aria-expanded={profileOpen}
-              aria-haspopup="menu"
-              aria-label="Profile menu"
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-bg-elevated text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]/40"
-            >
-              <Avatar name={user?.full_name} size={32} />
-            </button>
-            {profileOpen && (
-              <>
-                <button
-                  type="button"
-                  aria-label="Close menu"
-                  onClick={() => setProfileOpen(false)}
-                  className="fixed inset-0 z-30 cursor-default"
-                />
-                <div
-                  role="menu"
-                  className="absolute right-0 top-10 z-40 w-48 overflow-hidden rounded-xl border border-bg-border bg-bg-surface py-1 shadow-xl"
-                >
-                  <div className="border-b border-bg-border px-3.5 py-2.5">
-                    <p className="truncate text-sm font-medium text-text-primary">
-                      {user?.full_name || (admin ? "Admin" : "Account")}
-                    </p>
-                    <p className="truncate text-xs text-text-muted">{user?.email}</p>
-                  </div>
-                  <Link
-                    href={base + "/profile"}
-                    role="menuitem"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
-                  >
-                    <Icon name="user" />
-                    <Tr k="dashboard.nav.profile" />
-                  </Link>
-                  <Link
-                    href={base + "/settings"}
-                    role="menuitem"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
-                  >
-                    <Icon name="cog" />
-                    <Tr k="dashboard.nav.settings" />
-                  </Link>
-                  <div className="my-1 border-t border-bg-border" />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-[#F05D70] transition-colors hover:bg-[#F05D70]/10"
-                  >
-                    <Icon name="logout" />
-                    <Tr k="dashboard.page.logout" />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Page content */}
-      <main className="md:pl-[68px] lg:pl-64">
+      <main className={cn(
+        "transition-all duration-300 ease-in-out min-h-screen",
+        isCollapsed ? "md:pl-[68px]" : "md:pl-64"
+      )}>
         <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
       </main>
     </div>

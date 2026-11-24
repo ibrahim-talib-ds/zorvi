@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { AppShell } from "@/components/navigation/AppShell";
 import { Loader2 } from "lucide-react";
 import { useScrollKeeper } from "@/components/admin/ScrollKeeper";
 
@@ -32,5 +32,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isAdmin = user?.roles?.some((r: any) => r === "admin" || r === "super_admin" || r?.name === "admin" || r?.name === "super_admin");
   if (!isAuthenticated || !isAdmin) return null;
 
-  return <DashboardShell variant="admin">{children}</DashboardShell>;
+  return <AppShell variant="admin">{children}</AppShell>;
 }

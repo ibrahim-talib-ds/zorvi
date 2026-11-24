@@ -180,8 +180,8 @@ function ErrorBox({ onRetry }: { onRetry: () => void }) {
 }
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-4" aria-busy="true">
-      <div className="h-36 rounded-xl bg-white/[0.04]" />
+    <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-3" aria-busy="true">
+      <div className="h-28 rounded-xl bg-white/[0.04]" />
       <div className="mt-4 h-4 w-3/4 rounded bg-white/[0.04]" />
       <div className="mt-2 h-3 w-full rounded bg-white/[0.04]" />
       <div className="mt-1 h-3 w-2/3 rounded bg-white/[0.04]" />
@@ -201,7 +201,7 @@ const SIDE_LINKS = [
 ];
 function PageSidebar({ name, email }: { name: string; email: string }) {
   return (
-    <aside className="hidden w-60 flex-shrink-0 xl:block">
+    <aside className="hidden w-56 flex-shrink-0 xl:block">
       <nav className="sticky top-8 space-y-1">
         {SIDE_LINKS.map((l) => (
           <Link
@@ -348,8 +348,8 @@ function CourseCard({ c }: { c: Course }) {
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
-        <span className="font-display text-5xl font-extrabold text-[#A78BFA]/50">{initial}</span>
+      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+        <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -362,12 +362,12 @@ function CourseCard({ c }: { c: Course }) {
           />
         )}
         {isFeatured(c) && (
-          <span className="absolute left-3 top-3 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-3 top-3 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             ⭐ Featured
           </span>
         )}
         {discount !== null && discount > 0 && (
-          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             {discount}% OFF
           </span>
         )}
@@ -379,8 +379,8 @@ function CourseCard({ c }: { c: Course }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="truncate font-display text-lg font-bold text-white">{title}</h3>
+      <div className="flex flex-1 flex-col p-3">
+        <h3 className="truncate text-sm font-bold text-white sm:text-base">{title}</h3>
         {desc && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#929CBD]">{desc}</p>}
 
         <div className="mt-3 flex items-center gap-2">
@@ -438,7 +438,7 @@ function CourseCard({ c }: { c: Course }) {
 
         <Link
           href={courseHref(c)}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
         >
           View Course <ArrowRight size={14} />
         </Link>
@@ -598,11 +598,11 @@ export default function AcademyPage() {
           )}
         </p>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {state === "loading" &&
             Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
           {state === "error" && (
-            <div className="lg:col-span-3 2xl:col-span-4">
+            <div className="col-span-2 sm:col-span-3 md:col-span-4 xl:col-span-5 2xl:col-span-6">
               <ErrorBox onRetry={load} />
             </div>
           )}
@@ -649,7 +649,7 @@ export default function AcademyPage() {
                 <span className="text-[10px] font-medium text-[#7A8199]">(by rating — student counts not provided yet)</span>
               )}
             </h2>
-            <ol className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+            <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {popular.items.map((c, i) => {
                 const stu = studentsOf(c);
                 const r = ratingOf(c).rating;
