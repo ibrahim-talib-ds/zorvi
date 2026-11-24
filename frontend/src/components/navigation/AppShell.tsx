@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { SIDEBAR_W } from "./navigation.config";
 import { SidebarProvider, useSidebar } from "./SidebarProvider";
 import { AppSidebarCore } from "./AppSidebar";
+import { Footer } from "@/components/layout/Footer";
 import type { SidebarVariant } from "./navigation.types";
 
 export function AppShell({
@@ -31,13 +32,13 @@ export function AppShell({
 }
 
 function Shell({ variant, children }: { variant: SidebarVariant; children: ReactNode }) {
-  const { expanded, openMobile } = useSidebar();
+  const { expanded, openMobile, desktopWidth } = useSidebar();
   const { user } = useAuth() as { user?: { full_name?: string; email?: string } | null };
-  const sbVar = { "--sb-w": `${expanded ? SIDEBAR_W.expanded : SIDEBAR_W.collapsed}px` } as CSSProperties;
+  const sbVar = { "--sb-w": `${expanded ? desktopWidth : SIDEBAR_W.collapsed}px` } as CSSProperties;
   const homeHref = variant === "admin" ? "/admin" : "/account";
 
   return (
-    <div style={sbVar}>
+    <div style={sbVar} className="flex min-h-screen flex-col bg-bg-deep text-text-primary">
       <header className="fixed inset-x-0 top-0 z-30 flex h-16 items-center gap-3 border-b border-white/5 bg-[#0B0F1D]/95 px-4 backdrop-blur transition-[padding] duration-200 md:pl-[var(--sb-w)] motion-reduce:transition-none">
         <button
           type="button"
@@ -70,9 +71,13 @@ function Shell({ variant, children }: { variant: SidebarVariant; children: React
 
       <AppSidebarCore variant={variant} standaloneMobile={false} />
 
-      <main className="pt-16 transition-[padding] duration-200 md:pl-[var(--sb-w)] motion-reduce:transition-none">
+      <main className="flex-1 pt-16 transition-[padding] duration-200 md:pl-[var(--sb-w)] motion-reduce:transition-none">
         {children}
       </main>
+
+      <div className="mt-auto md:pl-[var(--sb-w)]">
+        <Footer />
+      </div>
     </div>
   );
 }

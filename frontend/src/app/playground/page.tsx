@@ -15,12 +15,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Play, RotateCcw, Terminal } from "lucide-react";
+import { GripHorizontal, GripVertical, Play, RotateCcw, Terminal, X } from "lucide-react";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 const PG_KEY = "IBRANT_PLAYGROUND_V1";
 const PG_LANG_KEY = "IBRANT_PLAYGROUND_LANGUAGES_V1";
+const PG_TABS_KEY = "IBRANT_PLAYGROUND_TABS_V2";
 
 const EXTRA_LANGUAGES = [
   { id: "python", label: "Python" },
@@ -77,6 +78,16 @@ interface LogLine {
   level: "cmd" | "out" | "log" | "info" | "warn" | "error" | "sys";
   text: string;
   t: string;
+  tabId?: string;
+}
+
+interface EditorTab {
+  id: string;
+  name: string;
+  language: string;
+  core?: boolean;
+  projectPath?: string;
+  handle?: FileSystemFileHandle;
 }
 
 interface ProjectNode {
@@ -405,10 +416,10 @@ const LEVEL_STYLE: Record<LogLine["level"], string> = {
   sys: "text-[#7A8199] italic",
 };
 
-const TABS: { key: keyof Code; label: string }[] = [
-  { key: "html", label: "HTML" },
-  { key: "css", label: "CSS" },
-  { key: "js", label: "JS" },
+const DEFAULT_EDITOR_TABS: EditorTab[] = [
+  { id: "html", name: "index.html", language: "html", core: true },
+  { id: "css", name: "style.css", language: "css", core: true },
+  { id: "javascript", name: "script.js", language: "javascript", core: true },
 ];
 
 // ----------------------------------------------------------------------------
@@ -469,11 +480,15 @@ export default function PlaygroundPage() {
   const [code, setCode] = useState<Code>(DEFAULT_CODE);
   const [activeLanguage, setActiveLanguage] = useState("html");
   const [extraCode, setExtraCode] = useState<Record<string, string>>({});
+  const [editorTabs, setEditorTabs] = useState<EditorTab[]>(DEFAULT_EDITOR_TABS);
+  const [activeTabId, setActiveTabId] = useState("html");
+  const [runningPythonTabs, setRunningPythonTabs] = useState<string[]>([]);
   const [srcDoc, setSrcDoc] = useState<string>(() => build(DEFAULT_CODE));
   const [autoRun, setAutoRun] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [input, setInput] = useState("");
-  const [pythonRunning, setPythonRunning] = useState(false);
+  const [editorShare, setEditorShare] = useState(56);
+  const [terminalHeight, setTerminalHeight] = useState(250);
 
   const [projectTree, setProjectTree] = useState<ProjectNode[]>([]);
   const [projectRootName, setProjectRootName] = useState("");
@@ -484,12 +499,15 @@ export default function PlaygroundPage() {
   const [projectBusy, setProjectBusy] = useState(false);
 
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const nextTabCounterRef = useRef(1);
+  const workspaceSplitRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelRef = useRef<HTMLElement | null>(null);
   const previewReadyRef = useRef(false);
   const requestIdRef = useRef(0);
   const pendingRequestsRef = useRef(new Map<number, number>());
-  const pythonWorkerRef = useRef<Worker | null>(null);
-  const pythonRunTimeoutRef = useRef<number | null>(null);
-  const pythonBusyRef = useRef(false);
+  const pythonWorkersRef = useRef(new Map<string, Worker>());
+  const pythonRunTimeoutsRef = useRef(new Map<string, number>());
+  const pythonBusyRef = useRef(new Set<string>());
 
   const clearPendingRequests = () => {
     for (const timer of pendingRequestsRef.current.values()) {
@@ -500,11 +518,122 @@ export default function PlaygroundPage() {
   const logsRef = useRef<HTMLDivElement | null>(null);
   const runRef = useRef<() => void>(() => {});
 
-  const pushLog = (level: LogLine["level"], text: string) => {
+  const pushLog = (level: LogLine["level"], text: string, tabId = activeTabId) => {
     setLogs((prev) => [
-      ...prev.slice(-299),
-      { level, text, t: new Date().toLocaleTimeString([], { hour12: false }) },
+      ...prev.slice(-499),
+      {
+        level,
+        text,
+        tabId,
+        t: new Date().toLocaleTimeString([], { hour12: false }),
+      },
     ]);
+  };
+
+  const activateEditorTab = (tab: EditorTab) => {
+    setActiveTabId(tab.id);
+    setActiveLanguage(tab.language);
+    setActiveProjectFile(tab.handle ?? null);
+    setActiveProjectPath(tab.projectPath ?? "");
+    setProjectFileContent(tab.handle ? extraCode[tab.id] ?? "" : "");
+  };
+
+  const createLanguageTab = (language: string) => {
+    if (!language) return;
+
+    const label = EXTRA_LANGUAGES.find((item) => item.id === language)?.label ?? language;
+    const number = editorTabs.filter((tab) => tab.language === language).length + 1;
+    const id = `${language}-${Date.now()}-${nextTabCounterRef.current++}`;
+    const tab: EditorTab = { id, name: `${label} ${number}`, language };
+
+    setEditorTabs((prev) => [...prev, tab]);
+    setExtraCode((prev) => ({
+      ...prev,
+      [id]: LANGUAGE_STARTERS[language] ?? "",
+    }));
+    setActiveTabId(id);
+    setActiveLanguage(language);
+    setActiveProjectFile(null);
+    setActiveProjectPath("");
+    setProjectFileContent("");
+  };
+
+  const stopPythonTab = (tabId: string, showMessage = true) => {
+    const worker = pythonWorkersRef.current.get(tabId);
+    worker?.terminate();
+    pythonWorkersRef.current.delete(tabId);
+
+    const timer = pythonRunTimeoutsRef.current.get(tabId);
+    if (timer !== undefined) window.clearTimeout(timer);
+    pythonRunTimeoutsRef.current.delete(tabId);
+
+    pythonBusyRef.current.delete(tabId);
+    setRunningPythonTabs((prev) => prev.filter((id) => id !== tabId));
+
+    if (showMessage) pushLog("warn", "Execution stopped.", tabId);
+  };
+
+  const closeEditorTab = (tabId: string) => {
+    const tab = editorTabs.find((item) => item.id === tabId);
+    if (!tab || tab.core) return;
+
+    stopPythonTab(tabId, false);
+    setEditorTabs((prev) => prev.filter((item) => item.id !== tabId));
+    setExtraCode((prev) => {
+      const next = { ...prev };
+      delete next[tabId];
+      return next;
+    });
+    setLogs((prev) => prev.filter((line) => line.tabId !== tabId));
+
+    if (activeTabId === tabId) {
+      const fallback = editorTabs.find((item) => item.core) ?? DEFAULT_EDITOR_TABS[0];
+      activateEditorTab(fallback);
+    }
+  };
+
+
+  const startEditorResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const element = workspaceSplitRef.current;
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    const move = (pointer: PointerEvent) => {
+      const ratio = ((pointer.clientX - rect.left) / rect.width) * 100;
+      setEditorShare(Math.round(Math.max(28, Math.min(72, ratio))));
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  };
+
+  const startTerminalResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = terminalHeight;
+    const panelHeight = rightPanelRef.current?.getBoundingClientRect().height ?? 700;
+    const maxHeight = Math.min(560, Math.max(180, panelHeight * 0.72));
+
+    const move = (pointer: PointerEvent) => {
+      const nextHeight = startHeight + startY - pointer.clientY;
+      setTerminalHeight(Math.round(Math.max(130, Math.min(maxHeight, nextHeight))));
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   };
 
   const openProjectFolder = async () => {
@@ -540,15 +669,33 @@ export default function PlaygroundPage() {
     if (node.kind !== "file") return;
 
     try {
+      const existing = editorTabs.find((tab) => tab.projectPath === node.path);
+      if (existing) {
+        activateEditorTab(existing);
+        return;
+      }
+
       const handle = node.handle as FileSystemFileHandle;
       const file = await handle.getFile();
       const content = await file.text();
+      const language = languageFromFileName(node.name);
+      const id = `project-${Date.now()}-${nextTabCounterRef.current++}`;
+      const tab: EditorTab = {
+        id,
+        name: node.name,
+        language,
+        projectPath: node.path,
+        handle,
+      };
 
+      setEditorTabs((prev) => [...prev, tab]);
+      setExtraCode((prev) => ({ ...prev, [id]: content }));
+      setActiveTabId(id);
+      setActiveLanguage(language);
       setActiveProjectFile(handle);
       setActiveProjectPath(node.path);
       setProjectFileContent(content);
-      setActiveLanguage(languageFromFileName(node.name));
-      pushLog("sys", `Opened file: ${node.path}`);
+      pushLog("sys", `Opened file: ${node.path}`, id);
     } catch (error) {
       pushLog("error", error instanceof Error ? error.message : String(error));
     }
@@ -567,88 +714,77 @@ export default function PlaygroundPage() {
     }
   };
 
-  const runPythonCode = (source: string) => {
-    if (pythonBusyRef.current) {
-      pushLog("warn", "Python is already running.");
+  const runPythonCode = (source: string, tabId: string) => {
+    if (pythonBusyRef.current.has(tabId)) {
+      pushLog("warn", "Python is already running in this tab.", tabId);
       return;
     }
 
-    const worker =
-      pythonWorkerRef.current ??
-      new Worker("/workers/ibrant-python.worker.js", {
-        type: "module",
-      });
+    let worker = pythonWorkersRef.current.get(tabId);
 
-    pythonWorkerRef.current = worker;
+    if (!worker) {
+      worker = new Worker("/workers/ibrant-python.worker.js", { type: "module" });
+      pythonWorkersRef.current.set(tabId, worker);
 
-    if (!worker.onmessage) {
       worker.onmessage = (event: MessageEvent<{ type?: string; text?: string }>) => {
         const data = event.data;
         if (!data) return;
 
         if (data.type === "stdout") {
-          pushLog("out", data.text ?? "");
+          pushLog("out", data.text ?? "", tabId);
         } else if (data.type === "stderr") {
-          pushLog("error", data.text ?? "");
+          pushLog("error", data.text ?? "", tabId);
         } else if (data.type === "result") {
-          pushLog("out", `=> ${data.text ?? ""}`);
+          pushLog("out", `=> ${data.text ?? ""}`, tabId);
         } else if (data.type === "error") {
-          pushLog("error", data.text || "Python execution failed.");
+          pushLog("error", data.text || "Python execution failed.", tabId);
         } else if (data.type === "complete") {
-          if (pythonRunTimeoutRef.current !== null) {
-            window.clearTimeout(pythonRunTimeoutRef.current);
-            pythonRunTimeoutRef.current = null;
-          }
-          pythonBusyRef.current = false;
-          setPythonRunning(false);
+          const timer = pythonRunTimeoutsRef.current.get(tabId);
+          if (timer !== undefined) window.clearTimeout(timer);
+          pythonRunTimeoutsRef.current.delete(tabId);
+          pythonBusyRef.current.delete(tabId);
+          setRunningPythonTabs((prev) => prev.filter((id) => id !== tabId));
         }
       };
 
       worker.onerror = (event) => {
-        if (pythonRunTimeoutRef.current !== null) {
-          window.clearTimeout(pythonRunTimeoutRef.current);
-          pythonRunTimeoutRef.current = null;
-        }
-        pythonBusyRef.current = false;
-        setPythonRunning(false);
-        worker.terminate();
-        if (pythonWorkerRef.current === worker) {
-          pythonWorkerRef.current = null;
-        }
-        pushLog("error", event.message || "Python worker failed.");
+        const timer = pythonRunTimeoutsRef.current.get(tabId);
+        if (timer !== undefined) window.clearTimeout(timer);
+        pythonRunTimeoutsRef.current.delete(tabId);
+        pythonBusyRef.current.delete(tabId);
+        setRunningPythonTabs((prev) => prev.filter((id) => id !== tabId));
+        worker?.terminate();
+        pythonWorkersRef.current.delete(tabId);
+        pushLog("error", event.message || "Python worker failed.", tabId);
       };
     }
 
-    pythonBusyRef.current = true;
-    setPythonRunning(true);
-    pushLog("sys", "Starting Python WebAssembly runtime…");
+    pythonBusyRef.current.add(tabId);
+    setRunningPythonTabs((prev) => prev.includes(tabId) ? prev : [...prev, tabId]);
 
-    pythonRunTimeoutRef.current = window.setTimeout(() => {
-      worker.terminate();
-      if (pythonWorkerRef.current === worker) {
-        pythonWorkerRef.current = null;
-      }
-      pythonRunTimeoutRef.current = null;
-      pythonBusyRef.current = false;
-      setPythonRunning(false);
-      pushLog("error", "Python stopped: execution exceeded 60 seconds.");
+    const timeout = window.setTimeout(() => {
+      stopPythonTab(tabId, false);
+      pushLog("error", "Python stopped: execution exceeded 60 seconds.", tabId);
     }, 60000);
+
+    pythonRunTimeoutsRef.current.set(tabId, timeout);
 
     try {
       worker.postMessage({ code: source });
     } catch (error) {
-      window.clearTimeout(pythonRunTimeoutRef.current);
-      pythonRunTimeoutRef.current = null;
-      pythonBusyRef.current = false;
-      setPythonRunning(false);
-      pushLog("error", error instanceof Error ? error.message : String(error));
+      stopPythonTab(tabId, false);
+      pushLog("error", error instanceof Error ? error.message : String(error), tabId);
     }
   };
 
   const run = async () => {
+    const activeSource = activeProjectFile
+      ? projectFileContent
+      : extraCode[activeTabId] ?? LANGUAGE_STARTERS[activeLanguage] ?? "";
+
     if (activeLanguage === "json") {
       try {
-        const parsed = JSON.parse(extraCode.json ?? "");
+        const parsed = JSON.parse(activeSource);
         pushLog("out", "Valid JSON.");
         pushLog("out", JSON.stringify(parsed, null, 2));
       } catch (error) {
@@ -659,7 +795,7 @@ export default function PlaygroundPage() {
 
     if (activeLanguage === "xml") {
       try {
-        const xml = extraCode.xml ?? "";
+        const xml = activeSource;
         if (!xml.trim()) throw new Error("XML is empty.");
 
         const parsed = new DOMParser().parseFromString(xml, "application/xml");
@@ -684,9 +820,7 @@ export default function PlaygroundPage() {
         pushLog("sys", "Transpiling TypeScript...");
 
         const ts = await import("typescript");
-        const source = activeProjectFile
-          ? projectFileContent
-          : extraCode.typescript ?? LANGUAGE_STARTERS.typescript ?? "";
+        const source = activeSource;
 
         const result = ts.transpileModule(source, {
           compilerOptions: {
@@ -736,11 +870,7 @@ export default function PlaygroundPage() {
     }
 
     if (activeLanguage === "python") {
-      runPythonCode(
-        activeProjectFile
-          ? projectFileContent
-          : extraCode.python ?? LANGUAGE_STARTERS.python ?? ""
-      );
+      runPythonCode(activeSource, activeTabId);
       return;
     }
 
@@ -760,10 +890,15 @@ export default function PlaygroundPage() {
 
   useEffect(() => {
     return () => {
-      if (pythonRunTimeoutRef.current !== null) {
-        window.clearTimeout(pythonRunTimeoutRef.current);
+      for (const timer of pythonRunTimeoutsRef.current.values()) {
+        window.clearTimeout(timer);
       }
-      pythonWorkerRef.current?.terminate();
+      for (const worker of pythonWorkersRef.current.values()) {
+        worker.terminate();
+      }
+      pythonRunTimeoutsRef.current.clear();
+      pythonWorkersRef.current.clear();
+      pythonBusyRef.current.clear();
     };
   }, []);
 
@@ -790,44 +925,99 @@ export default function PlaygroundPage() {
     return () => window.clearTimeout(t);
   }, [code]);
 
-  // Restore and save additional language buffers separately from the original web project.
+  // Restore scratch tabs. Project-file handles are intentionally session-only.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(PG_LANG_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as {
+      const savedTabsRaw = localStorage.getItem(PG_TABS_KEY);
+
+      if (savedTabsRaw) {
+        const saved = JSON.parse(savedTabsRaw) as {
+          tabs?: EditorTab[];
+          buffers?: Record<string, string>;
+          activeTabId?: string;
+        };
+        const validTabs = (saved.tabs ?? []).filter((tab) =>
+          tab &&
+          typeof tab.id === "string" &&
+          typeof tab.name === "string" &&
+          typeof tab.language === "string" &&
+          EXTRA_LANGUAGES.some((language) => language.id === tab.language) &&
+          !tab.handle &&
+          !tab.projectPath
+        );
+
+        setEditorTabs([...DEFAULT_EDITOR_TABS, ...validTabs]);
+        setExtraCode(saved.buffers ?? {});
+
+        const restoredActive = validTabs.find((tab) => tab.id === saved.activeTabId);
+        if (restoredActive) {
+          setActiveTabId(restoredActive.id);
+          setActiveLanguage(restoredActive.language);
+        }
+        return;
+      }
+
+      // Migrate previously saved one-buffer-per-language work.
+      const legacyRaw = localStorage.getItem(PG_LANG_KEY);
+      if (!legacyRaw) return;
+
+      const legacy = JSON.parse(legacyRaw) as {
         activeLanguage?: string;
         extraCode?: Record<string, string>;
       };
-      if (saved.extraCode && typeof saved.extraCode === "object") {
-        setExtraCode(saved.extraCode);
+      const restoredTabs: EditorTab[] = [];
+      const restoredBuffers: Record<string, string> = {};
+      let activeRestoredId = "";
+
+      Object.entries(legacy.extraCode ?? {}).forEach(([language, source], index) => {
+        if (!EXTRA_LANGUAGES.some((item) => item.id === language)) return;
+        const label = EXTRA_LANGUAGES.find((item) => item.id === language)?.label ?? language;
+        const id = `${language}-restored-${index + 1}`;
+        restoredTabs.push({ id, name: `${label} ${index + 1}`, language });
+        restoredBuffers[id] = source;
+        if (language === legacy.activeLanguage) activeRestoredId = id;
+      });
+
+      if (restoredTabs.length) {
+        setEditorTabs([...DEFAULT_EDITOR_TABS, ...restoredTabs]);
+        setExtraCode(restoredBuffers);
       }
-      const language = saved.activeLanguage;
-      if (
-        typeof language === "string" &&
-        (
-          language === "html" ||
-          language === "css" ||
-          language === "javascript" ||
-          EXTRA_LANGUAGES.some((item) => item.id === language)
-        )
-      ) {
-        setActiveLanguage(language);
+      if (activeRestoredId) {
+        setActiveTabId(activeRestoredId);
+        setActiveLanguage(legacy.activeLanguage ?? "html");
       }
-    } catch { /* ignore invalid local data */ }
+    } catch {
+      // Ignore invalid saved workspace data.
+    }
   }, []);
 
+  // Save independent scratch tabs and their buffers locally.
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       try {
-        localStorage.setItem(
-          PG_LANG_KEY,
-          JSON.stringify({ activeLanguage, extraCode })
+        const persistentTabs = editorTabs.filter((tab) => !tab.core && !tab.handle && !tab.projectPath);
+        const buffers = Object.fromEntries(
+          persistentTabs.map((tab) => [tab.id, extraCode[tab.id] ?? ""])
         );
-      } catch { /* ignore storage errors */ }
+        const saveActiveTabId = persistentTabs.some((tab) => tab.id === activeTabId)
+          ? activeTabId
+          : "html";
+
+        localStorage.setItem(
+          PG_TABS_KEY,
+          JSON.stringify({
+            tabs: persistentTabs.map(({ id, name, language }) => ({ id, name, language })),
+            buffers,
+            activeTabId: saveActiveTabId,
+          })
+        );
+      } catch {
+        // Ignore local storage quota or privacy-mode errors.
+      }
     }, 600);
-    return () => window.clearTimeout(t);
-  }, [activeLanguage, extraCode]);
+
+    return () => window.clearTimeout(timer);
+  }, [editorTabs, extraCode, activeTabId]);
 
   // auto-run
   useEffect(() => {
@@ -868,7 +1058,7 @@ export default function PlaygroundPage() {
           d.level === "warn" ||
           d.level === "error"
         ) {
-          pushLog(d.level, d.text);
+          pushLog(d.level, d.text, "web");
         }
         return;
       }
@@ -910,7 +1100,7 @@ export default function PlaygroundPage() {
     setInput("");
 
     if (src === "clear") {
-      setLogs([]);
+      setLogs((prev) => prev.filter((line) => line.tabId !== activeTabId));
       return;
     }
 
@@ -955,24 +1145,29 @@ export default function PlaygroundPage() {
   };
 
   const reset = () => {
-    if (pythonRunTimeoutRef.current !== null) {
-      window.clearTimeout(pythonRunTimeoutRef.current);
-      pythonRunTimeoutRef.current = null;
+    for (const timer of pythonRunTimeoutsRef.current.values()) {
+      window.clearTimeout(timer);
     }
-    pythonWorkerRef.current?.terminate();
-    pythonWorkerRef.current = null;
-    pythonBusyRef.current = false;
-    setPythonRunning(false);
+    for (const worker of pythonWorkersRef.current.values()) {
+      worker.terminate();
+    }
+    pythonRunTimeoutsRef.current.clear();
+    pythonWorkersRef.current.clear();
+    pythonBusyRef.current.clear();
+    setRunningPythonTabs([]);
     clearPendingRequests();
     previewReadyRef.current = false;
     setCode(DEFAULT_CODE);
     setActiveLanguage("html");
+    setEditorTabs(DEFAULT_EDITOR_TABS);
+    setActiveTabId("html");
     setExtraCode({});
     setSrcDoc(build(DEFAULT_CODE));
     setLogs([]);
     try {
       localStorage.removeItem(PG_KEY);
       localStorage.removeItem(PG_LANG_KEY);
+      localStorage.removeItem(PG_TABS_KEY);
     } catch { /* ignore */ }
     pushLog("sys", "Reset to the default example.");
   };
@@ -984,31 +1179,40 @@ export default function PlaygroundPage() {
     previewReadyRef.current = false;
     setCode(ex.code);
     setActiveLanguage("html");
+    setActiveTabId("html");
+    setActiveProjectFile(null);
+    setActiveProjectPath("");
+    setProjectFileContent("");
     setSrcDoc(build(ex.code));
     pushLog("sys", `Example loaded: ${ex.name}`);
   };
 
   const isWebLanguage = ["html", "css", "javascript"].includes(activeLanguage);
   const isWebPreviewLanguage = isWebLanguage || activeLanguage === "typescript";
-  const activeTab: keyof Code =
+  const activeTabKey: keyof Code =
     activeLanguage === "javascript" ? "js" :
     activeLanguage === "css" ? "css" : "html";
+  const activeEditorTab = editorTabs.find((tab) => tab.id === activeTabId) ?? DEFAULT_EDITOR_TABS[0];
+  const pythonRunning = runningPythonTabs.includes(activeTabId);
+  const visibleLogs = logs.filter((line) => !line.tabId || line.tabId === activeTabId || line.tabId === "web");
 
   const editorValue = activeProjectFile
     ? projectFileContent
     : isWebLanguage
-      ? code[activeTab]
-      : extraCode[activeLanguage] ?? LANGUAGE_STARTERS[activeLanguage] ?? "";
+      ? code[activeTabKey]
+      : extraCode[activeTabId] ?? LANGUAGE_STARTERS[activeLanguage] ?? "";
 
   const updateEditorValue = (value: string | undefined) => {
     const next = value ?? "";
 
     if (activeProjectFile) {
       setProjectFileContent(next);
+      setExtraCode((prev) => ({ ...prev, [activeTabId]: next }));
     } else if (isWebLanguage) {
-      setCode((prev) => ({ ...prev, [activeTab]: next }));
+      setCode((prev) => ({ ...prev, [activeTabKey]: next }));
     } else {
-      setExtraCode((prev) => ({ ...prev, [activeLanguage]: next }));
+      setExtraCode((prev) => ({ ...prev, [activeTabId]: next }));
+      if (activeProjectFile) setProjectFileContent(next);
     }
   };
 
@@ -1068,11 +1272,20 @@ export default function PlaygroundPage() {
           </button>
           <button
             disabled={pythonRunning}
-            onClick={() => { runRef.current(); pushLog("sys", "▶ Run"); }}
+            onClick={() => runRef.current()}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-2 text-xs font-bold text-white shadow-lg shadow-[#7559E8]/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play size={13} fill="currentColor" /> {pythonRunning ? "Running…" : "Run"} <span className="hidden opacity-70 sm:inline">Ctrl+↵</span>
           </button>
+          {activeLanguage === "python" && pythonRunning && (
+            <button
+              type="button"
+              onClick={() => stopPythonTab(activeTabId)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 px-3 py-2 text-xs font-semibold text-[#FF9AA6] transition hover:bg-[#F05D70]/20"
+            >
+              Stop
+            </button>
+          )}
         </div>
       </header>
 
@@ -1099,35 +1312,85 @@ export default function PlaygroundPage() {
             </div>
           </aside>
         )}
+        <div
+          ref={workspaceSplitRef}
+          className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 lg:h-full lg:grid-cols-[minmax(0,var(--pg-editor))_12px_minmax(0,var(--pg-preview))] lg:gap-0"
+          style={{
+            "--pg-editor": `${editorShare}fr`,
+            "--pg-preview": `${100 - editorShare}fr`,
+          } as React.CSSProperties}
+        >
         {/* editor */}
-        <section className="flex h-[420px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] lg:h-auto lg:flex-1">
-          <div className="flex shrink-0 items-center border-b border-white/5 bg-[#0A0E24] px-2">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setActiveLanguage(t.key === "js" ? "javascript" : t.key)}
-                className={`px-4 py-2.5 font-mono text-xs font-bold transition ${
-                  activeTab === t.key
-                    ? "border-b-2 border-[#A78BFA] text-white"
-                    : "border-b-2 border-transparent text-[#7A8199] hover:text-[#B7BDD0]"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+        <section className="flex h-[420px] min-w-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] lg:h-full lg:min-h-0">
+          <div className="flex min-h-[46px] shrink-0 items-center gap-1 overflow-x-auto border-b border-white/5 bg-[#0A0E24] px-2">
+            {editorTabs.map((tab) => {
+              const selected = tab.id === activeTabId;
+              const tabRunning = runningPythonTabs.includes(tab.id);
+
+              return (
+                <div
+                  key={tab.id}
+                  className={`group flex shrink-0 items-center gap-1 rounded-t-lg border-b-2 px-2 ${
+                    selected
+                      ? "border-[#A78BFA] bg-white/[0.06] text-white"
+                      : "border-transparent text-[#7A8199] hover:bg-white/[0.04] hover:text-[#D7DDF3]"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => activateEditorTab(tab)}
+                    title={tab.projectPath ?? tab.name}
+                    aria-current={selected ? "page" : undefined}
+                    className="flex min-h-9 items-center gap-2 py-1 font-mono text-xs"
+                  >
+                    {tabRunning && (
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#22C58B]" />
+                    )}
+                    <span>{tab.name}</span>
+                  </button>
+
+                  {!tab.core && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        closeEditorTab(tab.id);
+                      }}
+                      aria-label={`Close ${tab.name}`}
+                      title={`Close ${tab.name}`}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-[#687087] transition hover:bg-white/10 hover:text-white"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
             <select
-              value={isWebLanguage ? "" : activeLanguage}
-              onChange={(e) => setActiveLanguage(e.target.value)}
-              aria-label="Choose another programming language"
-              className="ml-2 max-w-[150px] rounded-md border border-white/10 bg-[#0B0F1D] px-2 py-1.5 text-[11px] text-[#B7BDD0] outline-none focus:border-[#7559E8]"
+              defaultValue=""
+              onChange={(event) => {
+                const language = event.currentTarget.value;
+                if (language) createLanguageTab(language);
+                event.currentTarget.value = "";
+              }}
+              aria-label="Create another language tab"
+              className="ml-2 min-w-[116px] rounded-md border border-white/10 bg-[#0B0F1D] px-2 py-1.5 text-[11px] text-[#B7BDD0] outline-none focus:border-[#7559E8]"
             >
-              <option value="" disabled>More languages…</option>
+              <option value="" disabled>+ New tab…</option>
               {EXTRA_LANGUAGES.map((language) => (
-                <option key={language.id} value={language.id}>{language.label}</option>
+                <option key={language.id} value={language.id}>
+                  {language.label}
+                </option>
               ))}
             </select>
-            <span className="ml-auto px-3 text-right font-mono text-[10px] text-[#3D4568]">
-              {isWebLanguage ? "Tab indents · Ctrl+↵ runs" : activeLanguage === "python" ? (pythonRunning ? "Python · Running…" : "Python · WebAssembly runner") : ["json", "xml"].includes(activeLanguage) ? "Validation available · Ctrl+↵" : "Syntax highlighting · saved locally"}
+
+            <span className="ml-auto hidden shrink-0 px-2 text-right font-mono text-[10px] text-[#687087] xl:inline">
+              {activeLanguage === "python"
+                ? pythonRunning ? "Python · Running" : "Python · WebAssembly"
+                : isWebLanguage ? "Web preview · Ctrl+↵"
+                : ["json", "xml"].includes(activeLanguage) ? "Validator · Ctrl+↵"
+                : "Editor · Ctrl+↵"}
             </span>
           </div>
           <div className="min-h-0 flex-1">
@@ -1142,7 +1405,6 @@ export default function PlaygroundPage() {
                   monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
                   () => {
                     runRef.current();
-                    pushLog("sys", "▶ Run");
                   }
                 );
               }}
@@ -1169,8 +1431,23 @@ export default function PlaygroundPage() {
           </div>
         </section>
 
+        <div
+          role="separator"
+          aria-label="Resize editor and preview"
+          aria-orientation="vertical"
+          aria-valuenow={editorShare}
+          onPointerDown={startEditorResize}
+          className="hidden min-w-0 cursor-col-resize items-center justify-center text-[#59617A] transition hover:text-[#A78BFA] lg:flex"
+          style={{ touchAction: "none" }}
+        >
+          <GripVertical size={17} />
+        </div>
+
         {/* preview + terminal */}
-        <section className="flex min-w-0 flex-col gap-4 lg:flex-1">
+        <section
+          ref={rightPanelRef}
+          className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0"
+        >
           <div className="flex h-[380px] flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] lg:h-auto lg:min-h-0 lg:flex-1">
             <div className="flex shrink-0 items-center gap-2 border-b border-white/5 bg-[#0A0E24] px-4 py-2.5">
               <span className="h-2.5 w-2.5 rounded-full bg-[#F05D70]" />
@@ -1209,16 +1486,31 @@ export default function PlaygroundPage() {
             )}
           </div>
 
-          <div className="flex h-64 shrink-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-[#0A0E24] lg:h-72">
+          <div
+            role="separator"
+            aria-label="Resize preview and terminal"
+            aria-orientation="horizontal"
+            aria-valuenow={terminalHeight}
+            onPointerDown={startTerminalResize}
+            className="flex h-3 shrink-0 cursor-row-resize items-center justify-center text-[#59617A] transition hover:text-[#A78BFA]"
+            style={{ touchAction: "none" }}
+          >
+            <GripHorizontal size={18} />
+          </div>
+
+          <div
+            style={{ height: terminalHeight }}
+            className="flex shrink-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-[#0A0E24]"
+          >
             <div className="flex shrink-0 items-center gap-2 border-b border-white/5 px-4 py-2.5">
               <Terminal size={13} className="text-[#A78BFA]" />
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Terminal — console output & REPL</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Terminal · {activeEditorTab.name}</span>
             </div>
             <div ref={logsRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-2 font-mono text-[12px] leading-relaxed">
-              {logs.length === 0 ? (
+              {visibleLogs.length === 0 ? (
                 <p className="italic text-[#3D4568]">Console output from your code shows up here. Type <span className="text-[#A78BFA]">help</span> below.</p>
               ) : (
-                logs.map((l, i) => (
+                visibleLogs.map((l, i) => (
                   <div key={i} className="flex gap-2">
                     <span className="shrink-0 text-[#3D4568]">{l.t}</span>
                     <span className={`whitespace-pre-wrap break-words ${LEVEL_STYLE[l.level]}`}>{l.text}</span>
@@ -1244,6 +1536,7 @@ export default function PlaygroundPage() {
             </form>
           </div>
         </section>
+        </div>
       </div>
 
       <p className="mx-auto mt-3 max-w-[1600px] text-center text-[11px] text-[#7A8199]">

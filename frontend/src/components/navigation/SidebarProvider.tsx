@@ -8,13 +8,21 @@
 // - Reads the saved-projects count ONCE per 1.5s tick (no repeated reads per item).
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { NAV_STORAGE_KEY, SAVED_KEY } from "./navigation.config";
+import {
+  NAV_STORAGE_KEY,
+  SAVED_KEY,
+  SIDEBAR_MIN_W,
+  SIDEBAR_MAX_W,
+  SIDEBAR_W,
+  SIDEBAR_WIDTH_STORAGE_KEY,
+} from "./navigation.config";
 import type { SidebarContextValue } from "./navigation.types";
 
 const SidebarCtx = createContext<SidebarContextValue | null>(null);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [expanded, setExpandedState] = useState(true);
+  const [desktopWidth, setDesktopWidthState] = useState<number>(SIDEBAR_W.expanded);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
 
@@ -24,12 +32,33 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       const v = localStorage.getItem(NAV_STORAGE_KEY);
       if (v === "collapsed") setExpandedState(false);
       else if (v === "expanded") setExpandedState(true);
+
+      const savedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY));
+      if (Number.isFinite(savedWidth) && savedWidth > 0) {
+        setDesktopWidthState(
+          Math.min(SIDEBAR_MAX_W, Math.max(SIDEBAR_MIN_W, savedWidth))
+        );
+      }
     } catch { /* private mode etc. - keep default */ }
   }, []);
 
   const setExpanded = (value: boolean) => {
     setExpandedState(value);
     try { localStorage.setItem(NAV_STORAGE_KEY, value ? "expanded" : "collapsed"); } catch { /* ignore */ }
+  };
+
+  const setDesktopWidth = (width: number) => {
+    const next = Math.min(
+      SIDEBAR_MAX_W,
+      Math.max(SIDEBAR_MIN_W, Math.round(width))
+    );
+
+    setDesktopWidthState(next);
+    try {
+      localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(next));
+    } catch {
+      // Keep the current width for this session if storage is unavailable.
+    }
   };
 
   const toggleExpanded = () => setExpanded(!expanded);
@@ -53,7 +82,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   return (
     <SidebarCtx.Provider
-      value={{ expanded, mobileOpen, savedCount, toggleExpanded, setExpanded, openMobile, closeMobile }}
+      value={{ expanded, mobileOpen, savedCount, desktopWidth, setDesktopWidth, toggleExpanded, setExpanded, openMobile, closeMobile }}
     >
       {children}
     </SidebarCtx.Provider>

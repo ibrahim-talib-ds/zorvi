@@ -15,6 +15,9 @@ import type { NavigationGroup, NavigationItem, SidebarVariant } from "./navigati
 // Kept at the project's current rail widths so existing content offsets keep
 // working. The spec's 260/76 is a one-line change here if you want it.
 export const SIDEBAR_W = { expanded: 256, collapsed: 72 } as const;
+export const SIDEBAR_MIN_W = 220;
+export const SIDEBAR_MAX_W = 420;
+export const SIDEBAR_WIDTH_STORAGE_KEY = "IBRANT_NAV_SIDEBAR_WIDTH";
 
 // ---------------------------------------------------------------- persistence
 export const NAV_STORAGE_KEY = "IBRANT_NAV_SIDEBAR"; // "expanded" | "collapsed"

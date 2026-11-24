@@ -35,6 +35,8 @@ export type SidebarContextValue = {
   expanded: boolean;
   mobileOpen: boolean;
   savedCount: number;
+  desktopWidth: number;
+  setDesktopWidth: (width: number) => void;
   toggleExpanded: () => void;
   setExpanded: (value: boolean) => void;
   openMobile: () => void;
