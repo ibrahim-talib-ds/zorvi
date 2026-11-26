@@ -615,7 +615,7 @@ export default function PlaygroundPage() {
   const [localAgentToken, setLocalAgentToken] = useState("");
   const [localAgentWorkspace, setLocalAgentWorkspace] = useState("");
   const [editorShare, setEditorShare] = useState(56);
-  const [terminalHeight, setTerminalHeight] = useState(250);
+  const [terminalHeight, setTerminalHeight] = useState(320);
 
   const [projectTree, setProjectTree] = useState<ProjectNode[]>([]);
   const [projectRootName, setProjectRootName] = useState("");
@@ -1343,7 +1343,7 @@ export default function PlaygroundPage() {
       const saved = JSON.parse(localStorage.getItem("IBRANT_PLAYGROUND_LAYOUT_V1") || "null");
       if (saved && typeof saved === "object") {
         if (Number.isFinite(saved.editorShare)) setEditorShare(Math.max(28, Math.min(72, saved.editorShare)));
-        if (Number.isFinite(saved.terminalHeight)) setTerminalHeight(Math.max(130, Math.min(560, saved.terminalHeight)));
+        if (Number.isFinite(saved.terminalHeight)) setTerminalHeight(Math.max(260, Math.min(560, saved.terminalHeight)));
         if (typeof saved.autoRun === "boolean") setAutoRun(saved.autoRun);
       }
     } catch { /* Ignore invalid preferences. */ }
@@ -1589,9 +1589,21 @@ export default function PlaygroundPage() {
 
     const isNativeProjectCommand = cloudProjectPaths.some((path) => path.toLowerCase() === "pubspec.yaml")
       && cloudProjectPaths.some((path) => path.toLowerCase() === "lib/main.dart");
-    const isShellLanguage = !["html", "css", "javascript", "typescript", "python", "json", "xml"].includes(activeLanguage);
-    if (localAgentToken && (isNativeProjectCommand || isShellLanguage)) {
+    if (isNativeProjectCommand || isShellLanguage) {
+      if (!localAgentToken) {
+        pushLog("error", "Local runtime is NOT connected. Start tools/ibrant-local-agent/agent.py on your computer, then click Connect local runtime and paste its one-time token. No command was executed.");
+        return;
+      }
       try {
+        const health = await fetch("http://127.0.0.1:4317/health", {
+          headers: { Authorization: `Bearer ${localAgentToken}` },
+        });
+        if (!health.ok) {
+          localStorage.removeItem("IBRANT_LOCAL_AGENT_TOKEN_V1");
+          setLocalAgentToken("");
+          setLocalAgentWorkspace("");
+          throw new Error("Local runtime authentication failed. Reconnect using the current token printed by the agent.");
+        }
         const response = await fetch("http://127.0.0.1:4317/run", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${localAgentToken}` },
@@ -1688,6 +1700,7 @@ export default function PlaygroundPage() {
       && cloudProjectPaths.some((path) => path.toLowerCase() === "lib/main.dart"),
   );
   const isWebLanguage = ["html", "css", "javascript"].includes(activeLanguage);
+  const isShellLanguage = !["html", "css", "javascript", "typescript", "python", "json", "xml"].includes(activeLanguage);
   const isWebPreviewLanguage = isWebLanguage || activeLanguage === "typescript";
   const activeTabKey: keyof Code =
     activeLanguage === "javascript" ? "js" :
@@ -2067,6 +2080,9 @@ flutter run</code></pre>
             <div className="flex shrink-0 items-center gap-2 border-b border-white/5 px-4 py-2.5">
               <Terminal size={13} className="text-[#A78BFA]" />
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Terminal · {activeEditorTab.name}</span>
+              <span className={`ml-auto rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-wide ${localAgentToken ? "bg-emerald-400/10 text-emerald-300" : "bg-amber-400/10 text-amber-300"}`}>
+                {localAgentToken ? `Local · ${localAgentWorkspace || "saved token"}` : "Runtime disconnected"}
+              </span>
             </div>
             <div ref={logsRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-2 font-mono text-[12px] leading-relaxed">
               {visibleLogs.length === 0 ? (
@@ -2088,12 +2104,12 @@ flutter run</code></pre>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={localAgentToken ? "Enter a shell command (e.g. flutter pub get)" : "Type JavaScript and press Enter — try document.title"}
+                placeholder={isFlutterProject || isShellLanguage ? "Shell command · connect local runtime first" : "JavaScript console · type help for commands"}
                 aria-label="Terminal input"
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                className="min-w-0 flex-1 bg-transparent font-mono text-[13px] text-[#D7DDF3] placeholder-[#3D4568] outline-none"
+                className="min-w-0 flex-1 bg-transparent font-mono text-[13px] text-[#D7DDF3] placeholder-[#65708F] outline-none"
               />
             </form>
           </div>
