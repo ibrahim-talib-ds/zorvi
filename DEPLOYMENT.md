@@ -12,13 +12,9 @@ docker build -t zorvi-api ./backend
 
 Configure the backend environment on the hosting platform. Required settings include `DATABASE_URL`, `DATABASE_URL_SYNC`, and a strong `SECRET_KEY`. Set `FRONTEND_URL` and `CORS_ORIGINS` to the deployed frontend origin(s). AI build uses server-only `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`, and `AI_REQUEST_TIMEOUT_SECONDS`; the Groq starting configuration is documented in `backend/AI_BUILD_SETUP.md`.
 
-Run migrations as a release step before serving traffic:
+The backend startup script (`backend/start.sh`) runs `alembic upgrade head` against `DATABASE_URL_SYNC` before launching Uvicorn. The Docker image uses this script automatically. For a Render native-Python service with the Root Directory set to `backend`, set the Start Command to `sh ./start.sh`; this also works on the Free plan and does not require Dashboard Shell. Keep `DATABASE_URL_SYNC` pointed at the same production database used by the API. The migration command is safe to repeat: Alembic applies only revisions that are not yet recorded.
 
-```sh
-cd backend && alembic upgrade head
-```
-
-The API listens on port `8000` in the container and exposes `/health`. Do not put backend credentials in the frontend environment.
+The API listens on the platform-provided `PORT` (default `8000`) and exposes `/health`. Do not put backend credentials in the frontend environment.
 
 ## Frontend
 
