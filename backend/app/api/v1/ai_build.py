@@ -12,6 +12,7 @@ import uuid
 from email.utils import parsedate_to_datetime
 from datetime import datetime, timezone
 from typing import Annotated
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -88,7 +89,28 @@ def _provider_config() -> tuple[str, str, str, bool]:
         raise HTTPException(status_code=503, detail="AI is not configured yet. Add the provider's API key to the backend environment. The key must never be placed in frontend code.")
     if not base_url or not model:
         raise HTTPException(status_code=503, detail="AI provider base URL and model are required.")
-    return base_url.rstrip("/"), api_key, model, bearer
+    normalized_base_url = base_url.rstrip("/")
+    # Keep OpenRouter strictly on explicitly free model IDs. This prevents an
+    # accidental model-name edit from routing ZORVI requests to paid models.
+    if urlparse(normalized_base_url).hostname == "openrouter.ai":
+        if not model.endswith(":free"):
+            raise HTTPException(status_code=503, detail="OpenRouter is restricted to explicitly free models. Set AI_MODEL to a model ending in :free.")
+        model = _effective_openrouter_model(normalized_base_url, model)
+    return normalized_base_url, api_key, model, bearer
+
+
+def _effective_openrouter_model(base_url: str, configured_model: str) -> str:
+    """Replace the known ERNIE empty-response source with a verified free model."""
+    if (
+        urlparse((base_url or "").rstrip("/")).hostname == "openrouter.ai"
+        and configured_model == "baidu/ernie-5.5-flash-preview:free"
+    ):
+        # ERNIE 5.5 Flash does not support a thinking budget. Its thinking
+        # tokens consume max_tokens and can leave no assistant content on long
+        # code-generation prompts. Ling 3.2 Flash is a $0 :free model, supports
+        # structured outputs, and allows reasoning to be disabled per request.
+        return "inclusionai/ling-3.2-flash:free"
+    return configured_model
 
 
 def _provider_status() -> dict:
@@ -104,6 +126,7 @@ def _provider_status() -> dict:
     model = settings.AI_MODEL or default_model
     base_url = settings.AI_BASE_URL or default_url
     if provider == "openai-compatible":
+        model = _effective_openrouter_model(base_url, model)
         configured = bool(model and base_url and (settings.AI_API_KEY or "").strip())
     else:
         configured = bool(model and base_url and (provider == "ollama" or (settings.AI_API_KEY or "").strip()))
@@ -113,7 +136,15 @@ def _provider_status() -> dict:
         "model": model or None,
         "mode": "automatic-safe-file-build",
         "secrets_stay_on_server": True,
-        "free_tier": provider in {"gemini", "groq", "ollama"},
+        "free_tier": (
+            provider in {"gemini", "groq", "ollama"}
+            or (
+                provider == "openai-compatible"
+                and urlparse((base_url or "").rstrip("/")).hostname == "openrouter.ai"
+                and bool(model)
+                and model.endswith(":free")
+            )
+        ),
         "billing_enabled_by_this_feature": False,
     }
 
@@ -218,6 +249,50 @@ def _is_json_generation_error(response: httpx.Response) -> bool:
     ))
 
 
+def _extract_chat_content(payload: object) -> str | None:
+    """Extract text from common OpenAI-compatible chat response shapes."""
+    if not isinstance(payload, dict):
+        return None
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        return None
+    message = choices[0].get("message")
+    if not isinstance(message, dict):
+        return None
+    content = message.get("content")
+    if isinstance(content, str):
+        return content if content.strip() else None
+    if isinstance(content, list):
+        text_parts = []
+        for part in content:
+            if not isinstance(part, dict):
+                continue
+            text = part.get("text")
+            if isinstance(text, str):
+                text_parts.append(text)
+        combined = "".join(text_parts)
+        return combined if combined.strip() else None
+    return None
+
+
+def _response_shape_metadata(payload: object) -> tuple[object, object, list[str], object, object]:
+    """Return safe response diagnostics; never include prompts or model content."""
+    choices = payload.get("choices") if isinstance(payload, dict) else None
+    first_choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
+    message = first_choice.get("message") if isinstance(first_choice, dict) else {}
+    usage = payload.get("usage") if isinstance(payload, dict) else {}
+    usage = usage if isinstance(usage, dict) else {}
+    completion_details = usage.get("completion_tokens_details")
+    completion_details = completion_details if isinstance(completion_details, dict) else {}
+    return (
+        len(choices) if isinstance(choices, list) else "missing",
+        first_choice.get("finish_reason") if isinstance(first_choice, dict) else None,
+        sorted(message.keys()) if isinstance(message, dict) else [],
+        usage.get("completion_tokens"),
+        completion_details.get("reasoning_tokens"),
+    )
+
+
 def _parse_json_content(content: str) -> dict:
     candidate = content.strip()
     candidate = re.sub(r"^\s*```(?:json)?\s*", "", candidate, flags=re.IGNORECASE)
@@ -259,10 +334,17 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
             {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
         ],
     }
-    if provider in {"gemini", "ollama"}:
+    # OpenRouter chat completions use the standard max_tokens field. The
+    # effective Ling model below has thinking disabled to reserve this budget
+    # for visible structured output.
+    if provider in {"gemini", "ollama"} or urlparse(base_url).hostname == "openrouter.ai":
         request_body["max_tokens"] = max_tokens
     else:
         request_body["max_completion_tokens"] = max_tokens
+    if urlparse(base_url).hostname == "openrouter.ai" and model == "inclusionai/ling-3.2-flash:free":
+        # Keep the completion budget for visible JSON/code instead of hidden
+        # reasoning. This model explicitly supports disabling thinking.
+        request_body["reasoning"] = {"effort": "none"}
 
     headers = {"Content-Type": "application/json"}
     if use_bearer:
@@ -288,6 +370,13 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
                         raise HTTPException(status_code=502, detail="The AI provider is temporarily unreachable. Your project files are safe; retry this build step when the provider is available.") from exc
                     await asyncio.sleep(min(2 ** attempt, AI_PROVIDER_MAX_RETRY_WAIT_SECONDS))
                     continue
+
+                if response.status_code == 429 and urlparse(base_url).hostname == "openrouter.ai" and not response.headers.get("retry-after"):
+                    # OpenRouter free-tier quota exhaustion often has no
+                    # Retry-After. Repeating the same call only burns more
+                    # daily free requests, so surface the limit immediately.
+                    logger.warning("OpenRouter returned HTTP 429 without a retry window; stopping automatic retries")
+                    break
 
                 if response.status_code == 429 or 500 <= response.status_code <= 599:
                     if attempt + 1 < AI_PROVIDER_MAX_ATTEMPTS:
@@ -346,9 +435,45 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
         except httpx.HTTPError as exc:
             raise HTTPException(status_code=502, detail="The AI provider could not complete the final JSON recovery attempt. Your project files are safe; retry this step.") from exc
 
+    # Some OpenRouter model responses complete with HTTP 200 but omit the
+    # assistant content when JSON-mode formatting is combined with reasoning.
+    # Retry that shape once without response_format; JSON parsing/validation
+    # remains mandatory, and no other provider or model is substituted.
+    if provider == "openai-compatible" and urlparse(base_url).hostname == "openrouter.ai" and response.status_code < 400:
+        try:
+            initial_payload = response.json()
+        except ValueError:
+            initial_payload = None
+        if _extract_chat_content(initial_payload) is None:
+            choices_count, finish_reason, message_keys, completion_tokens, reasoning_tokens = _response_shape_metadata(initial_payload)
+            logger.warning(
+                "OpenRouter returned no assistant text; retrying once without JSON mode (choices=%s, finish_reason=%s, message_keys=%s, completion_tokens=%s, reasoning_tokens=%s)",
+                choices_count, finish_reason, message_keys, completion_tokens, reasoning_tokens,
+            )
+            fallback_body = dict(request_body)
+            fallback_body.pop("response_format", None)
+            fallback_body["messages"] = list(request_body["messages"])
+            fallback_body["messages"][0] = {
+                "role": "system",
+                "content": system_prompt + "\n\nOUTPUT REQUIREMENT: Return exactly one valid JSON object and no markdown or surrounding prose.",
+            }
+            try:
+                async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
+                    response = await client.post(
+                        f"{base_url}/chat/completions",
+                        headers=headers,
+                        json=fallback_body,
+                    )
+            except httpx.TimeoutException as exc:
+                raise HTTPException(status_code=504, detail="The AI provider timed out while recovering an empty response. Your project files are safe; retry this step shortly.") from exc
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail="The AI provider could not recover its empty response. Your project files are safe; retry this step.") from exc
+
     if response.status_code in (401, 403):
         raise HTTPException(status_code=502, detail="The AI provider rejected its API key. Check the backend AI_API_KEY setting.")
     if response.status_code == 429:
+        if urlparse(base_url).hostname == "openrouter.ai":
+            raise HTTPException(status_code=429, detail="The OpenRouter free-model quota or temporary capacity is exhausted. No paid model was used. Your project and completed steps are saved; retry after the provider limit resets.")
         retry_after = response.headers.get("retry-after")
         wait_hint = f" Provider retry window: {retry_after}." if retry_after else " Wait for the provider quota to reset."
         raise HTTPException(status_code=429, detail="The AI provider quota is currently exhausted after automatic retries." + wait_hint + " Your project and completed steps are saved; use Retry failed step when capacity is available.")
@@ -372,13 +497,16 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
         raise HTTPException(status_code=502, detail=detail)
     try:
         payload = response.json()
-        content = payload["choices"][0]["message"]["content"]
-        if isinstance(content, list):
-            content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
-        if not isinstance(content, str):
-            raise ValueError("missing content")
-    except (ValueError, KeyError, IndexError, TypeError) as exc:
-        raise HTTPException(status_code=502, detail="The AI provider returned an empty or unsupported response.") from exc
+    except ValueError:
+        payload = None
+    content = _extract_chat_content(payload)
+    if content is None:
+        choices_count, finish_reason, message_keys, completion_tokens, reasoning_tokens = _response_shape_metadata(payload)
+        logger.warning(
+            "AI provider response had no supported assistant content after recovery (choices=%s, finish_reason=%s, message_keys=%s, completion_tokens=%s, reasoning_tokens=%s)",
+            choices_count, finish_reason, message_keys, completion_tokens, reasoning_tokens,
+        )
+        raise HTTPException(status_code=502, detail="The AI provider returned an empty or unsupported response. Retry the step; your saved project files are safe.")
     return _parse_json_content(content)
 
 

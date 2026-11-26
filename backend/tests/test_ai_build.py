@@ -196,3 +196,167 @@ def test_groq_json_generation_error_is_detected_for_failed_generation():
 def test_non_json_provider_error_does_not_trigger_output_fallback():
     response = ai_build.httpx.Response(400, json={"error": {"message": "Invalid model name"}})
     assert ai_build._is_json_generation_error(response) is False
+
+
+def test_openrouter_free_model_is_configured_and_reported_free(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="baidu/ernie-5.5-flash-preview:free",
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+    base_url, api_key, model, bearer = ai_build._provider_config()
+    assert base_url == "https://openrouter.ai/api/v1"
+    assert api_key == "test-key"
+    assert model == "inclusionai/ling-3.2-flash:free"
+    assert bearer is True
+    status = ai_build._provider_status()
+    assert status["configured"] is True
+    assert status["model"] == "inclusionai/ling-3.2-flash:free"
+    assert status["free_tier"] is True
+
+
+def test_openrouter_keeps_other_explicit_free_models(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="inclusionai/ling-3.2-flash:free",
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+    _, _, model, _ = ai_build._provider_config()
+    assert model == "inclusionai/ling-3.2-flash:free"
+
+
+def test_ernie_is_replaced_only_for_openrouter():
+    assert ai_build._effective_openrouter_model(
+        "https://openrouter.ai/api/v1", "baidu/ernie-5.5-flash-preview:free"
+    ) == "inclusionai/ling-3.2-flash:free"
+    assert ai_build._effective_openrouter_model(
+        "https://api.groq.com/openai/v1", "baidu/ernie-5.5-flash-preview:free"
+    ) == "baidu/ernie-5.5-flash-preview:free"
+
+
+def test_openrouter_rejects_non_free_model(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="some/provider-paid-model",
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+    with pytest.raises(HTTPException) as error:
+        ai_build._provider_config()
+    assert error.value.status_code == 503
+    assert "restricted to explicitly free models" in error.value.detail
+
+
+def test_extract_chat_content_supports_text_part_arrays():
+    assert ai_build._extract_chat_content({
+        "choices": [{"message": {"content": [{"type": "text", "text": "{\"ok\":"}, {"type": "text", "text": " true}"}]}}]
+    }) == '{"ok": true}'
+
+
+def test_extract_chat_content_rejects_missing_or_blank_text():
+    assert ai_build._extract_chat_content({"choices": [{"message": {"content": None}}]}) is None
+    assert ai_build._extract_chat_content({"choices": [{"message": {"content": "  "}}]}) is None
+    assert ai_build._extract_chat_content({"choices": []}) is None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_openrouter_retries_empty_content_without_json_mode(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="baidu/ernie-5.5-flash-preview:free",
+        AI_REQUEST_TIMEOUT_SECONDS=10,
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def json(self):
+            return self.payload
+
+    class FakeAsyncClient:
+        requests = []
+        responses = [
+            FakeResponse({"choices": [{"finish_reason": "length", "message": {"role": "assistant", "content": None, "reasoning": "internal reasoning"}}], "usage": {"completion_tokens": 10000, "completion_tokens_details": {"reasoning_tokens": 9999}}}),
+            FakeResponse({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": '{"ok": true}'}}]}),
+        ]
+
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+        async def post(self, url, headers, json):
+            self.requests.append(json)
+            return self.responses.pop(0)
+
+    monkeypatch.setattr(ai_build.httpx, "AsyncClient", FakeAsyncClient)
+    result = await ai_build._ask_model("Return JSON", {"prompt": "test"}, max_tokens=42)
+
+    assert result == {"ok": True}
+    assert len(FakeAsyncClient.requests) == 2
+    assert FakeAsyncClient.requests[0]["model"] == "inclusionai/ling-3.2-flash:free"
+    assert FakeAsyncClient.requests[0]["response_format"] == {"type": "json_object"}
+    assert FakeAsyncClient.requests[0]["reasoning"] == {"effort": "none"}
+    assert FakeAsyncClient.requests[1]["model"] == "inclusionai/ling-3.2-flash:free"
+    assert "response_format" not in FakeAsyncClient.requests[1]
+    assert FakeAsyncClient.requests[1]["max_tokens"] == 42
+    assert FakeAsyncClient.requests[1]["reasoning"] == {"effort": "none"}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_openrouter_quota_429_without_retry_after_is_not_retried(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="baidu/ernie-5.5-flash-preview:free",
+        AI_REQUEST_TIMEOUT_SECONDS=10,
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+
+    class FakeResponse:
+        status_code = 429
+        headers = {}
+
+        def json(self):
+            return {"error": {"message": "Free model daily limit reached"}}
+
+    class FakeAsyncClient:
+        request_count = 0
+
+        def __init__(self, timeout):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+        async def post(self, url, headers, json):
+            type(self).request_count += 1
+            return FakeResponse()
+
+    monkeypatch.setattr(ai_build.httpx, "AsyncClient", FakeAsyncClient)
+    with pytest.raises(HTTPException) as error:
+        await ai_build._ask_model("Return JSON", {"prompt": "test"})
+
+    assert error.value.status_code == 429
+    assert "No paid model was used" in error.value.detail
+    assert FakeAsyncClient.request_count == 1
