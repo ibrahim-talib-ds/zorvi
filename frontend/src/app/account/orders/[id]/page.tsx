@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
-  Loader2, ArrowLeft, Package, Download, CheckCircle2, Clock, AlertCircle,
+  Loader2, ArrowLeft, Package, Download, CheckCircle2, Clock, AlertCircle, XCircle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
@@ -12,8 +12,10 @@ import { API_BASE } from "@/lib/api/client";
 interface OrderItem {
   id: string;
   product_title: string;
+  product_slug: string;
   package_name: string;
   price_cents: number;
+  currency: string;
 }
 
 interface Order {
@@ -51,8 +53,10 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [downloads, setDownloads] = useState<IssuedDownload[]>([]);
   const [requesting, setRequesting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -80,6 +84,7 @@ export default function OrderDetailPage() {
   const requestDownloads = async () => {
     if (!token) return;
     setRequesting(true);
+    setDownloadError(null);
     try {
       const res = await fetch(`${API_BASE}/orders/${orderId}/downloads`, {
         method: "POST",
@@ -92,20 +97,52 @@ export default function OrderDetailPage() {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setDownloads(data);
+      if (!Array.isArray(data) || data.length === 0) {
+        setDownloadError("No downloadable files are attached to this package yet. Contact the seller or IBRANT support.");
+      }
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to issue downloads");
+      setDownloadError(e instanceof Error ? e.message : "Failed to issue downloads");
     } finally {
       setRequesting(false);
     }
   };
 
   const downloadFile = (tokenValue: string) => {
-    window.open(`${API_BASE}/downloads/${tokenValue}`, "_blank");
+    window.open(`${API_BASE}/downloads/${tokenValue}`, "_blank", "noopener,noreferrer");
+  };
+
+  const cancelOrder = async () => {
+    if (!token || !order || !confirm("Cancel this order? This action cannot be undone.")) return;
+    setCancelling(true);
+    setError(null);
+    try {
+      const res = await fetch(API_BASE + "/orders/" + orderId + "/cancel", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || "Unable to cancel this order.");
+      }
+      setOrder(await res.json());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to cancel this order.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const money = (cents: number, currency: string) => {
+    try {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD", maximumFractionDigits: 2 }).format(cents / 100);
+    } catch {
+      return (currency || "USD") + " " + (cents / 100).toFixed(2);
+    }
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0B0F1D] flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="animate-spin text-[#A78BFA]" size={32} />
       </div>
     );
@@ -113,8 +150,8 @@ export default function OrderDetailPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#0B0F1D] py-16">
-      <div className="mx-auto max-w-3xl px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-4xl">
         <Link
           href="/account/orders"
           className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -155,9 +192,9 @@ export default function OrderDetailPage() {
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-[#7A8199] uppercase tracking-wider">Total paid</div>
+                  <div className="text-xs text-[#7A8199] uppercase tracking-wider">Order total</div>
                   <div className="font-display text-3xl font-extrabold text-white">
-                    ${(order.total_cents / 100).toFixed(0)}
+                    {money(order.total_cents, order.currency)}
                   </div>
                 </div>
               </div>
@@ -168,15 +205,27 @@ export default function OrderDetailPage() {
                   {order.items.map((item) => (
                     <div key={item.id} className="flex justify-between items-start text-sm">
                       <div>
-                        <div className="text-white font-medium">{item.product_title}</div>
+                        <Link href={"/marketplace/" + item.product_slug} className="font-medium text-white transition hover:text-[#A78BFA]">{item.product_title}</Link>
                         <div className="text-xs text-[#7A8199]">{item.package_name} package</div>
                       </div>
-                      <span className="font-mono text-[#B7BDD0]">${(item.price_cents / 100).toFixed(0)}</span>
+                      <span className="font-mono text-[#B7BDD0]">{money(item.price_cents, item.currency || order.currency)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+
+            {(order.status === "pending" || order.status === "awaiting_verification") && (
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+                <p className="text-xs text-[#9299AE]">You can cancel this order before payment approval.</p>
+                <button onClick={cancelOrder} disabled={cancelling} className="inline-flex items-center gap-2 rounded-lg border border-[#F05D70]/25 px-3 py-2 text-xs font-semibold text-[#F58B98] transition hover:bg-[#F05D70]/10 disabled:opacity-50">
+                  {cancelling ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  {cancelling ? "Cancelling..." : "Cancel order"}
+                </button>
+              </div>
+            )}
+
+            {error && <div role="alert" className="mb-5 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/[0.06] px-4 py-3 text-sm text-[#F58B98]">{error}</div>}
 
             {order.status === "pending" && (
               <div className="rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/5 p-6 mb-6">
@@ -210,17 +259,19 @@ export default function OrderDetailPage() {
             )}
 
             {order.status === "paid" && (
+              <>
               <div className="rounded-2xl border border-[#22C58B]/30 bg-[#22C58B]/5 p-6 mb-6">
                 <div className="flex items-start gap-3 mb-4">
                   <CheckCircle2 size={20} className="text-[#22C58B] flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-display font-bold text-white mb-2">Ready to download</h3>
+                    <h3 className="font-display font-bold text-white mb-2">Your project package is ready</h3>
                     <p className="text-sm text-[#B7BDD0]">
-                      Click the button below to generate download links. Each link is valid for 15 minutes and can be used once.
+                      Generate a secure ZIP download for each purchased package. Each download link is valid for 15 minutes and can be used once.
                     </p>
                   </div>
                 </div>
 
+                {downloadError && <div role="alert" className="mb-4 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/10 px-4 py-3 text-sm text-[#FF9AA6]">{downloadError}</div>}
                 {downloads.length === 0 ? (
                   <button
                     onClick={requestDownloads}
@@ -235,7 +286,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <Download size={16} />
-                        Generate Download Links
+                        Generate ZIP download
                       </>
                     )}
                   </button>
@@ -261,7 +312,7 @@ export default function OrderDetailPage() {
                           onClick={() => downloadFile(d.token)}
                           className="inline-flex items-center gap-2 rounded-lg bg-[#22C58B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3FD9A2] transition"
                         >
-                          <Download size={14} /> Download
+                          <Download size={14} /> Download ZIP
                         </button>
                       </div>
                     ))}
@@ -274,6 +325,18 @@ export default function OrderDetailPage() {
                   </div>
                 )}
               </div>
+              <div className="mt-4 rounded-2xl border border-[#7559E8]/25 bg-[#7559E8]/[0.06] p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-display font-bold text-white">Next step: open your project</h3>
+                    <p className="mt-1 text-sm leading-6 text-[#B7BDD0]">Download the ZIP, extract it on your computer, then open the Playground and choose Open Folder to load the extracted project files.</p>
+                  </div>
+                  <Link href="/playground" className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#8B70FF]">Open Playground <ArrowLeft size={14} className="rotate-180" /></Link>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-[#929CBD]">The browser preview runs HTML, CSS and JavaScript; the Python runner supports Python scripts. Projects that require Node.js, databases, backend services, or other runtimes should be opened in a local development environment such as VS Code.</p>
+                <Link href="/build" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#C4B5FD] hover:text-white">Open Build Studio <ArrowLeft size={12} className="rotate-180" /></Link>
+              </div>
+              </>
             )}
 
             {(order.status === "cancelled" || order.status === "refunded") && (

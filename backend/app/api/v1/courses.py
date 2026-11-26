@@ -402,6 +402,17 @@ async def get_progress(
     )
     cert = cert_result.scalar_one_or_none()
 
+    completed_ids_result = await db.execute(
+        select(LessonProgress.lesson_id)
+        .join(Lesson, LessonProgress.lesson_id == Lesson.id)
+        .join(CourseModule, Lesson.module_id == CourseModule.id)
+        .where(
+            LessonProgress.user_id == user.id,
+            CourseModule.course_id == course.id,
+        )
+    )
+    completed_lesson_ids = list(completed_ids_result.scalars().all())
+
     return ProgressResponse(
         course_id=course.id,
         course_slug=course.slug,
@@ -411,6 +422,7 @@ async def get_progress(
         is_complete=is_complete,
         certificate_available=cert is not None,
         certificate_code=cert.certificate_code if cert else None,
+        completed_lesson_ids=completed_lesson_ids,
     )
 
 
@@ -456,12 +468,31 @@ async def list_my_courses(
 
         percent = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0.0
 
+        next_lesson_result = await db.execute(
+            select(Lesson.id)
+            .join(CourseModule, Lesson.module_id == CourseModule.id)
+            .outerjoin(
+                LessonProgress,
+                (LessonProgress.lesson_id == Lesson.id)
+                & (LessonProgress.user_id == user.id),
+            )
+            .where(
+                CourseModule.course_id == course.id,
+                LessonProgress.id.is_(None),
+            )
+            .order_by(CourseModule.sort_order, Lesson.sort_order, Lesson.id)
+            .limit(1)
+        )
+        next_lesson_id = next_lesson_result.scalar_one_or_none()
+
         items.append(MyCourseItem(
             course_id=course.id,
             course_title=course.title,
             course_slug=course.slug,
             thumbnail_url=course.thumbnail_url,
             course_cover_image_url=course.cover_image_url,
+            technologies=course.technologies or [],
+            next_lesson_id=next_lesson_id,
             enrolled_at=enrollment.enrolled_at,
             total_lessons=total_lessons,
             completed_lessons=completed_lessons,

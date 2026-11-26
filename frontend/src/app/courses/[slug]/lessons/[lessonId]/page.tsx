@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, PlayCircle, AlertCircle, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, PlayCircle, AlertCircle, ChevronDown } from "lucide-react";
 import { cookies } from "next/headers";
 import { MarkCompleteButton, ProgressBar } from "./LessonViewer";
 import { CodeBlock } from "@/components/courses/CodeBlock";
+import { PracticeInPlaygroundButton } from "@/components/courses/PracticeInPlaygroundButton";
 import { ExerciseBlock } from "@/components/courses/ExerciseBlock";
+import { PracticalExamples, PracticeQuestions } from "@/components/courses/StructuredLessonActivities";
 
 import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
@@ -23,11 +25,14 @@ interface Lesson {
   video_file_key: string | null;
   content_markdown: string;
   code_example: string | null;
+  code_language?: string;
   exercise: string | null;
   duration_minutes: number;
   sort_order: number;
   is_free_preview: boolean;
   is_completed: boolean;
+  practical_examples?: { title?: string; explanation?: string; code?: string; language?: string; expected_output?: string }[];
+  practice_questions?: { type?: string; prompt?: string; options?: string[]; answer?: string; explanation?: string; hint?: string; points?: number }[];
 }
 
 interface LessonPreview {
@@ -54,6 +59,9 @@ interface Progress {
   total_lessons: number;
   completed_lessons: number;
   percent_complete: number;
+  is_complete: boolean;
+  certificate_code: string | null;
+  completed_lesson_ids: string[];
 }
 
 
@@ -215,8 +223,10 @@ export default async function LessonPage({ params }: PageProps) {
                     >
                       {isCurrent ? (
                         <PlayCircle size={14} className="flex-shrink-0 mt-0.5 text-[#A78BFA]" />
+                      ) : progress?.completed_lesson_ids?.includes(l.id) ? (
+                        <CheckCircle2 size={14} className="flex-shrink-0 mt-0.5 text-[#22C58B]" />
                       ) : (
-                        <div className="w-3.5 h-3.5 rounded-full border border-white/20 flex-shrink-0 mt-0.5" />
+                        <Circle size={14} className="flex-shrink-0 mt-0.5 text-white/25" />
                       )}
                       <span className="flex-1 line-clamp-2">{l.title}</span>
                     </Link>
@@ -231,7 +241,7 @@ export default async function LessonPage({ params }: PageProps) {
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Top Mobile Bar / Breadcrumb */}
-        <div className="border-b border-white/5 bg-[#0B0F1D]/80 backdrop-blur-sm sticky top-16 z-30">
+        <div className="border-b border-white/5 bg-[#0B0F1D]/80 backdrop-blur-sm sticky top-[72px] z-30">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             <Link href={`/courses/${slug}`} className="lg:hidden inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA]">
               <ArrowLeft size={14} /> Overview
@@ -245,6 +255,41 @@ export default async function LessonPage({ params }: PageProps) {
               </div>
             )}
           </div>
+          <details className="group lg:hidden border-t border-white/5">
+            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-[#B7BDD0] marker:hidden">
+              <span className="flex items-center justify-between gap-3">
+                Course contents
+                <span className="inline-flex items-center gap-2 text-xs text-[#7A8199]">
+                  {allLessons.length} lessons
+                  <ChevronDown size={15} className="transition-transform group-open:rotate-180" />
+                </span>
+              </span>
+            </summary>
+            <div className="max-h-72 overflow-y-auto border-t border-white/5 bg-[#0B0F1D] px-2 py-2">
+              {course.modules.map((module, moduleIndex) => (
+                <div key={module.id} className="py-2">
+                  <p className="px-3 pb-1 text-[10px] font-mono uppercase tracking-wider text-[#7A8199]">
+                    Module {moduleIndex + 1} · {module.title}
+                  </p>
+                  {module.lessons.map((item) => {
+                    const isCurrent = item.id === lesson.id;
+                    return (
+                      <Link
+                        key={item.id}
+                        href={`/courses/${slug}/lessons/${item.id}`}
+                        aria-current={isCurrent ? "page" : undefined}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition ${isCurrent ? "bg-[#7559E8]/15 text-white" : "text-[#9299AE] hover:bg-white/[0.04] hover:text-white"}`}
+                      >
+                        {isCurrent ? <PlayCircle size={13} className="shrink-0 text-[#A78BFA]" /> : progress?.completed_lesson_ids?.includes(item.id) ? <CheckCircle2 size={13} className="shrink-0 text-[#22C58B]" /> : <Circle size={13} className="shrink-0 text-white/25" />}
+                        <span className="min-w-0 flex-1">{item.title}</span>
+                        <span className="shrink-0 text-[10px] text-[#7A8199]">{item.duration_minutes}m</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </details>
         </div>
 
         <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
@@ -295,15 +340,21 @@ export default async function LessonPage({ params }: PageProps) {
           {/* Code example */}
           {lesson.code_example && (
             <div className="mb-12">
-              <h2 className="font-display text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7559E8]" /> Code Example
-              </h2>
-              {/* Default to python for the FastAPI course, but can be extended later */}
-              <CodeBlock code={lesson.code_example} language="python" />
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-display text-xl font-bold text-white flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#7559E8]" /> Code Example
+                </h2>
+                <PracticeInPlaygroundButton code={lesson.code_example} language={lesson.code_language || "sql"} lessonTitle={lesson.title} />
+              </div>
+              <CodeBlock code={lesson.code_example} language={lesson.code_language || "sql"} />
             </div>
           )}
 
-          {/* Exercise */}
+          <PracticalExamples examples={lesson.practical_examples || []} />
+
+          <PracticeQuestions questions={lesson.practice_questions || []} />
+
+          {/* Legacy exercise content retained for existing lessons */}
           {lesson.exercise && (
             <ExerciseBlock exerciseText={lesson.exercise} language="python" />
           )}
@@ -314,11 +365,22 @@ export default async function LessonPage({ params }: PageProps) {
               <p className="font-semibold text-white">Finished this lesson?</p>
               <p className="text-sm text-[#7A8199]">Mark it as complete to track your progress.</p>
             </div>
-            <MarkCompleteButton
-              courseSlug={slug}
-              lessonId={lesson.id}
-              initialCompleted={lesson.is_completed}
-            />
+            {progress ? (
+              <MarkCompleteButton
+                courseSlug={slug}
+                lessonId={lesson.id}
+                initialCompleted={lesson.is_completed}
+                courseComplete={progress.is_complete}
+                certificateCode={progress.certificate_code}
+              />
+            ) : (
+              <Link
+                href={`/courses/${slug}`}
+                className="inline-flex items-center justify-center rounded-lg border border-[#7559E8]/35 bg-[#7559E8]/10 px-5 py-3 text-sm font-semibold text-[#C4B5FD] transition hover:bg-[#7559E8]/20"
+              >
+                Enroll to track progress <ArrowRight size={15} className="ml-2" />
+              </Link>
+            )}
           </div>
 
           {/* Prev / Next Navigation */}
@@ -370,60 +432,85 @@ function MarkdownRenderer({ text }: { text: string }) {
   const lines = text.split("\n");
   const elements: React.ReactElement[] = [];
   let key = 0;
-  let inList = false;
+  let listType: "ul" | "ol" | null = null;
   let listItems: React.ReactElement[] = [];
 
-  const parseInlineFormatting = (str: string) => {
-    // 1. Bold (**text**)
-    let formatted = str.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
-    // 2. Inline Code (`code`)
-    formatted = formatted.replace(/`(.*?)`/g, '<code class="bg-[#1E1E1E] text-[#F5A623] px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
-    // 3. Italics (*text*)
-    formatted = formatted.replace(/\*(.*?)\*/g, '<em class="text-[#B7BDD0] italic">$1</em>');
-    return <span dangerouslySetInnerHTML={{ __html: formatted }} />;
+  const flushList = () => {
+    if (!listType || !listItems.length) return;
+    const ListTag = listType;
+    elements.push(
+      <ListTag key={key++} className="mb-5 space-y-2 pl-6">
+        {listItems}
+      </ListTag>
+    );
+    listType = null;
+    listItems = [];
   };
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  const parseInlineFormatting = (value: string): React.ReactNode => {
+    const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
+    const parts = value.split(pattern).filter(Boolean);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index} className="font-bold text-white">{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return <code key={index} className="rounded bg-[#1E1E1E] px-1.5 py-0.5 font-mono text-sm text-[#F5A623]">{part.slice(1, -1)}</code>;
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return <em key={index} className="italic text-[#B7BDD0]">{part.slice(1, -1)}</em>;
+      }
+      const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+      if (link) {
+        return <a key={index} href={link[2]} target="_blank" rel="noopener noreferrer" className="text-[#A78BFA] underline underline-offset-4 hover:text-white">{link[1]}</a>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
-    if (line.startsWith("# ")) {
-      if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); inList = false; listItems = []; }
-      elements.push(<h2 key={key++} className="font-display text-3xl font-bold text-white mt-8 mb-4 border-b border-white/10 pb-2">{line.slice(2)}</h2>);
-    } else if (line.startsWith("## ")) {
-      if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); inList = false; listItems = []; }
-      elements.push(<h3 key={key++} className="font-display text-2xl font-bold text-[#A78BFA] mt-6 mb-3">{line.slice(3)}</h3>);
-    } else if (line.startsWith("### ")) {
-      if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); inList = false; listItems = []; }
-      elements.push(<h4 key={key++} className="font-display text-xl font-bold text-white mt-5 mb-2">{line.slice(4)}</h4>);
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      inList = true;
-      listItems.push(
-        <li key={key++} className="text-[#B7BDD0] ml-6 mb-2 list-disc leading-relaxed">
-          {parseInlineFormatting(line.slice(2))}
-        </li>
-      );
-    } else if (line.match(/^\d+\.\s/)) {
-      inList = true;
-      const contentText = line.replace(/^\d+\.\s/, "");
-      listItems.push(
-        <li key={key++} className="text-[#B7BDD0] ml-6 mb-2 list-decimal leading-relaxed">
-          {parseInlineFormatting(contentText)}
-        </li>
-      );
-    } else if (line.trim() === "") {
-      if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); inList = false; listItems = []; }
-      elements.push(<div key={key++} className="h-4" />);
-    } else {
-      if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); inList = false; listItems = []; }
-      elements.push(
-        <p key={key++} className="text-[#B7BDD0] mb-4 leading-relaxed text-lg">
-          {parseInlineFormatting(line)}
-        </p>
-      );
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushList();
+      continue;
     }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flushList();
+      const text = heading[2];
+      if (heading[1].length === 1) {
+        elements.push(<h2 key={key++} className="mt-8 mb-4 border-b border-white/10 pb-2 font-display text-3xl font-bold text-white">{text}</h2>);
+      } else if (heading[1].length === 2) {
+        elements.push(<h3 key={key++} className="mt-6 mb-3 font-display text-2xl font-bold text-[#A78BFA]">{text}</h3>);
+      } else {
+        elements.push(<h4 key={key++} className="mt-5 mb-2 font-display text-xl font-bold text-white">{text}</h4>);
+      }
+      continue;
+    }
+
+    const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+    const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
+    if (bullet || numbered) {
+      const nextType = bullet ? "ul" : "ol";
+      if (listType && listType !== nextType) flushList();
+      listType = nextType;
+      listItems.push(
+        <li key={key++} className={nextType === "ol" ? "list-decimal text-[#B7BDD0] leading-relaxed" : "list-disc text-[#B7BDD0] leading-relaxed"}>
+          {parseInlineFormatting((bullet || numbered)![1])}
+        </li>
+      );
+      continue;
+    }
+
+    flushList();
+    elements.push(
+      <p key={key++} className="mb-4 text-lg leading-relaxed text-[#B7BDD0]">
+        {parseInlineFormatting(line)}
+      </p>
+    );
   }
 
-  if (inList) { elements.push(<ul key={key++} className="mb-4">{listItems}</ul>); }
-
+  flushList();
   return <div>{elements}</div>;
 }

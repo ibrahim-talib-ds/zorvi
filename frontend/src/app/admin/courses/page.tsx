@@ -139,7 +139,7 @@ export default function AdminCoursesPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="py-10 px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <Link
         href="/admin"
         className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -161,6 +161,21 @@ export default function AdminCoursesPage() {
           <Plus size={16} /> New Course
         </Link>
       </div>
+
+      {/* Course portfolio overview */}
+      <section className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          { label: "All courses", value: courses.length, detail: "In your workspace" },
+          { label: "Published", value: courses.filter((c) => c.status === "published").length, detail: "Visible to students" },
+          { label: "Drafts", value: courses.filter((c) => c.status === "draft").length, detail: "Still in progress" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-2xl border border-white/[0.08] bg-[#111827] p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#9299AE]">{item.label}</p>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight text-white">{item.value}</p>
+            <p className="mt-1 text-xs text-[#7A8199]">{item.detail}</p>
+          </div>
+        ))}
+      </section>
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
@@ -227,8 +242,28 @@ export default function AdminCoursesPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/5 overflow-hidden">
-          <table className="w-full">
+        <>
+        <div className="grid gap-3 md:hidden">
+          {filtered.map((course) => (
+            <article key={course.id} className="rounded-2xl border border-white/[0.08] bg-[#111827] p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#7559E8]/20 bg-[#7559E8]/15 font-bold text-[#A78BFA]">{course.title.charAt(0)}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-white">{course.title}</h3><span className={`rounded-full border px-2 py-0.5 text-[10px] capitalize ${STATUS_COLORS[course.status]}`}>{course.status}</span></div>
+                  <p className="mt-1 truncate font-mono text-xs text-[#7A8199]">{course.slug}</p>
+                  <p className="mt-2 text-xs text-[#9299AE]">{totalLessons(course)} lessons · {course.modules.length} modules · {course.estimated_hours} hours</p>
+                  {course.is_featured && <span className="mt-2 inline-block rounded-md bg-[#F5A623]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#F5A623]">Featured</span>}
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2 border-t border-white/[0.07] pt-3">
+                <Link href={`/admin/courses/${course.id}`} className="flex-1 rounded-lg bg-[#7559E8] px-3 py-2.5 text-center text-sm font-semibold text-white">Manage course</Link>
+                <button onClick={() => togglePublish(course)} disabled={togglingId === course.id} className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-[#B7BDD0] disabled:opacity-50" title={course.status === "published" ? "Unpublish" : "Publish"}>{togglingId === course.id ? <Loader2 size={16} className="animate-spin"/> : course.status === "published" ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto rounded-2xl border border-white/5 md:block">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-white/[0.03] border-b border-white/5">
               <tr className="text-left text-xs uppercase tracking-wider text-[#7A8199]">
                 <th className="px-6 py-4 font-medium">Course</th>
@@ -318,6 +353,7 @@ export default function AdminCoursesPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       <p className="mt-6 text-xs text-[#7A8199]">

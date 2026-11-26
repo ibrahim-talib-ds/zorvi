@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func as sql_func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -60,6 +60,7 @@ async def update_me(
 
 @router.post("/me/avatar", response_model=UserRead, summary="Upload avatar")
 async def upload_avatar(
+    request: Request,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
     file: UploadFile = File(...),
@@ -83,20 +84,28 @@ async def upload_avatar(
     storage_path = f"avatars/{current_user.id}/{filename}"
 
     if supabase is None:
-        raise HTTPException(status_code=500, detail="Storage is not configured")
-
-    bucket = supabase.storage.from_("ibrant-images")
-    try:
-        await run_in_threadpool(
-            bucket.upload,
-            path=storage_path,
-            file=content,
-            file_options={"content-type": file.content_type, "upsert": "true"},
-        )
-        public_url = await run_in_threadpool(bucket.get_public_url, storage_path)
-        current_user.avatar_url = public_url.rstrip("?")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Supabase avatar upload failed: {str(e)}")
+        # Local persistent fallback for development/self-hosted deployments without
+        # Supabase credentials. The public route serves only UUID-named image files.
+        local_path = AVATAR_DIR / filename
+        try:
+            await run_in_threadpool(local_path.write_bytes, content)
+            public_url = f"{str(request.base_url).rstrip('/')}/api/v1/users/avatars/{filename}"
+            current_user.avatar_url = public_url
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Avatar could not be saved") from e
+    else:
+        bucket = supabase.storage.from_("ibrant-images")
+        try:
+            await run_in_threadpool(
+                bucket.upload,
+                path=storage_path,
+                file=content,
+                file_options={"content-type": file.content_type, "upsert": "true"},
+            )
+            public_url = await run_in_threadpool(bucket.get_public_url, storage_path)
+            current_user.avatar_url = public_url.rstrip("?")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Avatar upload to cloud storage failed") from e
     await db.commit()
     await db.refresh(current_user)
     return UserRead.model_validate(current_user)

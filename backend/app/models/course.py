@@ -86,6 +86,9 @@ class Course(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     prerequisites: Mapped[list] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
     )
+    resources: Mapped[list] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
     learning_path: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     estimated_hours: Mapped[int] = mapped_column(

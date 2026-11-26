@@ -46,6 +46,7 @@ interface EnrolledCourse {
   progress_percent: number;
   completed_lessons: number;
   total_lessons: number;
+  next_lesson_id: string | null;
 }
 interface Order {
   id: string;
@@ -284,6 +285,7 @@ export default function AccountDashboardPage() {
         total_lessons: Number(c.total_lessons || 0),
         completed_lessons: Number(c.completed_lessons || 0),
         progress_percent: Number(c.progress_percent ?? c.percent_complete ?? 0),
+        next_lesson_id: typeof c.next_lesson_id === "string" ? c.next_lesson_id : null,
       }));
       setCourses(mapped);
       setCoursesState("ready");
@@ -316,8 +318,10 @@ export default function AccountDashboardPage() {
 
   // real values
   const enrolled = statsState === "ready" ? stats?.courses_enrolled ?? 0 : courses.length;
-  const lessonsDone = statsState === "ready" ? stats?.lessons_completed ?? 0 : 0;
-  const ordersCount = statsState === "ready" ? stats?.orders_count ?? 0 : 0;
+  const lessonsDone = statsState === "ready"
+    ? stats?.lessons_completed ?? courses.reduce((sum, course) => sum + course.completed_lessons, 0)
+    : courses.reduce((sum, course) => sum + course.completed_lessons, 0);
+  const ordersCount = statsState === "ready" ? stats?.orders_count ?? 0 : null;
   const avgProgress = useMemo(() => {
     if (coursesState !== "ready" || courses.length === 0) return 0;
     return courses.reduce((s, c) => s + Math.min(Math.max(c.progress_percent, 0), 100), 0) / courses.length;
@@ -328,8 +332,18 @@ export default function AccountDashboardPage() {
     courses.find((c) => c.progress_percent > 0 && c.progress_percent < 100) ??
     courses.find((c) => c.progress_percent === 0) ??
     courses[0];
-  const resumeHref = resumeCourse?.course_slug ? `/courses/${resumeCourse.course_slug}` : "/courses";
-  const resumeLabel = resumeCourse ? (resumeCourse.progress_percent > 0 ? "Resume Learning" : "Start Learning") : "Browse Courses";
+  const resumeHref = resumeCourse?.course_slug
+    ? resumeCourse.progress_percent < 100 && resumeCourse.next_lesson_id
+      ? `/courses/${resumeCourse.course_slug}/lessons/${resumeCourse.next_lesson_id}`
+      : `/courses/${resumeCourse.course_slug}`
+    : "/courses";
+  const resumeLabel = resumeCourse
+    ? resumeCourse.progress_percent >= 100
+      ? "Review Course"
+      : resumeCourse.progress_percent > 0
+        ? "Resume Learning"
+        : "Start Learning"
+    : "Browse Courses";
 
   // honest goals computed from real numbers
   const goals: string[] = [];
@@ -378,7 +392,7 @@ export default function AccountDashboardPage() {
     },
     {
       label: "My Orders",
-      value: fmtNum(ordersCount),
+      value: ordersCount === null ? "—" : fmtNum(ordersCount),
       icon: <ShoppingBag size={20} />,
       color: "text-[#F5A623]",
       bg: "bg-[#F5A623]/15",
@@ -395,7 +409,7 @@ export default function AccountDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <Hero name={firstName} resumeHref={resumeHref} resumeLabel={resumeLabel} enrolled={enrolled} />
 
       {/* KPI cards - all real */}
@@ -462,7 +476,11 @@ export default function AccountDashboardPage() {
                 return (
                   <Link
                     key={c.id || c.course_slug}
-                    href={c.course_slug ? `/courses/${c.course_slug}` : "/account/courses"}
+                    href={c.course_slug
+                      ? c.progress_percent < 100 && c.next_lesson_id
+                        ? `/courses/${c.course_slug}/lessons/${c.next_lesson_id}`
+                        : `/courses/${c.course_slug}`
+                      : "/account/courses"}
                     className="group rounded-xl border border-white/5 bg-white/[0.03] p-3 transition hover:border-[#7559E8]/40 hover:bg-[#7559E8]/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7559E8]"
                   >
                     <div className="flex h-24 items-center justify-center rounded-xl border border-white/5 bg-gradient-to-br from-[#1B2347] to-[#10162E]">

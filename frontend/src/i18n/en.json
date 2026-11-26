@@ -24,7 +24,8 @@
     "my_profile": "My Profile",
     "admin_panel": "Admin Panel",
     "admin": "Admin",
-    "create_account": "Create Account"
+    "create_account": "Create Account",
+    "build": "Build"
   },
   "marketplace": {
     "title": "Explore Projects",

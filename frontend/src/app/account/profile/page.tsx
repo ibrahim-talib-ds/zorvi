@@ -33,7 +33,7 @@ interface Stats {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token, isAuthenticated, isLoading: authLoading, updateUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F1D] flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="animate-spin text-[#A78BFA]" size={32} />
       </div>
     );
@@ -90,8 +90,8 @@ export default function ProfilePage() {
   const displayName = user.full_name || user.email.split("@")[0];
 
   return (
-    <div className="min-h-screen bg-[#0B0F1D] py-16">
-      <div className="mx-auto max-w-3xl px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-4xl">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -104,7 +104,7 @@ export default function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#7559E8]/10 blur-[80px] rounded-full pointer-events-none" />
 
           <div className="relative flex items-start gap-6">
-            <Avatar name={displayName} size={96} className="border-2 border-[#7559E8]/30" />
+            <Avatar name={displayName} src={user.avatar_url} size={96} className="border-2 border-[#7559E8]/30" />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1 flex-wrap">
@@ -161,7 +161,7 @@ export default function ProfilePage() {
         {/* Edit form */}
         <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 mb-6">
           <h2 className="font-display text-lg font-bold text-white mb-6">Edit profile</h2>
-          <ProfileForm initialName={user.full_name || ""} token={token || ""} />
+          <ProfileForm initialName={user.full_name || ""} token={token || ""} avatarUrl={user.avatar_url} onAvatarUpdated={(updated) => { const nextUser = { ...user, avatar_url: updated.avatar_url }; setUser(nextUser); updateUser(nextUser); }} onNameUpdated={(full_name) => { const nextUser = { ...user, full_name }; setUser(nextUser); updateUser(nextUser); }} />
         </div>
 
         {/* Admin panel link */}

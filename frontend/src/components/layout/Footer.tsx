@@ -27,6 +27,7 @@ export function Footer() {
             <h4 className="text-sm font-bold text-text-primary tracking-wider uppercase mb-4"><Tr k="footer.platform" /></h4>
             <ul className="space-y-3 text-sm text-text-secondary">
               <li><Link href="/courses" className="hover:text-[#8B70FF] transition"><Tr k="footer.academy" /></Link></li>
+              <li><Link href="/build" className="hover:text-[#8B70FF] transition">Build Workspace</Link></li>
               <li><Link href="/marketplace" className="hover:text-[#8B70FF] transition"><Tr k="footer.marketplace" /></Link></li>
               <li><Link href="/technologies" className="hover:text-[#8B70FF] transition"><Tr k="footer.technologies" /></Link></li>
               <li><Link href="/how-it-works" className="hover:text-[#8B70FF] transition"><Tr k="footer.how_it_works" /></Link></li>
@@ -71,12 +72,12 @@ export function Footer() {
           <p className="text-xs text-text-muted text-center md:text-left">
             &copy; {currentYear} IBRANT. <Tr k="footer.rights" />
           </p>
-          <div className="flex items-center gap-4 text-xs font-mono text-text-muted">
-            <span>PostgreSQL 18</span>
-            <span className="text-white/20">&bull;</span>
-            <span>FastAPI</span>
-            <span className="text-white/20">&bull;</span>
-            <span>Next.js 15</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-text-muted">
+            <span>Learn</span>
+            <span aria-hidden="true" className="text-white/20">&bull;</span>
+            <span>Build</span>
+            <span aria-hidden="true" className="text-white/20">&bull;</span>
+            <span>Launch</span>
           </div>
         </div>
       </div>

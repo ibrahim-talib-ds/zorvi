@@ -181,7 +181,7 @@ function ErrorBox({ onRetry }: { onRetry: () => void }) {
 function CardSkeleton() {
   return (
     <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-3" aria-busy="true">
-      <div className="h-28 rounded-xl bg-white/[0.04]" />
+      <div className="h-28 rounded-xl bg-white/[0.04] sm:h-32 xl:h-36" />
       <div className="mt-4 h-4 w-3/4 rounded bg-white/[0.04]" />
       <div className="mt-2 h-3 w-full rounded bg-white/[0.04]" />
       <div className="mt-1 h-3 w-2/3 rounded bg-white/[0.04]" />
@@ -348,7 +348,7 @@ function CourseCard({ c }: { c: Course }) {
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+      <div className="relative flex h-28 sm:h-32 xl:h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
         <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -431,7 +431,7 @@ function CourseCard({ c }: { c: Course }) {
                 </span>
               </>
             ) : (
-              <span className="text-sm font-semibold text-[#929CBD]">Price on request</span>
+              <span className="text-sm font-semibold text-[#22C58B]">Free access</span>
             )}
           </span>
         </div>
@@ -470,7 +470,7 @@ export default function AcademyPage() {
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [level, setLevel] = useState("All Levels");
-  const [sort, setSort] = useState<Sort>("Popular");
+  const [sort, setSort] = useState<Sort>("Newest");
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const load = useCallback(async () => {
@@ -485,6 +485,21 @@ export default function AcademyPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const availableSorts = useMemo<Sort[]>(() => {
+    const options: Sort[] = [];
+    if (courses.some((course) => studentsOf(course) !== null)) options.push("Popular");
+    options.push("Newest");
+    if (courses.some((course) => priceOf(course).cents !== null)) {
+      options.push("Price: Low to High", "Price: High to Low");
+    }
+    if (courses.some((course) => ratingOf(course).rating > 0)) options.push("Top Rated");
+    return options;
+  }, [courses]);
+
+  useEffect(() => {
+    if (!availableSorts.includes(sort)) setSort(availableSorts[0] ?? "Newest");
+  }, [availableSorts, sort]);
 
   // difficulty chips derived from the real course list
   const levels = useMemo(() => {
@@ -527,6 +542,8 @@ export default function AcademyPage() {
   // popular rail: real metric only (students, else rating)
   const popular = useMemo(() => {
     const hasStudents = courses.some((c) => studentsOf(c) !== null);
+    const hasRatings = courses.some((c) => ratingOf(c).rating > 0);
+    if (!hasStudents && !hasRatings) return { items: [], metric: "rating" as const };
     const list = [...courses];
     if (hasStudents) list.sort((a, b) => (studentsOf(b) ?? 0) - (studentsOf(a) ?? 0));
     else list.sort((a, b) => ratingOf(b).rating - ratingOf(a).rating);
@@ -571,7 +588,7 @@ export default function AcademyPage() {
             className="rounded-lg border border-white/10 bg-[#0B0F1D] px-3 py-2 text-xs text-[#B7BDD0] focus:border-[#7559E8] focus:outline-none"
             aria-label="Sort courses"
           >
-            {SORTS.map((s) => (
+            {availableSorts.map((s) => (
               <option key={s} value={s}>
                 Sort by: {s}
               </option>
@@ -598,11 +615,11 @@ export default function AcademyPage() {
           )}
         </p>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
           {state === "loading" &&
             Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
           {state === "error" && (
-            <div className="col-span-2 sm:col-span-3 md:col-span-4 xl:col-span-5 2xl:col-span-6">
+            <div className="col-span-2 md:col-span-3 xl:col-span-4">
               <ErrorBox onRetry={load} />
             </div>
           )}
@@ -696,7 +713,7 @@ export default function AcademyPage() {
         )}
 
         <p className="pb-2 text-center text-[11px] text-[#7A8199]">
-          Live data from your courses API — difficulty, ratings, students and prices appear only where the data exists.
+          Live course data — ratings, enrollment counts and pricing appear only when provided by the API.
         </p>
       </div>
     </div>

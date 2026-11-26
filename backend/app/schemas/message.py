@@ -18,5 +18,7 @@ class MessageRead(BaseModel):
     created_at: datetime
     sender_name: str | None = None
     sender_email: str | None = None
+    receiver_name: str | None = None
+    product_id: uuid.UUID | None = None
     product_title: str | None = None
     model_config = {"from_attributes": True}

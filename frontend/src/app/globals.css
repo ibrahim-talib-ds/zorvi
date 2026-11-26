@@ -31,7 +31,7 @@
   color-scheme: dark;
 }
 
-[data-theme="light"] {
+html.light {
   --bg-deep: #F5F6FA;
   --bg-base: #FFFFFF;
   --bg-surface: #FFFFFF;
@@ -49,6 +49,7 @@
 html {
   font-size: 17px;
   scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
 }
 
 body {
@@ -69,7 +70,7 @@ body {
     linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
-[data-theme="light"] .bg-grid {
+html.light .bg-grid {
   background-image:
     linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
@@ -87,7 +88,7 @@ body {
 .goog-te-banner-frame { display: none !important; }
 body { top: 0 !important; }
 
-/* ===== ZORVI THEME TOKENS (v4) =====
+/* ===== IBRANT THEME TOKENS (v4) =====
    Dark is the default. Light overrides via html.light. The no-flash blocker
    script in layout.tsx sets .light/.dark on <html> before paint. */
 :root,
@@ -111,12 +112,12 @@ html.light {
   --text-muted: #6B7280;
   color-scheme: light;
 }
-/* ===== END ZORVI THEME TOKENS ===== */
+/* ===== END IBRANT THEME TOKENS ===== */
 
 
 
 
-/* ===== ZORVI LIGHT OVERRIDES (v6) - generated 2026-11-20 ===== */
+/* ===== IBRANT LIGHT THEME COMPATIBILITY (v6) - generated 2026-11-20 ===== */
 /* Remaps hardcoded dark-palette classes to theme tokens under html.light.
    v8: status text darkened same-hue (pills stay colored), vivid bgs and
    borders kept, text contrast fixed, gradients flip. */
@@ -285,4 +286,4 @@ html.light .to-\[\#8B70FF\].text-white { color: #FFFFFF !important; }
 html.light .to-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-white { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
-/* ===== END ZORVI LIGHT OVERRIDES ===== */
+/* ===== END IBRANT LIGHT THEME COMPATIBILITY ===== */

@@ -60,7 +60,7 @@ export default function CertificateViewPage() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto pb-20">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       {/* Header - Hidden when printing */}
       <div className="flex items-center justify-between mb-6 print:hidden">
         <Link href="/account/certificates" className="text-sm text-[#7A8199] hover:text-white flex items-center gap-2 transition">

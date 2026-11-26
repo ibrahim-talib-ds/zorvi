@@ -111,7 +111,7 @@ export default function AdminNotificationsPage() {
   });
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-white flex items-center gap-3">

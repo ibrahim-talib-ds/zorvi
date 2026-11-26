@@ -7,6 +7,24 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 
+const BOOLEAN_SETTING_KEYS = [
+  "stripe_enabled",
+  "bank_enabled",
+  "email_notifications_enabled",
+  "maintenance_mode",
+] as const;
+
+function parseBooleanSetting(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on"].includes(normalized)) return true;
+    if (["false", "0", "no", "off", ""].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
 export default function AdminSettingsPage() {
   const { token, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -55,11 +73,17 @@ export default function AdminSettingsPage() {
           const data = await res.json();
           // Backend returns { settings: [{ key, value, description }, ...] }
           if (data && Array.isArray(data.settings)) {
-            const flat: Record<string, string> = {};
+            const flat: Record<string, unknown> = {};
             data.settings.forEach((item: any) => {
               flat[item.key] = item.value;
             });
-            setForm((prev) => ({ ...prev, ...flat }));
+            setForm((prev) => {
+              const merged = { ...prev, ...flat };
+              for (const key of BOOLEAN_SETTING_KEYS) {
+                merged[key] = parseBooleanSetting(flat[key], prev[key]);
+              }
+              return merged;
+            });
           }
         }
       } catch (e) {
@@ -99,7 +123,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-[#7A8199] hover:text-white mb-6 transition">
         <ArrowLeft size={16} /> Back to Admin
       </Link>
@@ -241,7 +265,7 @@ export default function AdminSettingsPage() {
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="checkbox" checked={form.stripe_enabled}
+                type="checkbox" checked={form.stripe_enabled === true}
                 onChange={(e) => setForm({ ...form, stripe_enabled: e.target.checked })}
                 className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#22C58B]"
               />
@@ -294,7 +318,7 @@ export default function AdminSettingsPage() {
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="checkbox" checked={form.bank_enabled}
+                type="checkbox" checked={form.bank_enabled === true}
                 onChange={(e) => setForm({ ...form, bank_enabled: e.target.checked })}
                 className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#22C58B]"
               />
@@ -431,7 +455,7 @@ export default function AdminSettingsPage() {
           <div className="space-y-3">
             <label className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0B0F1D] p-4 cursor-pointer">
               <input
-                type="checkbox" checked={form.email_notifications_enabled}
+                type="checkbox" checked={form.email_notifications_enabled === true}
                 onChange={(e) => setForm({ ...form, email_notifications_enabled: e.target.checked })}
                 className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#22C58B]"
               />
@@ -443,7 +467,7 @@ export default function AdminSettingsPage() {
 
             <label className="flex items-center gap-3 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/5 p-4 cursor-pointer">
               <input
-                type="checkbox" checked={form.maintenance_mode}
+                type="checkbox" checked={form.maintenance_mode === true}
                 onChange={(e) => setForm({ ...form, maintenance_mode: e.target.checked })}
                 className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#F05D70]"
               />

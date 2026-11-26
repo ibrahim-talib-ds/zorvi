@@ -4,7 +4,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -52,7 +52,10 @@ class Lesson(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Text, nullable=False, default="", server_default=text("''")
     )
     code_example: Mapped[str | None] = mapped_column(Text, nullable=True)
+    code_language: Mapped[str] = mapped_column(String(32), nullable=False, default="sql", server_default=text("'sql'"))
     exercise: Mapped[str | None] = mapped_column(Text, nullable=True)
+    practical_examples: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    practice_questions: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
 
     duration_minutes: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default=text("0")

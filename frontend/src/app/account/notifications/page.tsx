@@ -23,6 +23,8 @@ export default function NotificationsHistoryPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const loadNotifications = async () => {
     if (!token) return;
@@ -30,12 +32,12 @@ export default function NotificationsHistoryPage() {
       const res = await fetch(`${API_BASE}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(Array.isArray(data) ? data : []);
-      }
+      if (!res.ok) throw new Error("Unable to load notifications (" + res.status + ").");
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+      setError(null);
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Unable to load notifications.");
     } finally {
       setLoading(false);
     }
@@ -48,53 +50,56 @@ export default function NotificationsHistoryPage() {
 
   const handleMarkAllRead = async () => {
     if (!token) return;
+    setBusyId("all");
+    setError(null);
     try {
-      const res = await fetch(`${API_BASE}/notifications/mark-all-read`, {
+      const res = await fetch(API_BASE + "/notifications/mark-all-read", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: "Bearer " + token },
       });
-      if (!res.ok) {
-        console.warn("Mark all read failed:", res.status);
-      }
-      // Optimistically update the UI without waiting for a re-fetch
-      setNotifications(notifications.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })));
+      if (!res.ok) throw new Error("Could not mark notifications as read (" + res.status + ").");
+      const now = new Date().toISOString();
+      setNotifications((current) => current.map((n) => ({ ...n, read_at: n.read_at || now })));
     } catch (err) {
-      console.warn("Mark all read network error:", err);
-      // Still update the UI so the user sees the change
-      setNotifications(notifications.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })));
+      setError(err instanceof Error ? err.message : "Could not update notifications.");
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handleMarkRead = async (id: string) => {
     if (!token) return;
+    setBusyId(id);
+    setError(null);
     try {
-      const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
+      const res = await fetch(API_BASE + "/notifications/" + id + "/read", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: "Bearer " + token },
       });
-      if (!res.ok) {
-        console.warn("Mark read failed:", res.status);
-      }
-      setNotifications(notifications.map(n => n.id === id ? { ...n, read_at: n.read_at || new Date().toISOString() } : n));
+      if (!res.ok) throw new Error("Could not mark this notification as read (" + res.status + ").");
+      setNotifications((current) => current.map((n) => n.id === id ? { ...n, read_at: n.read_at || new Date().toISOString() } : n));
     } catch (err) {
-      console.warn("Mark read network error:", err);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, read_at: n.read_at || new Date().toISOString() } : n));
+      setError(err instanceof Error ? err.message : "Could not update this notification.");
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!token || !confirm("Delete this notification?")) return;
-    // Optimistically remove from UI
-    setNotifications(notifications.filter((n) => n.id !== id));
+    setBusyId(id);
+    setError(null);
     try {
-      await fetch(`${API_BASE}/notifications/${id}`, {
+      const res = await fetch(API_BASE + "/notifications/" + id, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: "Bearer " + token },
       });
+      if (!res.ok) throw new Error("Could not delete this notification (" + res.status + ").");
+      setNotifications((current) => current.filter((n) => n.id !== id));
     } catch (err) {
-      console.warn("Delete failed:", err);
-      // Reload to restore if failed
-      loadNotifications();
+      setError(err instanceof Error ? err.message : "Could not delete this notification.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -115,7 +120,7 @@ export default function NotificationsHistoryPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-white flex items-center gap-3">
@@ -130,10 +135,12 @@ export default function NotificationsHistoryPage() {
             onClick={handleMarkAllRead}
             className="inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#8B70FF] transition"
           >
-            <CheckCircle2 size={16} /> Mark All Read
+            <CheckCircle2 size={16} /> {busyId === "all" ? "Updating..." : "Mark All Read"}
           </button>
         )}
       </div>
+
+      {error && <div role="alert" className="mb-5 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/[0.06] px-4 py-3 text-sm text-[#F58B98]">{error}</div>}
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 mb-6">
@@ -220,7 +227,8 @@ export default function NotificationsHistoryPage() {
                   {!n.read_at && (
                     <button
                       onClick={() => handleMarkRead(n.id)}
-                      className="p-2 rounded hover:bg-[#22C58B]/10 text-[#22C58B] transition"
+                      disabled={busyId === n.id}
+                      className="p-2 rounded hover:bg-[#22C58B]/10 text-[#22C58B] transition disabled:opacity-40"
                       title="Mark as read"
                     >
                       <CheckCircle2 size={16} />
@@ -228,7 +236,8 @@ export default function NotificationsHistoryPage() {
                   )}
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="p-2 rounded hover:bg-[#F05D70]/10 text-[#F05D70] transition"
+                    disabled={busyId === n.id}
+                    className="p-2 rounded hover:bg-[#F05D70]/10 text-[#F05D70] transition disabled:opacity-40"
                     title="Delete"
                   >
                     <Trash2 size={16} />

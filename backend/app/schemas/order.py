@@ -2,13 +2,20 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.order import OrderStatus, PaymentMethod
 
 
 class OrderItemCreate(BaseModel):
-    package_id: uuid.UUID
+    package_id: uuid.UUID | None = None
+    product_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def require_product_or_package(self):
+        if self.package_id is None and self.product_id is None:
+            raise ValueError("Each order item must include a package_id or product_id")
+        return self
 
 
 class OrderCreate(BaseModel):

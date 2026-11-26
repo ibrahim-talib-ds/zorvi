@@ -77,7 +77,7 @@ export default function AdminProductsPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0B0F1D] flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="animate-spin text-[#A78BFA]" size={32} />
       </div>
     );
@@ -85,8 +85,8 @@ export default function AdminProductsPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#0B0F1D] py-16">
-      <div className="mx-auto max-w-7xl px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl">
         <Link
           href="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -128,8 +128,8 @@ export default function AdminProductsPage() {
             </Link>
           </div>
         ) : (
-          <div className="rounded-2xl border border-white/5 overflow-hidden">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-2xl border border-white/5">
+            <table className="w-full min-w-[680px]">
               <thead className="bg-white/[0.03] border-b border-white/5">
                 <tr className="text-left text-xs uppercase tracking-wider text-[#7A8199]">
                   <th className="px-6 py-4 font-medium">Product</th>

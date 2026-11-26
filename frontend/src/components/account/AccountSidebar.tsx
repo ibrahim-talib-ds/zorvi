@@ -96,7 +96,8 @@ export function AccountSidebar({
     { group: "Explore", items: [
       { href: "/marketplace", label: "Marketplace", icon: Code2 },
       { href: "/courses", label: "Academy", icon: BookOpen },
-      { href: "/playground", label: "Code Playground", icon: Terminal },
+      { href: "/build", label: "Build Workspace", icon: Terminal },
+      { href: "/playground", label: "Code Playground", icon: Code2 },
       { href: "/pricing", label: "Pricing", icon: Sparkles },
     ]},
   ];

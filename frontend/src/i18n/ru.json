@@ -24,7 +24,8 @@
     "my_profile": "Мой профиль",
     "admin_panel": "Панель администратора",
     "admin": "Админ",
-    "create_account": "Создать аккаунт"
+    "create_account": "Создать аккаунт",
+    "build": "Создать"
   },
   "marketplace": {
     "title": "Изучить проекты",

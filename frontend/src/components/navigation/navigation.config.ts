@@ -4,7 +4,7 @@
 // Nothing is listed that does not exist. See the route audit in the v16 report.
 
 import {
-  Award, Bell, BookOpen, ClipboardList, Code2, GraduationCap,
+  Activity, Award, Bell, BookOpen, ClipboardList, Code2, GraduationCap,
   Heart, Home, LayoutDashboard, LayoutGrid, MessageSquare,
   Package, Settings, ShoppingBag, Sparkles, Store, Tags,
   Terminal, UserRound, UserCheck,
@@ -28,6 +28,14 @@ export const SAVED_KEY = "IBRANT_SAVED_V1";          // written by marketplace h
 export const AUTH_ROUTES = { signIn: "/login", register: "/register" };
 
 // ---------------------------------------------------------------- shared item
+const BUILD_WORKSPACE: NavigationItem = {
+  label: "Build Workspace",
+  href: "/build",
+  icon: Code2,
+  group: "development",
+  roles: ["student", "admin"],
+  requiresAuth: true,
+};
 const PLAYGROUND: NavigationItem = {
   label: "Code Playground",
   href: "/playground",
@@ -63,12 +71,13 @@ export const STUDENT_NAV: NavigationGroup[] = [
       { label: "Marketplace", href: "/marketplace", icon: Code2, group: "explore", roles: ["student", "guest"] },
       { label: "Saved Projects", href: "/account/saved", icon: Heart, group: "explore", roles: ["student"], requiresAuth: true, badge: "saved" },
       { label: "My Purchases", href: "/account/orders", icon: ShoppingBag, group: "explore", roles: ["student"], requiresAuth: true },
+      { label: "Messages", href: "/account/messages", icon: MessageSquare, group: "explore", roles: ["student"], requiresAuth: true },
     ],
   },
   {
     key: "development",
     label: "Development",
-    items: [PLAYGROUND],
+    items: [BUILD_WORKSPACE, PLAYGROUND],
   },
   {
     key: "account",
@@ -103,13 +112,14 @@ export const ADMIN_NAV: NavigationGroup[] = [
   {
     key: "development",
     label: "Development",
-    items: [PLAYGROUND],
+    items: [BUILD_WORKSPACE, PLAYGROUND],
   },
   {
     key: "operations",
     label: "Operations",
     items: [
       { label: "Orders", href: "/admin/orders", icon: ClipboardList, group: "operations", roles: ["admin"], requiresAuth: true },
+      { label: "AI Build Tasks", href: "/admin/build-tasks", icon: Activity, group: "operations", roles: ["admin"], requiresAuth: true },
       { label: "Instructor Applications", href: "/admin/instructor-applications", icon: UserCheck, group: "operations", roles: ["admin"], requiresAuth: true },
       { label: "Messages", href: "/admin/messages", icon: MessageSquare, group: "operations", roles: ["admin"], requiresAuth: true },
       { label: "Notifications", href: "/admin/notifications", icon: Bell, group: "operations", roles: ["admin"], requiresAuth: true },

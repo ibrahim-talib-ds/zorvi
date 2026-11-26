@@ -10,7 +10,10 @@ import { API_BASE } from "@/lib/api/client";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("return") || "/account";
+  const requestedReturn = searchParams.get("return");
+  const returnUrl = requestedReturn && requestedReturn.startsWith("/") && !requestedReturn.startsWith("//") && !requestedReturn.includes("\\")
+    ? requestedReturn
+    : "/account";
   const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);

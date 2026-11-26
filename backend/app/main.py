@@ -13,6 +13,8 @@ from app.api.v1 import (
     instructor_applications,
     health,
     messages as public_messages,
+    projects,
+    ai_build,
 )
 from app.api.v1.admin import (
     categories as admin_categories,
@@ -36,6 +38,7 @@ app.add_middleware(
 )
 
 # Public Routes
+app.include_router(health.router, tags=["health"])  # Root health check for monitoring
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
@@ -51,6 +54,8 @@ app.include_router(certificates.my_router, prefix="/api/v1", tags=["my-certifica
 app.include_router(downloads.router, prefix="/api/v1", tags=["downloads"])
 app.include_router(instructor_applications.router, prefix="/api/v1", tags=["instructor-applications"])
 app.include_router(public_messages.router, prefix="/api/v1", tags=["messages"])
+app.include_router(projects.router, prefix="/api/v1", tags=["build-projects"])
+app.include_router(ai_build.router, prefix="/api/v1", tags=["ai-build"])
 
 # Admin Routes
 app.include_router(admin_categories.router, prefix="/api/v1", tags=["admin:categories"])

@@ -47,6 +47,7 @@ function AccountCoursesContent() {
           completed_lessons: c.completed_lessons || 0,
           progress_percent: c.progress_percent ?? c.percent_complete ?? 0,
           enrolled_at: c.enrolled_at || new Date().toISOString(),
+          next_lesson_id: c.next_lesson_id || null,
         }));
         
         setCourses(mapped);
@@ -84,7 +85,7 @@ function AccountCoursesContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs font-mono uppercase tracking-wider text-[#7A8199] mb-2">My Learning</p>
@@ -98,7 +99,7 @@ function AccountCoursesContent() {
         </Link>
       </div>
 
-      <div className="sticky top-16 md:top-[72px] z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-[#0B0F1D]/95 backdrop-blur-md border-y border-white/5">
+      <div className="sticky top-[72px] z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-[#0B0F1D]/95 backdrop-blur-md border-y border-white/5">
         <TechnologyStrip />
       </div>
 
@@ -179,7 +180,9 @@ function AccountCoursesContent() {
 
                 {c.course_slug ? (
                   <Link
-                    href={`/courses/${c.course_slug}`}
+                    href={c.progress_percent === 100 || !c.next_lesson_id
+                      ? `/courses/${c.course_slug}`
+                      : `/courses/${c.course_slug}/lessons/${c.next_lesson_id}`}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#7559E8] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#8B70FF] transition"
                   >
                     {c.progress_percent === 100 ? (

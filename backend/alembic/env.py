@@ -23,6 +23,15 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL_SYNC)
 target_metadata = Base.metadata
 
 
+def include_object(obj, name, type_, reflected, compare_to):
+    # translation_cache is intentionally managed by its existing SQL migration
+    # and accessed with raw SQL, not ORM models. Keep autogenerate from proposing
+    # to drop the live cache table merely because it is absent from Base.metadata.
+    if type_ == "table" and name == "translation_cache" and reflected and compare_to is None:
+        return False
+    return True
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=config.get_main_option("sqlalchemy.url"),
@@ -30,6 +39,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -46,6 +56,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=include_object,
         )
         with context.begin_transaction():
             context.run_migrations()

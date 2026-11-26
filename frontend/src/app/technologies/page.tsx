@@ -1,39 +1,28 @@
-"use client";
-import Link from "next/link";
+import { ArrowUpRight, Code2, Database, Globe2, Smartphone } from "lucide-react";
+import { PublicInfoPage } from "@/components/layout/PublicInfoPage";
 
-export default function Technologies_Page() {
+const stack = [
+  { icon: Globe2, name: "Next.js and React", role: "Web application", detail: "Component-driven interfaces, routing, rendering, and responsive user experiences.", href: "https://nextjs.org/docs" },
+  { icon: Code2, name: "Python and FastAPI", role: "Backend services", detail: "Typed API schemas, asynchronous request handling, and generated API documentation.", href: "https://fastapi.tiangolo.com/" },
+  { icon: Database, name: "PostgreSQL", role: "Data layer", detail: "Relational data, constraints, indexing, and transactional persistence.", href: "https://www.postgresql.org/docs/" },
+  { icon: Smartphone, name: "Flutter", role: "Mobile development", detail: "Cross-platform application development from a shared codebase.", href: "https://docs.flutter.dev/" },
+];
+
+export const metadata = { title: "Technologies", description: "Explore the modern web, backend, database, and mobile technologies featured across IBRANT." };
+
+export default function TechnologiesPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F1D] text-[#B7BDD0] py-24 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-[#8B70FF] hover:text-[#A78BFA] mb-8 inline-block font-medium">
-          &larr; Back to Home
-        </Link>
-        <h1 className="text-4xl font-display font-extrabold text-white mb-8">Technologies</h1>
-        <div className="space-y-6 text-sm leading-relaxed">
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">The IBRANT Stack</h2>
-            <p>We teach and build using modern, industry-standard technologies.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              <div className="p-6 rounded-xl border border-white/10 bg-[#171B33]">
-                <h3 className="text-xl font-bold text-white mb-2">Next.js 15 & React 19</h3>
-                <p>For lightning-fast, SEO-friendly, and highly interactive frontend applications.</p>
-              </div>
-              <div className="p-6 rounded-xl border border-white/10 bg-[#171B33]">
-                <h3 className="text-xl font-bold text-white mb-2">FastAPI & Python 3.12</h3>
-                <p>For high-performance, asynchronous backend APIs with automatic documentation.</p>
-              </div>
-              <div className="p-6 rounded-xl border border-white/10 bg-[#171B33]">
-                <h3 className="text-xl font-bold text-white mb-2">PostgreSQL 18</h3>
-                <p>The world's most advanced open-source relational database.</p>
-              </div>
-              <div className="p-6 rounded-xl border border-white/10 bg-[#171B33]">
-                <h3 className="text-xl font-bold text-white mb-2">Flutter</h3>
-                <p>For building beautiful, native mobile apps for iOS and Android from a single codebase.</p>
-              </div>
-            </div>
-          </section>
-        </div>
+    <PublicInfoPage eyebrow="Technology" title="Built around modern tools" description="IBRANT focuses on technologies that are widely used to design, build, and operate modern software products.">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {stack.map(({ icon: Icon, name, role, detail, href }) => (
+          <article key={name} className="rounded-2xl border border-bg-border bg-bg-elevated/55 p-5">
+            <div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7559E8]/15 text-[#A78BFA]"><Icon size={19} /></div><span className="rounded-full border border-bg-border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">{role}</span></div>
+            <h2 className="mt-4">{name}</h2>
+            <p className="mt-2">{detail}</p>
+            <a href={href} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">Official documentation <ArrowUpRight size={14} /></a>
+          </article>
+        ))}
       </div>
-    </div>
+    </PublicInfoPage>
   );
 }

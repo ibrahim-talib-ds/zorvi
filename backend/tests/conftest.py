@@ -17,6 +17,7 @@ from app.models.order import Order, OrderItem
 from app.models.refresh_token import RefreshToken
 from app.models.role import Role, UserRole
 from app.models.user import User
+from app.models.user_project import UserProject
 
 TEST_EMAIL_DOMAIN = "@example.com"
 
@@ -126,6 +127,9 @@ async def clean_test_users(async_session):
                 )
             )
 
+        await async_session.execute(
+            delete(UserProject).where(UserProject.user_id.in_(user_ids))
+        )
         await async_session.execute(
             delete(RefreshToken).where(RefreshToken.user_id.in_(user_ids))
         )

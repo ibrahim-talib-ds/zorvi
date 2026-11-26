@@ -14,14 +14,22 @@ import { locales } from "@/i18n/config";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { Tr } from "@/components/i18n/Tr";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Avatar } from "@/components/ui/Avatar";
 
 const BASE_NAV = [
   { href: "/", label: "nav.home" },
   { href: "/marketplace", label: "nav.marketplace" },
   { href: "/courses", label: "nav.academy" },
+  { href: "/build", label: "nav.build" },
   { href: "/pricing", label: "nav.pricing" },
   { href: "/about", label: "nav.about" },
 ];
+
+function isNavigationActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  if (href === "/build" && (pathname.startsWith("/playground") || pathname.startsWith("/build"))) return true;
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+}
 
 interface Notification {
   id: string;
@@ -33,7 +41,7 @@ interface Notification {
   readAt: string | null;
 }
 
-export function Header() {
+export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   const { lang, setLang, t } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
@@ -45,7 +53,6 @@ export function Header() {
   const [notifOpen, setNotifOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -58,21 +65,24 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    const previousOverflow = document.body.style.overflow;
+    if (open) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
   }, [open]);
 
-  // Fetch notifications
+  // Keep the header notification badge in sync with order/payment updates.
   useEffect(() => {
     if (!user || !token || !isAuthenticated) {
       setNotifications([]);
       return;
     }
-    (async () => {
+    let active = true;
+    const refreshNotifications = async () => {
       try {
         const { fetchMyNotifications } = await import("@/lib/api/notifications");
         const real = await fetchMyNotifications(token);
-        const notes: Notification[] = real.map((n) => ({
+        if (!active) return;
+        setNotifications(real.map((n) => ({
           id: n.id,
           title: n.title,
           message: n.message,
@@ -80,12 +90,20 @@ export function Header() {
           href: n.href,
           unread: n.read_at === null,
           readAt: n.read_at,
-        }));
-        setNotifications(notes);
-      } catch (e) {
-        console.error(e);
+        })));
+      } catch (error) {
+        if (active) console.error(error);
       }
-    })();
+    };
+    refreshNotifications();
+    const onFocus = () => refreshNotifications();
+    window.addEventListener("focus", onFocus);
+    const interval = window.setInterval(refreshNotifications, 30000);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
+    };
   }, [user, token, isAuthenticated]);
 
   useEffect(() => {
@@ -98,6 +116,37 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const handleDismiss = async (id: string) => {
+    if (!token) return;
+    try {
+      const { deleteNotification } = await import("@/lib/api/notifications");
+      const ok = await deleteNotification(token, id);
+      if (!ok) return;
+      setNotifications((current) => current.filter((notification) => notification.id !== id));
+    } catch (error) {
+      console.error("Unable to dismiss notification:", error);
+    }
+  };
+
+  const handleOpenNotification = async (id: string) => {
+    setNotifOpen(false);
+    const current = notifications.find((notification) => notification.id === id);
+    if (!current?.unread || !token) return;
+    try {
+      const { markNotificationRead } = await import("@/lib/api/notifications");
+      const ok = await markNotificationRead(token, id);
+      if (ok) {
+        setNotifications((items) => items.map((notification) =>
+          notification.id === id
+            ? { ...notification, unread: false, readAt: new Date().toISOString() }
+            : notification
+        ));
+      }
+    } catch (error) {
+      console.error("Unable to mark notification as read:", error);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     setOpen(false);
@@ -108,12 +157,8 @@ export function Header() {
   const isAdmin = user?.roles?.some((r) => r.name === "admin" || r.name === "super_admin") ?? false;
   const displayName = user?.full_name || user?.email?.split("@")[0] || "User";
   const activeLang = locales.find((l) => l.code === lang) || locales[0];
-  const visibleNotifications = notifications.filter((n) => !dismissedIds.includes(n.id));
+  const visibleNotifications = notifications;
   const unreadCount = visibleNotifications.filter((n) => n.unread).length;
-
-  const handleDismiss = (id: string) => {
-    setDismissedIds((prev) => [...prev, id]);
-  };
 
   const navLinks = isAuthenticated
     ? [{ href: isAdmin ? "/admin" : "/account", label: "nav.dashboard" }, ...BASE_NAV.slice(1)]
@@ -123,52 +168,53 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          "bg-gradient-to-b from-bg-deep via-bg-deep to-bg-deep",
-          "border-b border-white/5",
-          scrolled ? "h-16 shadow-lg shadow-black/30" : "h-16"
+          "fixed top-0 inset-x-0 z-50 h-[72px] transition-all duration-300",
+          "bg-bg-deep/90 backdrop-blur-xl supports-[backdrop-filter]:bg-bg-deep/75",
+          "border-b border-white/[0.08]",
+          scrolled ? "shadow-lg shadow-black/20" : "shadow-none"
         )}
       >
-        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 gap-2">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">
+        <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8 gap-3">
+          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group" aria-label="IBRANT home">
             <img
               src="/images/logo/ibrant-mark.png"
               alt="IBRANT"
-              className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.04]"
             />
-            <span className="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-[#8B70FF]">
+            <span className="font-display text-[21px] sm:text-[23px] font-extrabold tracking-[-0.04em] text-text-primary">
               IBRANT
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-7 flex-1 justify-center">
+          <nav className="hidden xl:flex items-center justify-center flex-1 gap-1 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-1 mx-4">
             {navLinks.map((l) => {
-              const isActive = pathname === l.href;
+              const isActive = isNavigationActive(pathname, l.href);
               return (
                 <Link
                   key={l.href}
                   href={l.href}
                   className={cn(
-                    "relative text-[15px] font-medium transition-colors hover:text-text-primary whitespace-nowrap px-3 py-2 rounded-md hover:bg-bg-border/40",
-                    isActive ? "text-text-primary" : "text-text-secondary"
+                    "relative text-[13px] font-semibold tracking-[0.01em] transition-all duration-200 whitespace-nowrap px-3.5 py-2 rounded-xl hover:text-text-primary hover:bg-white/[0.055]",
+                    isActive ? "text-text-primary bg-white/[0.075] shadow-sm" : "text-text-secondary"
                   )}
                 >
                   <Tr k={l.label} />
                   {isActive && (
-                    <span className="absolute -bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7559E8] to-[#A78BFA] rounded-full" />
+                    <span className="absolute inset-x-3 bottom-0 h-[2px] bg-gradient-to-r from-[#7559E8] to-[#A78BFA] rounded-full" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-0.5 sm:gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             {/* Language */}
             <div className="relative" ref={langRef} data-no-translate>
               <button
                 onClick={() => setLangOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
-                aria-label={t("nav.menu")}
+                className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition"
+                aria-label="Choose language"
+                aria-expanded={langOpen}
               >
                 <Globe size={16} />
                 <span className="hidden md:inline text-xs">
@@ -183,7 +229,7 @@ export function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-52 rounded-lg border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
+                    className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-52 rounded-2xl border border-white/[0.09] bg-bg-surface shadow-2xl shadow-black/40 overflow-hidden z-50"
                   >
                     <div className="max-h-80 overflow-y-auto">
                       {locales.map((l) => (
@@ -222,7 +268,7 @@ export function Header() {
                 {isAdmin && (
                   <Link
                     href="/admin"
-                    className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-[#F5A623]/40 bg-[#F5A623]/10 px-3 py-1.5 text-sm font-semibold text-[#F5A623] hover:bg-[#F5A623]/20 transition"
+                    className="hidden 2xl:inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#F5A623]/25 bg-[#F5A623]/[0.07] px-3 text-xs font-semibold text-[#F5A623] hover:bg-[#F5A623]/[0.13] transition"
                   >
                     <Shield size={14} /> <Tr k="nav.admin" />
                   </Link>
@@ -232,8 +278,9 @@ export function Header() {
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => setNotifOpen((v) => !v)}
-                    className="relative p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition"
                     aria-label={t("nav.notifications")}
+                    aria-expanded={notifOpen}
                   >
                     <Bell size={18} />
                     {unreadCount > 0 && (
@@ -249,7 +296,7 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-80 max-w-[calc(100vw-32px)] rounded-xl border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-80 max-w-[calc(100vw-32px)] rounded-2xl border border-white/[0.09] bg-bg-surface shadow-2xl shadow-black/40 overflow-hidden z-50"
                       >
                         <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-text-primary"><Tr k="nav.notifications" /></h3>
@@ -266,14 +313,17 @@ export function Header() {
                               <p className="text-sm text-text-secondary"><Tr k="nav.no_notifications" /></p>
                             </div>
                           ) : (
-                            visibleNotifications.map((n) => (
+                            visibleNotifications.map((n) => {
+                              const fallbackHref = isAdmin ? "/admin/notifications" : "/account/notifications";
+                              const destination = n.href?.startsWith("/") && !n.href.startsWith("//") ? n.href : fallbackHref;
+                              return (
                               <div
                                 key={n.id}
                                 className="group flex items-start gap-2 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition"
                               >
                                 <Link
-                                  href={n.href || "#"}
-                                  onClick={() => setNotifOpen(false)}
+                                  href={destination}
+                                  onClick={() => handleOpenNotification(n.id)}
                                   className="flex items-start gap-2 flex-1 min-w-0"
                                 >
                                   <div className={"mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 " + (n.unread ? "bg-[#7559E8]" : "bg-transparent")} />
@@ -289,7 +339,7 @@ export function Header() {
                                     e.stopPropagation();
                                     handleDismiss(n.id);
                                   }}
-                                  className="flex-shrink-0 p-1 rounded hover:bg-[#F05D70]/20 text-text-muted hover:text-[#F05D70] transition opacity-0 group-hover:opacity-100"
+                                  className="flex-shrink-0 p-1 rounded hover:bg-[#F05D70]/20 text-text-muted hover:text-[#F05D70] transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                                   title={t("nav.dismiss")}
                                 >
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -298,7 +348,8 @@ export function Header() {
                                   </svg>
                                 </button>
                               </div>
-                            ))
+                              );
+                            })
                           )}
                         </div>
                       </motion.div>
@@ -310,17 +361,16 @@ export function Header() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((v) => !v)}
-                    className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 pl-1.5 pr-2 py-1.5 hover:bg-white/10 transition"
+                    className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.09] bg-white/[0.045] pl-1.5 pr-2.5 hover:border-white/[0.15] hover:bg-white/[0.075] transition-all duration-200"
+                    aria-haspopup="menu"
+                    aria-expanded={dropdownOpen}
+                    aria-label={`Account menu for ${displayName}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#7559E8]/30 border border-[#7559E8]/40 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#A78BFA] bg-[#7559E8]/20">
-                        {user.full_name ? user.full_name.slice(0, 2).toUpperCase() : "U"}
-                      </div>
-                    </div>
-                    <span className="hidden xl:inline text-sm font-medium text-text-primary max-w-[120px] truncate">
+                    <Avatar name={displayName} src={user.avatar_url} size={30} className="border border-white/10 ring-1 ring-black/10" />
+                    <span className="hidden 2xl:inline text-[13px] font-semibold text-text-primary max-w-[140px] truncate">
                       {displayName}
                     </span>
-                    <ChevronDown size={12} className={cn("text-text-muted transition-transform", dropdownOpen && "rotate-180")} />
+                    <ChevronDown size={14} className={cn("text-text-muted transition-transform", dropdownOpen && "rotate-180")} />
                   </button>
 
                   <AnimatePresence>
@@ -330,7 +380,7 @@ export function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-bg-surface shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute right-0 rtl:right-auto rtl:left-0 top-full mt-2 w-56 rounded-2xl border border-white/[0.09] bg-bg-surface shadow-2xl shadow-black/40 overflow-hidden z-50"
                       >
                         <div className="p-3 border-b border-white/5">
                           <p className="text-sm font-medium text-text-primary truncate">{displayName}</p>
@@ -376,11 +426,13 @@ export function Header() {
             )}
 
             <button
-              onClick={() => setOpen((v) => !v)}
-              className="lg:hidden text-text-primary p-1.5 rounded-md hover:bg-white/5 transition"
+              onClick={() => onMenuClick ? onMenuClick() : setOpen((v) => !v)}
+              className={cn(onMenuClick ? "md:hidden" : "xl:hidden", "flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition")}
               aria-label={t("nav.toggle_menu")}
+              aria-expanded={onMenuClick ? undefined : open}
+              aria-controls={onMenuClick ? "app-sidebar-nav" : undefined}
             >
-              {open ? <X size={24} /> : <Menu size={24} />}
+              {open ? <X size={24} /> : <Menu size={21} />}
             </button>
           </div>
         </div>
@@ -395,7 +447,7 @@ export function Header() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-black/55 backdrop-blur-sm z-40 xl:hidden"
               onClick={() => setOpen(false)}
             />
 
@@ -405,7 +457,7 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              className="fixed top-20 right-3 w-[300px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-110px)] bg-bg-surface border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 lg:hidden flex flex-col overflow-hidden"
+              className="fixed top-[84px] right-3 w-[320px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-100px)] bg-bg-surface border border-white/[0.09] rounded-2xl shadow-2xl shadow-black/50 z-50 xl:hidden flex flex-col overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
@@ -422,7 +474,7 @@ export function Header() {
               {/* Nav Links */}
               <nav className="flex-1 overflow-y-auto py-2">
                 {navLinks.map((l) => {
-                  const isActive = pathname === l.href;
+                  const isActive = isNavigationActive(pathname, l.href);
                   return (
                     <Link
                       key={l.href}
@@ -478,7 +530,7 @@ export function Header() {
                       </Link>
                     )}
                     <Link
-                      href="/account"
+                      href="/account/profile"
                       onClick={() => setOpen(false)}
                       className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-white/10 transition"
                     >

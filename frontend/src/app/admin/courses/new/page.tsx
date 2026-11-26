@@ -175,7 +175,7 @@ export default function NewCoursePage() {
     "w-full bg-[#0B0F1D] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#7559E8]";
 
   return (
-    <div className="py-10 px-6 lg:px-10 max-w-3xl">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <Link
         href="/admin/courses"
         className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"

@@ -8,14 +8,17 @@
 //   - Terminal: REAL console capture from the running code (log/info/warn/error,
 //     runtime errors, promise rejections) + a REPL - anything you type is
 //     evaluated inside the preview frame. `clear` and `help` are built in.
-//   - Work is saved locally (localStorage) - nothing uploads anywhere.
+//   - Scratch tabs are saved locally; Build Studio projects sync to the account API.
 //
-// No new npm dependencies. Standalone route (no sidebar chrome) - linked from
-// the account sidebar and the marketplace sidebar as "Code Playground".
+// Uses the existing Monaco, sandboxed preview and Python runner. Account-backed
+// projects are loaded from Build Studio; local folders use the File System Access API.
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { GripHorizontal, GripVertical, Play, RotateCcw, Terminal, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowDownToLine, CheckCircle2, FilePlus2, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
+import { API_BASE } from "@/lib/api/client";
+import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -88,7 +91,22 @@ interface EditorTab {
   core?: boolean;
   projectPath?: string;
   handle?: FileSystemFileHandle;
+  cloudProject?: boolean;
 }
+
+interface CloudProjectFile {
+  path: string;
+  content: string;
+}
+interface CloudProject {
+  id: string;
+  name: string;
+  description: string | null;
+  template: string;
+  files: CloudProjectFile[];
+}
+
+type CloudCorePaths = { html: string; css: string; javascript: string };
 
 interface ProjectNode {
   name: string;
@@ -98,11 +116,37 @@ interface ProjectNode {
   children?: ProjectNode[];
 }
 
+const LOCAL_PROJECT_MAX_FILES = 1500;
+const LOCAL_PROJECT_MAX_DEPTH = 12;
+const LOCAL_PROJECT_MAX_TEXT_BYTES = 2 * 1024 * 1024;
+const LOCAL_PROJECT_SKIP_DIRECTORIES = new Set([
+  "node_modules", ".git", ".next", "dist", "build", "out", "coverage",
+  ".turbo", ".cache", ".dart_tool", ".gradle", "Pods", "target",
+  "vendor", ".venv", "venv", "__pycache__",
+]);
+const LOCAL_PROJECT_BINARY_EXTENSIONS = new Set([
+  "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "pdf", "zip",
+  "gz", "7z", "rar", "exe", "dll", "so", "dylib", "mp3", "mp4",
+  "mov", "wav", "woff", "woff2", "ttf", "otf", "eot", "class", "jar",
+]);
+
+function isSensitiveProjectFile(name: string) {
+  const lower = name.toLowerCase();
+  return lower === ".env"
+    || (lower.startsWith(".env.") && lower !== ".env.example")
+    || ["id_rsa", "id_ed25519", "authorized_keys"].includes(lower)
+    || lower.endsWith(".pem")
+    || lower.endsWith(".key");
+}
+
 async function readProjectTree(
   directory: FileSystemDirectoryHandle,
-  parentPath = ""
+  parentPath = "",
+  depth = 0,
+  budget = { remaining: LOCAL_PROJECT_MAX_FILES },
 ): Promise<ProjectNode[]> {
   const nodes: ProjectNode[] = [];
+  if (depth > LOCAL_PROJECT_MAX_DEPTH || budget.remaining <= 0) return nodes;
 
   const directoryWithEntries = directory as unknown as {
     entries(): AsyncIterableIterator<
@@ -111,12 +155,15 @@ async function readProjectTree(
   };
 
   for await (const [name, handle] of directoryWithEntries.entries()) {
-    if (
-      handle.kind === "directory" &&
-      ["node_modules", ".git", ".next", "dist", "build", ".venv", "venv", "coverage", ".turbo"].includes(name)
-    ) {
-      continue;
+    if (budget.remaining <= 0) break;
+    if (handle.kind === "directory" && LOCAL_PROJECT_SKIP_DIRECTORIES.has(name.toLowerCase())) continue;
+    if (handle.kind === "file" && isSensitiveProjectFile(name)) continue;
+    if (handle.kind === "file") {
+      const extension = name.split(".").pop()?.toLowerCase() ?? "";
+      if (LOCAL_PROJECT_BINARY_EXTENSIONS.has(extension)) continue;
     }
+
+    budget.remaining -= 1;
     const path = parentPath ? `${parentPath}/${name}` : name;
 
     if (handle.kind === "directory") {
@@ -126,7 +173,7 @@ async function readProjectTree(
         path,
         kind: "directory",
         handle: dir,
-        children: await readProjectTree(dir, path),
+        children: await readProjectTree(dir, path, depth + 1, budget),
       });
     } else {
       nodes.push({
@@ -477,6 +524,7 @@ function ProjectTreeItem({
 // page
 // ----------------------------------------------------------------------------
 export default function PlaygroundPage() {
+  const { token } = useAuth();
   const [code, setCode] = useState<Code>(DEFAULT_CODE);
   const [activeLanguage, setActiveLanguage] = useState("html");
   const [extraCode, setExtraCode] = useState<Record<string, string>>({});
@@ -497,6 +545,16 @@ export default function PlaygroundPage() {
   const [activeProjectPath, setActiveProjectPath] = useState("");
   const [projectFileContent, setProjectFileContent] = useState("");
   const [projectBusy, setProjectBusy] = useState(false);
+  const [cloudProject, setCloudProject] = useState<CloudProject | null>(null);
+  const [cloudProjectPaths, setCloudProjectPaths] = useState<string[]>([]);
+  const [cloudProjectFiles, setCloudProjectFiles] = useState<Record<string, string>>({});
+  const [cloudCorePaths, setCloudCorePaths] = useState<CloudCorePaths>({ html: "", css: "", javascript: "" });
+  const [cloudProjectLoading, setCloudProjectLoading] = useState(false);
+  const [cloudProjectStatus, setCloudProjectStatus] = useState<"idle" | "unsaved" | "saving" | "saved" | "error">("idle");
+  const [cloudProjectError, setCloudProjectError] = useState("");
+  const [cloudProjectDirty, setCloudProjectDirty] = useState(false);
+  const cloudProjectReadyRef = useRef(false);
+  const cloudEditRevisionRef = useRef(0);
 
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const nextTabCounterRef = useRef(1);
@@ -517,6 +575,8 @@ export default function PlaygroundPage() {
   };
   const logsRef = useRef<HTMLDivElement | null>(null);
   const runRef = useRef<() => void>(() => {});
+  const saveProjectFileRef = useRef<() => void>(() => {});
+  const saveCloudProjectRef = useRef<() => void>(() => {});
 
   const pushLog = (level: LogLine["level"], text: string, tabId = activeTabId) => {
     setLogs((prev) => [
@@ -530,12 +590,89 @@ export default function PlaygroundPage() {
     ]);
   };
 
+  // A project opened from the Build hub is loaded from the signed-in user's account.
+  useEffect(() => {
+    if (!token) return;
+    const projectId = new URLSearchParams(window.location.search).get("project");
+    if (!projectId) return;
+    let active = true;
+    cloudProjectReadyRef.current = false;
+    setCloudProjectLoading(true);
+    setCloudProjectError("");
+    fetchWithAuth(`${API_BASE}/projects/${encodeURIComponent(projectId)}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(await response.text());
+        return response.json() as Promise<CloudProject>;
+      })
+      .then((project) => {
+        if (!active) return;
+        const files = Object.fromEntries((project.files ?? []).map((file) => [file.path, file.content]));
+        const paths = Object.keys(files).sort((a, b) => a.localeCompare(b));
+        const findPath = (names: string[]) => paths.find((path) => names.includes(path.toLowerCase()))
+          ?? paths.find((path) => names.some((name) => path.toLowerCase().endsWith(`/${name}`)))
+          ?? "";
+        const corePaths: CloudCorePaths = {
+          html: findPath(["index.html", "index.htm"]),
+          css: findPath(["styles.css", "style.css", "main.css"]),
+          javascript: findPath(["script.js", "main.js", "app.js"]),
+        };
+        const nextCode: Code = {
+          html: corePaths.html ? files[corePaths.html] : "",
+          css: corePaths.css ? files[corePaths.css] : "",
+          js: corePaths.javascript ? files[corePaths.javascript] : "",
+        };
+        const corePathSet = new Set(Object.values(corePaths).filter(Boolean));
+        const additionalFiles = paths.filter((path) => !corePathSet.has(path));
+        const buffers: Record<string, string> = {};
+        const projectTabs: EditorTab[] = additionalFiles.map((path, index) => {
+          const id = `cloud-${project.id}-${index + 1}`;
+          buffers[id] = files[path] ?? "";
+          return { id, name: path.split("/").pop() || path, language: languageFromFileName(path), projectPath: path, cloudProject: true };
+        });
+        const initialFile = project.template === "python" ? projectTabs.find((tab) => tab.language === "python") : undefined;
+        setCloudProject(project);
+        setCloudProjectFiles(files);
+        setCloudProjectPaths(paths);
+        setCloudCorePaths(corePaths);
+        setProjectRootName(project.name);
+        setProjectTree([]);
+        setCode(nextCode);
+        setEditorTabs([...DEFAULT_EDITOR_TABS.map((tab) => ({
+          ...tab,
+          name: tab.id === "html" ? (corePaths.html.split("/").pop() || "index.html")
+            : tab.id === "css" ? (corePaths.css.split("/").pop() || "styles.css")
+            : (corePaths.javascript.split("/").pop() || "script.js"),
+          projectPath: corePaths[tab.id === "javascript" ? "javascript" : tab.id as "html" | "css"] || undefined,
+          cloudProject: true,
+        })), ...projectTabs]);
+        setExtraCode(buffers);
+        setActiveProjectFile(null);
+        setProjectFileContent("");
+        setActiveProjectPath(initialFile?.projectPath ?? "");
+        setActiveTabId(initialFile?.id ?? "html");
+        setActiveLanguage(initialFile?.language ?? "html");
+        cloudEditRevisionRef.current = 0;
+        setCloudProjectDirty(false);
+        setCloudProjectStatus("saved");
+        cloudProjectReadyRef.current = true;
+        setSrcDoc(build(nextCode));
+        setLogs([]);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setCloudProjectError(error instanceof Error ? error.message : "Unable to open this project.");
+        setCloudProjectStatus("error");
+      })
+      .finally(() => { if (active) setCloudProjectLoading(false); });
+    return () => { active = false; };
+  }, [token]);
+
   const activateEditorTab = (tab: EditorTab) => {
     setActiveTabId(tab.id);
     setActiveLanguage(tab.language);
     setActiveProjectFile(tab.handle ?? null);
     setActiveProjectPath(tab.projectPath ?? "");
-    setProjectFileContent(tab.handle ? extraCode[tab.id] ?? "" : "");
+    setProjectFileContent(tab.handle || (tab.cloudProject && !tab.core) ? extraCode[tab.id] ?? "" : "");
   };
 
   const createLanguageTab = (language: string) => {
@@ -558,6 +695,41 @@ export default function PlaygroundPage() {
     setProjectFileContent("");
   };
 
+  // A learner can send a lesson's code example straight into a fresh editor tab.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("handoff") !== "lesson") return;
+    const raw = localStorage.getItem("IBRANT_PLAYGROUND_HANDOFF_V1");
+    if (!raw) return;
+    try {
+      const handoff = JSON.parse(raw) as { code?: string; language?: string; title?: string };
+      if (typeof handoff.code !== "string") throw new Error("Lesson example is missing code.");
+      localStorage.removeItem("IBRANT_PLAYGROUND_HANDOFF_V1");
+      const language = languageFromFileName(`example.${(handoff.language || "python").toLowerCase()}`);
+      const title = (handoff.title || "Lesson example").slice(0, 60);
+      if (["html", "css", "javascript"].includes(language)) {
+        const key = language === "javascript" ? "js" : language;
+        setCode((current) => ({ ...current, [key]: handoff.code! }));
+        setActiveTabId(language === "javascript" ? "javascript" : language);
+        setActiveLanguage(language);
+      } else {
+        const id = `lesson-${Date.now()}-${nextTabCounterRef.current++}`;
+        const tab: EditorTab = { id, name: title || `${language} lesson`, language };
+        setEditorTabs((current) => [...current, tab]);
+        setExtraCode((current) => ({ ...current, [id]: handoff.code! }));
+        setActiveTabId(id);
+        setActiveLanguage(language);
+      }
+      setActiveProjectFile(null);
+      setActiveProjectPath("");
+      setProjectFileContent("");
+      setCloudProject(null);
+      pushLog("sys", `Lesson example opened: ${title}`);
+    } catch (error) {
+      setCloudProjectError(error instanceof Error ? error.message : "Unable to open the lesson example.");
+    }
+  }, []);
+
   const stopPythonTab = (tabId: string, showMessage = true) => {
     const worker = pythonWorkersRef.current.get(tabId);
     worker?.terminate();
@@ -578,6 +750,12 @@ export default function PlaygroundPage() {
     if (!tab || tab.core) return;
 
     stopPythonTab(tabId, false);
+    if (cloudProject && tab.cloudProject && tab.projectPath) {
+      cloudEditRevisionRef.current += 1;
+      const latestContent = extraCode[tabId] ?? "";
+      setCloudProjectFiles((current) => ({ ...current, [tab.projectPath!]: latestContent }));
+      setCloudProjectDirty(true);
+    }
     setEditorTabs((prev) => prev.filter((item) => item.id !== tabId));
     setExtraCode((prev) => {
       const next = { ...prev };
@@ -638,7 +816,7 @@ export default function PlaygroundPage() {
 
   const openProjectFolder = async () => {
     const pickerWindow = window as Window & {
-      showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
+      showDirectoryPicker?: (options?: { mode?: "read" | "readwrite" }) => Promise<FileSystemDirectoryHandle>;
     };
 
     if (!pickerWindow.showDirectoryPicker) {
@@ -647,16 +825,32 @@ export default function PlaygroundPage() {
     }
 
     try {
+      if (cloudProject && cloudProjectDirty && !window.confirm("You have unsaved account project changes. Switch to a local folder and discard those changes?")) return;
       setProjectBusy(true);
-      const directory = await pickerWindow.showDirectoryPicker();
+      const directory = await pickerWindow.showDirectoryPicker({ mode: "readwrite" });
       const tree = await readProjectTree(directory);
 
+      cloudProjectReadyRef.current = false;
+      setCloudProject(null);
+      setCloudProjectFiles({});
+      setCloudProjectPaths([]);
+      setCloudCorePaths({ html: "", css: "", javascript: "" });
+      cloudEditRevisionRef.current = 0;
+      setCloudProjectDirty(false);
+      setCloudProjectStatus("idle");
+      setCloudProjectError("");
+      setEditorTabs(DEFAULT_EDITOR_TABS);
+      setExtraCode({});
+      setActiveTabId("html");
+      setActiveLanguage("html");
+      setCode(DEFAULT_CODE);
       setProjectTree(tree);
       setProjectRootName(directory.name);
       setActiveProjectFile(null);
       setActiveProjectPath("");
       setProjectFileContent("");
       pushLog("sys", `Opened project folder: ${directory.name}`);
+      pushLog("sys", "Local folder scan skips environment files, private keys, binary assets, and generated dependency folders.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       pushLog("error", error instanceof Error ? error.message : String(error));
@@ -677,6 +871,9 @@ export default function PlaygroundPage() {
 
       const handle = node.handle as FileSystemFileHandle;
       const file = await handle.getFile();
+      if (file.size > LOCAL_PROJECT_MAX_TEXT_BYTES) {
+        throw new Error("This file is larger than the 2 MB browser editor limit. Edit it in a desktop code editor.");
+      }
       const content = await file.text();
       const language = languageFromFileName(node.name);
       const id = `project-${Date.now()}-${nextTabCounterRef.current++}`;
@@ -712,6 +909,139 @@ export default function PlaygroundPage() {
     } catch (error) {
       pushLog("error", error instanceof Error ? error.message : String(error));
     }
+  };
+
+  saveProjectFileRef.current = () => { void saveProjectFile(); };
+
+  const collectCloudProjectFiles = () => {
+    if (!cloudProject) return [] as CloudProjectFile[];
+    const files: Record<string, string> = { ...cloudProjectFiles };
+    if (cloudCorePaths.html) files[cloudCorePaths.html] = code.html;
+    if (cloudCorePaths.css) files[cloudCorePaths.css] = code.css;
+    if (cloudCorePaths.javascript) files[cloudCorePaths.javascript] = code.js;
+    for (const tab of editorTabs) {
+      if (tab.cloudProject && !tab.core && tab.projectPath) {
+        files[tab.projectPath] = extraCode[tab.id] ?? "";
+      }
+    }
+    return Object.entries(files).map(([path, content]) => ({ path, content }));
+  };
+
+  const saveCloudProject = async () => {
+    if (!cloudProject || !token || !cloudProjectReadyRef.current) return;
+    setCloudProjectStatus("saving");
+    setCloudProjectError("");
+    const savedRevision = cloudEditRevisionRef.current;
+    try {
+      const files = collectCloudProjectFiles();
+      const response = await fetchWithAuth(`${API_BASE}/projects/${cloudProject.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      setCloudProjectFiles(Object.fromEntries(files.map((file) => [file.path, file.content])));
+      setCloudProjectPaths(files.map((file) => file.path).sort((a, b) => a.localeCompare(b)));
+      const hasNewerEdits = savedRevision !== cloudEditRevisionRef.current;
+      setCloudProjectDirty(hasNewerEdits);
+      setCloudProjectStatus(hasNewerEdits ? "unsaved" : "saved");
+      return true;
+    } catch (error) {
+      setCloudProjectStatus("error");
+      setCloudProjectError(error instanceof Error ? error.message : "Unable to save project.");
+      return false;
+    }
+  };
+  saveCloudProjectRef.current = () => { void saveCloudProject(); };
+  // Monaco's Ctrl+S command is registered once; route it through a mutable ref
+  // so it always saves the active local file or account-backed project.
+  saveProjectFileRef.current = () => {
+    if (cloudProject) void saveCloudProject();
+    else void saveProjectFile();
+  };
+
+  useEffect(() => {
+    if (!cloudProject || !cloudProjectDirty || !cloudProjectReadyRef.current || cloudProjectStatus === "saving") return;
+    setCloudProjectStatus("unsaved");
+    const timer = window.setTimeout(() => saveCloudProjectRef.current(), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cloudProject, cloudProjectDirty, cloudProjectStatus, code, extraCode, editorTabs, cloudProjectFiles, cloudCorePaths]);
+
+  const exportCloudProject = async () => {
+    if (!cloudProject || !token) return;
+    try {
+      if (cloudProjectDirty) {
+        const saved = await saveCloudProject();
+        if (!saved) return;
+      }
+      const response = await fetchWithAuth(`${API_BASE}/projects/${cloudProject.id}/download`);
+      if (!response.ok) throw new Error(await response.text());
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${cloudProject.name.replace(/[^a-zA-Z0-9._-]+/g, "-") || "ibrant-project"}.zip`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setCloudProjectError(error instanceof Error ? error.message : "Unable to export project.");
+    }
+  };
+
+  const openCloudProjectFile = (path: string) => {
+    if (!cloudProject) return;
+    const coreEntry = (Object.entries(cloudCorePaths) as [keyof CloudCorePaths, string][]).find(([, filePath]) => filePath && filePath === path);
+    if (coreEntry) {
+      const tab = DEFAULT_EDITOR_TABS.find((item) => item.id === (coreEntry[0] === "javascript" ? "javascript" : coreEntry[0]));
+      if (tab) {
+        const mappedTab = editorTabs.find((item) => item.id === tab.id) ?? tab;
+        activateEditorTab(mappedTab);
+      }
+      return;
+    }
+    const existing = editorTabs.find((tab) => tab.cloudProject && tab.projectPath === path);
+    if (existing) { activateEditorTab(existing); return; }
+    const id = `cloud-${cloudProject.id}-${Date.now()}-${nextTabCounterRef.current++}`;
+    const name = path.split("/").pop() || path;
+    const language = languageFromFileName(name);
+    const content = cloudProjectFiles[path] ?? "";
+    const tab: EditorTab = { id, name, language, projectPath: path, cloudProject: true };
+    setEditorTabs((prev) => [...prev, tab]);
+    setExtraCode((prev) => ({ ...prev, [id]: content }));
+    setActiveTabId(id);
+    setActiveLanguage(language);
+    setActiveProjectFile(null);
+    setActiveProjectPath(path);
+    setProjectFileContent(content);
+  };
+
+  const addCloudProjectFile = () => {
+    if (!cloudProject) return;
+    const requested = window.prompt("New file path (example: src/app.js)");
+    if (!requested) return;
+    const path = requested.trim().replace(/\\/g, "/");
+    const pathParts = path.split("/");
+    if (!path || path.startsWith("/") || pathParts.some((part) => {
+      const lowerPart = part.toLowerCase();
+      return !part || part === "." || part === ".." || lowerPart === ".env"
+        || (lowerPart.startsWith(".env.") && lowerPart !== ".env.example")
+        || lowerPart.endsWith(".pem") || lowerPart.endsWith(".key")
+        || ["id_rsa", "id_ed25519", "authorized_keys"].includes(lowerPart);
+    }) || path.length > 180) {
+      setCloudProjectError("Use a safe relative file path, such as src/app.js.");
+      return;
+    }
+    if (cloudProjectPaths.includes(path)) {
+      openCloudProjectFile(path);
+      return;
+    }
+    cloudEditRevisionRef.current += 1;
+    setCloudProjectFiles((prev) => ({ ...prev, [path]: "" }));
+    setCloudProjectPaths((prev) => [...prev, path].sort((a, b) => a.localeCompare(b)));
+    setCloudProjectDirty(true);
+    openCloudProjectFile(path);
   };
 
   const runPythonCode = (source: string, tabId: string) => {
@@ -884,6 +1214,26 @@ export default function PlaygroundPage() {
 
     clearPendingRequests();
     previewReadyRef.current = false;
+    if (activeProjectFile) {
+      const projectPreview: Code = {
+        html: activeLanguage === "html" ? activeSource : "",
+        css: activeLanguage === "css" ? activeSource : "",
+        js: activeLanguage === "javascript" ? activeSource : "",
+      };
+      setSrcDoc(build(projectPreview));
+      pushLog("out", `Preview updated from ${activeProjectPath || activeLanguage}.`);
+      return;
+    }
+    if (cloudProject && activeProjectPath && !Object.values(cloudCorePaths).includes(activeProjectPath)) {
+      const projectPreview: Code = {
+        html: activeLanguage === "html" ? activeSource : "",
+        css: activeLanguage === "css" ? activeSource : "",
+        js: activeLanguage === "javascript" ? activeSource : "",
+      };
+      setSrcDoc(build(projectPreview));
+      pushLog("out", `Preview updated from ${activeProjectPath}.`);
+      return;
+    }
     setSrcDoc(build(code));
   };
   runRef.current = run;
@@ -901,6 +1251,26 @@ export default function PlaygroundPage() {
       pythonBusyRef.current.clear();
     };
   }, []);
+
+  // Restore and persist workspace preferences independently from source buffers.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("IBRANT_PLAYGROUND_LAYOUT_V1") || "null");
+      if (saved && typeof saved === "object") {
+        if (Number.isFinite(saved.editorShare)) setEditorShare(Math.max(28, Math.min(72, saved.editorShare)));
+        if (Number.isFinite(saved.terminalHeight)) setTerminalHeight(Math.max(130, Math.min(560, saved.terminalHeight)));
+        if (typeof saved.autoRun === "boolean") setAutoRun(saved.autoRun);
+      }
+    } catch { /* Ignore invalid preferences. */ }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try { localStorage.setItem("IBRANT_PLAYGROUND_LAYOUT_V1", JSON.stringify({ editorShare, terminalHeight, autoRun })); }
+      catch { /* Ignore storage quota or privacy-mode errors. */ }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [editorShare, terminalHeight, autoRun]);
 
   // load saved work once
   useEffect(() => {
@@ -1196,7 +1566,7 @@ export default function PlaygroundPage() {
   const pythonRunning = runningPythonTabs.includes(activeTabId);
   const visibleLogs = logs.filter((line) => !line.tabId || line.tabId === activeTabId || line.tabId === "web");
 
-  const editorValue = activeProjectFile
+  const editorValue = activeProjectFile || (cloudProject && activeEditorTab.cloudProject && !activeEditorTab.core)
     ? projectFileContent
     : isWebLanguage
       ? code[activeTabKey]
@@ -1205,14 +1575,25 @@ export default function PlaygroundPage() {
   const updateEditorValue = (value: string | undefined) => {
     const next = value ?? "";
 
-    if (activeProjectFile) {
+    if (activeProjectFile || (cloudProject && activeEditorTab.cloudProject && !activeEditorTab.core)) {
       setProjectFileContent(next);
       setExtraCode((prev) => ({ ...prev, [activeTabId]: next }));
+      if (cloudProject && activeEditorTab.cloudProject) {
+        cloudEditRevisionRef.current += 1;
+        setCloudProjectDirty(true);
+      }
     } else if (isWebLanguage) {
       setCode((prev) => ({ ...prev, [activeTabKey]: next }));
+      if (cloudProject) {
+        cloudEditRevisionRef.current += 1;
+        setCloudProjectDirty(true);
+      }
     } else {
       setExtraCode((prev) => ({ ...prev, [activeTabId]: next }));
-      if (activeProjectFile) setProjectFileContent(next);
+      if (cloudProject && activeEditorTab.cloudProject) {
+        cloudEditRevisionRef.current += 1;
+        setCloudProjectDirty(true);
+      }
     }
   };
 
@@ -1225,11 +1606,22 @@ export default function PlaygroundPage() {
             <Terminal size={20} />
           </span>
           <div>
-            <h1 className="font-display text-xl font-extrabold text-white">Code Playground</h1>
-            <p className="text-xs text-[#7A8199]">Monaco editor · HTML/CSS/JS preview · Python WebAssembly runner</p>
+            <h1 className="font-display text-xl font-extrabold text-white">{cloudProject ? cloudProject.name : "Code Playground"}</h1>
+            <p className="text-xs text-[#7A8199]">{cloudProject ? "Saved to your IBRANT account · auto-save enabled" : "Monaco editor · HTML/CSS/JS preview · Python WebAssembly runner"}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link href="/build" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] hover:bg-white/10">My Projects</Link>
+          {cloudProject && (
+            <>
+              <span className="hidden items-center gap-1 text-[11px] text-[#929CBD] sm:inline-flex">
+                {cloudProjectStatus === "saving" ? <Loader2 size={12} className="animate-spin" /> : cloudProjectStatus === "error" ? <X size={12} className="text-[#FF9AA6]" /> : <CheckCircle2 size={12} className="text-[#22C58B]" />}
+                {cloudProjectStatus === "saving" ? "Saving" : cloudProjectStatus === "unsaved" ? "Unsaved changes" : cloudProjectStatus === "error" ? "Save failed" : "Saved"}
+              </span>
+              <button onClick={() => void saveCloudProject()} disabled={cloudProjectStatus === "saving" || !cloudProjectDirty} className="inline-flex items-center gap-1.5 rounded-lg border border-[#7559E8]/30 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] hover:bg-[#7559E8]/20 disabled:opacity-40"><Save size={13} /> Save</button>
+              <button onClick={() => void exportCloudProject()} disabled={cloudProjectStatus === "saving"} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] hover:bg-white/10 disabled:opacity-40"><ArrowDownToLine size={13} /> Export ZIP</button>
+            </>
+          )}
           <button
             onClick={openProjectFolder}
             disabled={projectBusy}
@@ -1244,7 +1636,7 @@ export default function PlaygroundPage() {
           >
             Save File
           </button>
-          <select
+          {!cloudProject && <select
             onChange={(e) => applyExample(e.target.value)}
             defaultValue=""
             aria-label="Load an example"
@@ -1254,7 +1646,7 @@ export default function PlaygroundPage() {
             {EXAMPLES.map((x) => (
               <option key={x.name} value={x.name}>{x.name}</option>
             ))}
-          </select>
+          </select>}
           <label className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[#B7BDD0]">
             <input
               type="checkbox"
@@ -1264,12 +1656,12 @@ export default function PlaygroundPage() {
             />
             Auto-run
           </label>
-          <button
+          {!cloudProject && <button
             onClick={reset}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] transition hover:bg-white/10 hover:text-white"
           >
             <RotateCcw size={13} /> Reset
-          </button>
+          </button>}
           <button
             disabled={pythonRunning}
             onClick={() => runRef.current()}
@@ -1289,26 +1681,28 @@ export default function PlaygroundPage() {
         </div>
       </header>
 
+      {cloudProjectLoading && <div className="mx-auto mt-4 max-w-[1600px] rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-[#B7BDD0]"><Loader2 size={14} className="mr-2 inline animate-spin" /> Loading your saved project…</div>}
+      {cloudProjectError && <div role="alert" className="mx-auto mt-4 max-w-[1600px] rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/10 px-4 py-3 text-xs text-[#FF9AA6]">{cloudProjectError}</div>}
       {/* workspace */}
       <div className="mx-auto mt-4 flex max-w-[1600px] flex-col gap-4 lg:h-[calc(100vh-11.5rem)] lg:flex-row">
-        {projectRootName && (
+        {(projectRootName || cloudProject) && (
           <aside className="flex max-h-[260px] w-full shrink-0 flex-col overflow-auto rounded-2xl border border-white/5 bg-white/[0.03] lg:max-h-none lg:w-56">
-            <div className="sticky top-0 border-b border-white/5 bg-[#0A0E24] px-3 py-3 text-xs font-semibold text-[#D7DDF3]">
-              {projectRootName}
+            <div className="sticky top-0 z-10 border-b border-white/5 bg-[#0A0E24] px-3 py-3 text-xs font-semibold text-[#D7DDF3]">
+              {cloudProject?.name || projectRootName}
             </div>
             <div className="p-2">
-              {projectTree.length === 0 ? (
+              {cloudProject ? (
+                <>
+                  <button onClick={addCloudProjectFile} className="mb-2 flex w-full items-center gap-2 rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-semibold text-[#B7BDD0] hover:border-[#7559E8]/50 hover:text-white"><FilePlus2 size={13} /> New file</button>
+                  {cloudProjectPaths.map((path) => (
+                    <button key={path} onClick={() => openCloudProjectFile(path)} title={path} className={`mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-mono text-[11px] transition ${activeProjectPath === path ? "bg-[#7559E8]/20 text-white" : "text-[#929CBD] hover:bg-white/5 hover:text-white"}`}><span className="truncate">{path}</span></button>
+                  ))}
+                </>
+              ) : projectTree.length === 0 ? (
                 <p className="px-2 py-3 text-xs text-[#7A8199]">This folder is empty.</p>
-              ) : (
-                projectTree.map((node) => (
-                  <ProjectTreeItem
-                    key={node.path}
-                    node={node}
-                    activePath={activeProjectPath}
-                    onOpen={openProjectFile}
-                  />
-                ))
-              )}
+              ) : projectTree.map((node) => (
+                <ProjectTreeItem key={node.path} node={node} activePath={activeProjectPath} onOpen={openProjectFile} />
+              ))}
             </div>
           </aside>
         )}
@@ -1367,7 +1761,7 @@ export default function PlaygroundPage() {
               );
             })}
 
-            <select
+            {!cloudProject && <select
               defaultValue=""
               onChange={(event) => {
                 const language = event.currentTarget.value;
@@ -1383,7 +1777,7 @@ export default function PlaygroundPage() {
                   {language.label}
                 </option>
               ))}
-            </select>
+            </select>}
 
             <span className="ml-auto hidden shrink-0 px-2 text-right font-mono text-[10px] text-[#687087] xl:inline">
               {activeLanguage === "python"
@@ -1405,6 +1799,12 @@ export default function PlaygroundPage() {
                   monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
                   () => {
                     runRef.current();
+                  }
+                );
+                editor.addCommand(
+                  monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+                  () => {
+                    saveProjectFileRef.current();
                   }
                 );
               }}
@@ -1540,7 +1940,7 @@ export default function PlaygroundPage() {
       </div>
 
       <p className="mx-auto mt-3 max-w-[1600px] text-center text-[11px] text-[#7A8199]">
-        Your code saves automatically on this device. HTML, CSS and JavaScript run in a sandboxed browser preview. Python runs through WebAssembly. JSON and XML have validation. Other languages require their respective engines or validators.
+        {cloudProject ? "Your project saves automatically to your IBRANT account. Export ZIP to keep a local copy or continue it in a desktop editor." : projectRootName ? "Files opened from a local folder are saved back to that folder with Save File or Ctrl+S. They are not uploaded to your IBRANT account. HTML, CSS and JavaScript preview in the browser; Python runs through WebAssembly." : "Scratch code saves on this device. Create a saved project in Build to sync files to your IBRANT account. HTML, CSS and JavaScript run in a sandboxed browser preview; Python runs through WebAssembly. Other languages require their respective engines or validators."}
       </p>
     </div>
   );

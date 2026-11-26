@@ -10,6 +10,7 @@ export function ClientShellWrapper({ children }: { children: React.ReactNode }) 
   const isAuthenticatedArea =
     pathname?.startsWith("/account") ||
     pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/build") ||
     pathname?.startsWith("/playground");
 
   // Authenticated layouts provide their own AppShell.
@@ -21,7 +22,7 @@ export function ClientShellWrapper({ children }: { children: React.ReactNode }) 
   return (
     <>
       <Header />
-      <main className="min-h-screen flex-1 pt-16 md:pt-[76px]">
+      <main className="min-h-screen flex-1 pt-[72px]">
         {children}
       </main>
       <Footer />

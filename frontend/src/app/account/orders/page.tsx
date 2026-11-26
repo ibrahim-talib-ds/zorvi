@@ -13,8 +13,10 @@ import { API_BASE } from "@/lib/api/client";
 interface OrderItem {
   id: string;
   product_title: string;
+  product_slug: string;
   package_name: string;
   price_cents: number;
+  currency: string;
 }
 
 interface Order {
@@ -56,6 +58,14 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }>
 };
 
 type Filter = "all" | "pending" | "awaiting_verification" | "paid" | "cancelled" | "refunded";
+
+function money(cents: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD", maximumFractionDigits: 2 }).format(cents / 100);
+  } catch {
+    return (currency || "USD") + " " + (cents / 100).toFixed(2);
+  }
+}
 
 export default function MyOrdersPage() {
   const router = useRouter();
@@ -129,7 +139,7 @@ export default function MyOrdersPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="py-10 px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <p className="text-xs font-mono uppercase tracking-wider text-[#5B9EFF] mb-2">
@@ -273,7 +283,7 @@ export default function MyOrdersPage() {
                   <div className="text-right">
                     <div className="text-xs text-[#7A8199] uppercase tracking-wider">Total</div>
                     <div className="font-display text-xl font-bold text-white">
-                      ${(order.total_cents / 100).toFixed(0)}
+                      {money(order.total_cents, order.currency)}
                     </div>
                   </div>
                 </div>
@@ -282,7 +292,7 @@ export default function MyOrdersPage() {
                   <div className="text-sm text-[#B7BDD0] mb-1">
                     {order.items.map((item, i) => (
                       <div key={item.id} className={i > 0 ? "mt-1" : ""}>
-                        {item.product_title} — <span className="text-white">{item.package_name}</span>
+                        <Link href={"/marketplace/" + item.product_slug} className="hover:text-[#A78BFA] transition">{item.product_title}</Link> — <span className="text-white">{item.package_name}</span> <span className="text-[#7A8199]">({money(item.price_cents, item.currency || order.currency)})</span>
                       </div>
                     ))}
                   </div>

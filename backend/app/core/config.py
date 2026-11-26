@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     GITHUB_REDIRECT_URI: str | None = None
     FRONTEND_URL: str = "https://ibrant.vercel.app"
 
+    # Server-side AI provider configuration. Never expose AI_API_KEY to the frontend.
+    AI_PROVIDER: str = "groq"
+    AI_API_KEY: str | None = None
+    AI_MODEL: str | None = None
+    AI_BASE_URL: str | None = None
+    AI_REQUEST_TIMEOUT_SECONDS: int = 120
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

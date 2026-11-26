@@ -202,3 +202,29 @@ async def test_category_slug_unique(client, admin_token):
         json={"name": "Different Name", "slug": r.json()["slug"]},
     )
     assert r2.status_code == 409
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_public_creator_profile_lists_only_published_products(client, admin_token):
+    draft = await _create_product(client, admin_token, title="Seller draft " + uuid.uuid4().hex[:6])
+    published = await _create_product(client, admin_token, title="Seller public " + uuid.uuid4().hex[:6])
+    await client.patch(
+        "/api/v1/admin/marketplace/" + published["id"],
+        headers={"Authorization": "Bearer " + admin_token},
+        json={"status": "published"},
+    )
+    creator_id = published.get("creator_id")
+    if not creator_id:
+        async with __import__("app.core.database", fromlist=["AsyncSessionLocal"]).AsyncSessionLocal() as db:
+            from sqlalchemy import select
+            from app.models.marketplace import MarketplaceProduct
+            product_row = await db.get(MarketplaceProduct, uuid.UUID(published["id"]))
+            creator_id = str(product_row.creator_id)
+
+    response = await client.get("/api/v1/marketplace/creators/" + creator_id)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["creator"]["id"] == creator_id
+    assert any(item["id"] == published["id"] for item in body["products"])
+    assert all(item["id"] != draft["id"] for item in body["products"])
+    assert body["products"][0]["creator_id"] == creator_id

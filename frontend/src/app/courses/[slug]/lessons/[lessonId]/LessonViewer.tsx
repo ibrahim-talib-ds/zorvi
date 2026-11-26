@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, Circle, Award } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -11,17 +11,33 @@ interface Props {
   courseSlug: string;
   lessonId: string;
   initialCompleted: boolean;
+  courseComplete?: boolean;
+  certificateCode?: string | null;
 }
 
-export function MarkCompleteButton({ courseSlug, lessonId, initialCompleted }: Props) {
+export function MarkCompleteButton({
+  courseSlug,
+  lessonId,
+  initialCompleted,
+  courseComplete: initialCourseComplete = false,
+  certificateCode: initialCertificateCode = null,
+}: Props) {
   const router = useRouter();
   const { token, isAuthenticated } = useAuth();
   
   const [completed, setCompleted] = useState(initialCompleted);
-  const [courseComplete, setCourseComplete] = useState(false);
-  const [certCode, setCertCode] = useState<string | null>(null);
+  const [courseComplete, setCourseComplete] = useState(initialCourseComplete);
+  const [certCode, setCertCode] = useState<string | null>(initialCertificateCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialCourseComplete && initialCertificateCode) {
+      setCourseComplete(true);
+      setCertCode(initialCertificateCode);
+      setCompleted(true);
+    }
+  }, [initialCourseComplete, initialCertificateCode]);
 
   const handleClick = async () => {
     if (!isAuthenticated || !token) {

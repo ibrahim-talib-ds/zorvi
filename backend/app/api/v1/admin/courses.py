@@ -75,6 +75,7 @@ async def create_course(
         short_description=payload.short_description,
         long_description=payload.long_description,
         thumbnail_url=payload.thumbnail_url,
+        cover_image_url=payload.cover_image_url,
         instructor_id=user.id,
         category_id=payload.category_id,
         difficulty=payload.difficulty,
@@ -83,6 +84,7 @@ async def create_course(
         learning_path=payload.learning_path,
         estimated_hours=payload.estimated_hours,
         is_featured=payload.is_featured,
+        resources=[resource.model_dump() for resource in payload.resources],
         status=CourseStatus.draft,
     )
     db.add(course)
@@ -222,6 +224,8 @@ async def create_lesson(
         content_markdown=payload.content_markdown,
         code_example=payload.code_example,
         exercise=payload.exercise,
+        practical_examples=payload.practical_examples,
+        practice_questions=payload.practice_questions,
         duration_minutes=payload.duration_minutes,
         sort_order=payload.sort_order,
         is_free_preview=payload.is_free_preview,

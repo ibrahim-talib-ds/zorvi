@@ -90,8 +90,8 @@ export function AppSidebarCore({
       <aside
         aria-label="Application sidebar"
         data-variant={variant}
-        className="fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-white/5 bg-[#0B0F1D] transition-[width] duration-200 md:flex motion-reduce:transition-none"
-        style={{ width: sidebarWidth }}
+        className="fixed bottom-0 left-0 z-40 hidden flex-col border-r border-white/[0.07] bg-bg-deep shadow-[12px_0_36px_rgba(0,0,0,0.12)] transition-[width] duration-200 md:flex motion-reduce:transition-none"
+        style={{ width: sidebarWidth, top: 72 }}
       >
         <SidebarHeader expanded={expanded} onToggle={toggle} />
         <SidebarNavigation variant={variant} expanded={expanded} />

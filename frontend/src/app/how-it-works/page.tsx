@@ -1,43 +1,28 @@
-"use client";
 import Link from "next/link";
+import { ArrowRight, BookOpen, Code2, Rocket } from "lucide-react";
+import { PublicInfoPage } from "@/components/layout/PublicInfoPage";
 
-export default function Howitworks_Page() {
+const steps = [
+  { number: "01", icon: BookOpen, title: "Learn the foundations", text: "Follow structured courses, work through practical examples, and track your progress from your account.", href: "/courses", action: "Explore the academy" },
+  { number: "02", icon: Code2, title: "Build and experiment", text: "Practise concepts in the coding workspace and turn lessons into projects you can develop further.", href: "/build", action: "Start building" },
+  { number: "03", icon: Rocket, title: "Launch with confidence", text: "Study real project structures, explore marketplace products, and use what you learn in your own work.", href: "/marketplace", action: "Explore the marketplace" },
+];
+
+export const metadata = { title: "How IBRANT Works", description: "Discover how IBRANT connects practical software education, hands-on coding, and digital projects." };
+
+export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F1D] text-[#B7BDD0] py-24 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-[#8B70FF] hover:text-[#A78BFA] mb-8 inline-block font-medium">
-          &larr; Back to Home
-        </Link>
-        <h1 className="text-4xl font-display font-extrabold text-white mb-8">How It Works</h1>
-        <div className="space-y-6 text-sm leading-relaxed">
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">Learn. Create. Launch.</h2>
-            <div className="space-y-6 mt-8">
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#7559E8] flex items-center justify-center text-white font-bold flex-shrink-0">1</div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Learn</h3>
-                  <p>Enroll in our Academy. Watch video lessons, read comprehensive guides, and write code directly in our interactive Python runner.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#7559E8] flex items-center justify-center text-white font-bold flex-shrink-0">2</div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Create</h3>
-                  <p>Build real-world projects. Master the exact architecture used in production apps.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#7559E8] flex items-center justify-center text-white font-bold flex-shrink-0">3</div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Launch</h3>
-                  <p>Use the Marketplace. Buy production-ready source code or launch the apps you built during the courses.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+    <PublicInfoPage eyebrow="The IBRANT experience" title="Learn. Create. Launch." description="One platform that connects practical software education, hands-on coding, and a marketplace for real-world digital projects.">
+      <div className="grid gap-4 md:grid-cols-3">
+        {steps.map(({ number, icon: Icon, title, text, href, action }) => (
+          <article key={number} className="rounded-2xl border border-bg-border bg-bg-elevated/55 p-5">
+            <div className="flex items-center justify-between"><span className="text-xs font-bold tracking-[0.2em] text-[#A78BFA]">{number}</span><Icon size={21} className="text-[#A78BFA]" /></div>
+            <h2 className="mt-6">{title}</h2>
+            <p className="mt-2">{text}</p>
+            <Link href={href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-text-primary hover:text-[#A78BFA]">{action} <ArrowRight size={15} /></Link>
+          </article>
+        ))}
       </div>
-    </div>
+    </PublicInfoPage>
   );
 }

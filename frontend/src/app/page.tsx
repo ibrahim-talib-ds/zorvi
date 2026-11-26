@@ -142,16 +142,16 @@ function SectionShell({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section className="space-y-6 sm:space-y-7">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#7559E8] to-[#8B70FF] text-white shadow-lg shadow-[#7559E8]/25">
+          <h2 className="flex items-center gap-3 font-display text-[1.65rem] font-extrabold tracking-[-0.035em] text-white sm:text-3xl">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#A78BFA]/20 bg-[#7559E8]/15 text-[#B9A7FF]">
               {icon}
             </span>
             {title}
           </h2>
-          <p className="mt-2 text-sm text-[#929CBD] sm:text-base">{subtitle}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#929CBD] sm:text-[15px]">{subtitle}</p>
         </div>
         {viewAllHref && viewAllLabel && (
           <Link
@@ -212,8 +212,8 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
   const initial = title.trim().charAt(0).toUpperCase();
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/[.08] bg-white/[.025] transition duration-300 hover:-translate-y-1 hover:border-[#8B70FF]/40 hover:bg-white/[.045] hover:shadow-xl hover:shadow-black/20">
+      <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-[#202951] via-[#171D39] to-[#10162E]">
         <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -232,14 +232,14 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
           </span>
         )}
         {discount !== null && discount > 0 && (
-          <span className="absolute left-3 top-3 rounded-lg bg-[#F05D70] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
+          <span className="absolute right-3 top-3 rounded-lg bg-[#F05D70] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
             {discount}% OFF
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-3">
-        <h3 className="truncate text-sm font-bold text-white sm:text-base">{title}</h3>
-        {desc && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#929CBD]">{desc}</p>}
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-white sm:text-[15px]">{title}</h3>
+        <p className="mt-1.5 line-clamp-2 min-h-9 text-xs leading-[1.15rem] text-[#929CBD]">{desc || "Explore the details and discover what you can create."}</p>
         <div className="mt-3 flex items-center gap-2">
           {person && (
             <>
@@ -259,7 +259,7 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
         </div>
         <div className="mt-3 flex items-center justify-between">
           {categoryOf(x) && (
-            <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#929CBD]">
+            <span className="max-w-[58%] truncate rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-[#929CBD]">
               {categoryOf(x)}
             </span>
           )}
@@ -278,7 +278,7 @@ function ItemCard({ x, href, ctaLabel }: { x: Item; href: string; ctaLabel: stri
         </div>
         <Link
           href={href}
-          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#8B70FF]/20 bg-[#7559E8]/15 px-3 py-2.5 text-xs font-semibold text-[#D7CEFF] transition group-hover:border-[#8B70FF]/50 group-hover:bg-gradient-to-r group-hover:from-[#7559E8] group-hover:to-[#8B70FF] group-hover:text-white"
         >
           {ctaLabel} <ArrowRight size={14} />
         </Link>
@@ -327,54 +327,63 @@ function HomeIllustration() {
 }
 function Hero({ projectsReady, coursesReady }: { projectsReady: boolean; coursesReady: boolean }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#241B5E] via-[#171338] to-[#0B0F1D] px-6 py-10 lg:px-12 lg:py-16">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(760px 300px at 82% 25%, rgba(117,89,232,0.32), transparent 65%), radial-gradient(460px 220px at 4% 115%, rgba(34,197,139,0.12), transparent 60%)",
-        }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center justify-between gap-8">
-        <div className="min-w-0 flex-1">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#7559E8]/40 bg-[#7559E8]/15 px-4 py-1.5 text-xs font-semibold text-[#C9B8FF]">
-            <Sparkles size={13} /> Learn · Build · Grow
+    <section className="relative isolate overflow-hidden rounded-[2rem] border border-white/10 bg-[#0D1226] px-5 py-9 shadow-2xl shadow-black/20 sm:px-8 lg:px-12 lg:py-14">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-50" />
+      <div className="pointer-events-none absolute -right-24 -top-36 -z-10 h-[34rem] w-[34rem] rounded-full bg-[#7559E8]/25 blur-[100px]" />
+      <div className="pointer-events-none absolute -bottom-48 left-1/4 -z-10 h-80 w-80 rounded-full bg-[#22C58B]/10 blur-[90px]" />
+      <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-12">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#A78BFA]/30 bg-[#7559E8]/15 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-[#D5C9FF]">
+            <Sparkles size={13} /> THE PLACE TO LEARN, BUILD & EARN
           </span>
-          <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Learn. Build.{" "}
-            <span className="bg-gradient-to-r from-[#A78BFA] via-[#8B70FF] to-[#5B9EFF] bg-clip-text text-transparent">Grow.</span>
+          <h1 className="mt-6 max-w-2xl font-display text-[2.65rem] font-extrabold leading-[1.08] tracking-[-0.045em] text-white sm:text-5xl lg:text-[3.65rem]">
+            Turn what you
+            <span className="block bg-gradient-to-r from-[#B9A7FF] via-[#8B70FF] to-[#5B9EFF] bg-clip-text text-transparent">know into what’s next.</span>
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#B7BDD0] sm:text-base lg:text-lg">
-            Production-ready projects and expert-led courses on one platform. Pick a project, ship it to your portfolio,
-            and level up with every course you finish.
+          <p className="mt-5 max-w-xl text-sm leading-7 text-[#B7BDD0] sm:text-base">
+            Learn practical tech skills, build real projects, and grow your income. One platform to move from your first lesson to your next launch.
           </p>
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#7559E8]/30 transition hover:brightness-110"
-            >
-              <Code2 size={16} /> Explore Marketplace
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link href={COURSES_BASE} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7559E8]/25 transition hover:-translate-y-0.5 hover:brightness-110">
+              <GraduationCap size={17} /> Explore the Academy <ArrowRight size={15} />
             </Link>
-            <Link
-              href={COURSES_BASE}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-[#7559E8]/50 hover:bg-[#7559E8]/10"
-            >
-              <GraduationCap size={16} /> Start Learning
+            <Link href="/marketplace" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/10">
+              <Code2 size={17} /> Browse Projects
             </Link>
           </div>
-          {(projectsReady || coursesReady) && (
-            <p className="mt-5 flex items-center gap-1.5 text-xs text-[#7A8199]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22C58B] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#22C58B]" />
-              </span>
-              Live catalog — fresh projects and courses straight from the platform
-            </p>
-          )}
+          <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#929CBD]">
+            <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#22C58B]" /> Learn at your own pace</span>
+            <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#5B9EFF]" /> Build portfolio-ready skills</span>
+            <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#F5A623]" /> Create and sell</span>
+          </div>
         </div>
-        <div className="hidden h-44 flex-shrink-0 lg:block xl:h-52">
-          <HomeIllustration />
+        <div className="relative mx-auto w-full max-w-[540px] lg:ml-auto">
+          <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-[#7559E8]/30 via-transparent to-[#5B9EFF]/20 blur-2xl" />
+          <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#10162B] p-2 shadow-2xl shadow-black/40 sm:p-3">
+            <div className="flex items-center justify-between px-2 pb-3 pt-1">
+              <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F05D70]" /><span className="h-2.5 w-2.5 rounded-full bg-[#F5A623]" /><span className="h-2.5 w-2.5 rounded-full bg-[#22C58B]" /></div>
+              <span className="text-[10px] font-semibold tracking-[.18em] text-[#929CBD]">THE IBRANT EXPERIENCE</span>
+              <span className="h-2 w-2 rounded-full bg-[#22C58B] shadow-[0_0_12px_#22C58B]" />
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0B1020]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/hero/dashboard-web.png" alt="Preview of the IBRANT learning dashboard" className="block aspect-[1.6/1] w-full object-cover object-top" />
+              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#080D1B]/90 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 sm:bottom-4 sm:left-4 sm:right-4">
+                <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#C5B8FF]">One connected platform</p><p className="mt-1 text-sm font-bold text-white sm:text-base">Learn. Create. Launch.</p></div>
+                <span className="rounded-lg border border-white/15 bg-black/35 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur">Explore IBRANT</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 px-1 pb-1 pt-3 text-center">
+              <div className="rounded-lg bg-white/[.045] px-2 py-2"><BookOpen size={15} className="mx-auto text-[#B9A7FF]" /><p className="mt-1 text-[10px] font-semibold text-[#D8D9E8]">Learn</p></div>
+              <div className="rounded-lg bg-white/[.045] px-2 py-2"><Code2 size={15} className="mx-auto text-[#80B8FF]" /><p className="mt-1 text-[10px] font-semibold text-[#D8D9E8]">Build</p></div>
+              <div className="rounded-lg bg-white/[.045] px-2 py-2"><Rocket size={15} className="mx-auto text-[#62DDB0]" /><p className="mt-1 text-[10px] font-semibold text-[#D8D9E8]">Launch</p></div>
+            </div>
+          </div>
+          <div className="absolute -bottom-5 -left-3 hidden items-center gap-2 rounded-xl border border-white/10 bg-[#171D36] px-3 py-2.5 shadow-xl sm:flex lg:-left-8">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#22C58B]/15 text-[#62DDB0]"><ShieldCheck size={16} /></span>
+            <span><span className="block text-[11px] font-bold text-white">Built for progress</span><span className="block text-[10px] text-[#929CBD]">Skills into real outcomes</span></span>
+          </div>
         </div>
       </div>
     </section>
@@ -506,8 +515,23 @@ export default function HomePage() {
   const visibleStats = stats.filter((s) => s.value !== null);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-16 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="mx-auto max-w-[1320px] space-y-16 px-4 py-7 sm:space-y-20 sm:px-6 lg:px-8 lg:py-12">
       <Hero projectsReady={projectsState === "ready"} coursesReady={coursesState === "ready"} />
+
+      <section aria-label="Choose your path" className="grid gap-3 sm:grid-cols-3">
+        <Link href="/courses" className="group flex items-center gap-4 rounded-2xl border border-white/[.08] bg-white/[.025] p-4 transition hover:-translate-y-0.5 hover:border-[#8B70FF]/40 hover:bg-white/[.045] sm:p-5">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7559E8]/15 text-[#B9A7FF]"><GraduationCap size={22} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-white">I want to learn</span><span className="mt-1 block text-xs text-[#929CBD]">Courses, lessons and practical skills</span></span><ArrowRight size={16} className="text-[#929CBD] transition group-hover:translate-x-1 group-hover:text-white" />
+        </Link>
+        <Link href="/marketplace" className="group flex items-center gap-4 rounded-2xl border border-white/[.08] bg-white/[.025] p-4 transition hover:-translate-y-0.5 hover:border-[#5B9EFF]/40 hover:bg-white/[.045] sm:p-5">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#5B9EFF]/15 text-[#80B8FF]"><Code2 size={22} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-white">I want to build</span><span className="mt-1 block text-xs text-[#929CBD]">Explore real projects and code</span></span><ArrowRight size={16} className="text-[#929CBD] transition group-hover:translate-x-1 group-hover:text-white" />
+        </Link>
+        <Link href="/account" className="group flex items-center gap-4 rounded-2xl border border-white/[.08] bg-white/[.025] p-4 transition hover:-translate-y-0.5 hover:border-[#22C58B]/40 hover:bg-white/[.045] sm:p-5">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#22C58B]/15 text-[#62DDB0]"><Rocket size={22} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-white">I want to grow</span><span className="mt-1 block text-xs text-[#929CBD]">Track progress and publish work</span></span><ArrowRight size={16} className="text-[#929CBD] transition group-hover:translate-x-1 group-hover:text-white" />
+        </Link>
+      </section>
 
       {/* live stats from real data */}
       {visibleStats.length > 0 && (
@@ -533,7 +557,7 @@ export default function HomePage() {
         viewAllLabel="View all projects"
       >
         {projectsState === "loading" ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : projectsState === "error" ? (
@@ -541,8 +565,8 @@ export default function HomePage() {
         ) : projects.length === 0 ? (
           <EmptyStrip label="No projects published yet — check back soon." />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
-            {projects.slice(0, 6).map((p) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+            {[...projects].sort((a, b) => Number(isFeatured(b)) - Number(isFeatured(a))).slice(0, 6).map((p) => (
               <ItemCard key={str(p.id) || titleOf(p)} x={p} href={`${MARKET_BASE}/${str(p.slug) || str(p.id) || ""}`} ctaLabel="View Details" />
             ))}
           </div>
@@ -558,7 +582,7 @@ export default function HomePage() {
         viewAllLabel="View all courses"
       >
         {coursesState === "loading" ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : coursesState === "error" ? (
@@ -566,8 +590,8 @@ export default function HomePage() {
         ) : courses.length === 0 ? (
           <EmptyStrip label="No courses published yet — check back soon." />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-6">
-            {courses.slice(0, 6).map((c) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+            {[...courses].sort((a, b) => Number(isFeatured(b)) - Number(isFeatured(a))).slice(0, 6).map((c) => (
               <ItemCard key={str(c.id) || titleOf(c)} x={c} href={`${COURSES_BASE}/${str(c.slug) || str(c.course_slug) || str(c.id) || ""}`} ctaLabel="View Course" />
             ))}
           </div>
@@ -578,7 +602,7 @@ export default function HomePage() {
       <SectionShell
         icon={<Sparkles size={18} />}
         title="How IBRANT Works"
-        subtitle="Three steps from where you are now to a portfolio you're proud of."
+        subtitle="A practical journey from learning the fundamentals to publishing work you can stand behind."
       >
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
           {HOME_STEPS.map((s) => (

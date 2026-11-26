@@ -168,7 +168,7 @@ async def get_creator_profile(
     return {
         "creator": {
             "id": str(creator.id),
-            "full_name": creator.full_name,
+            "full_name": creator.full_name or "IBRANT Seller",
             "avatar_url": creator.avatar_url,
             "role": creator.roles[0].name if creator.roles else "instructor",
             "joined_at": creator.created_at.isoformat(),

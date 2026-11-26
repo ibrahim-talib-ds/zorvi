@@ -1,27 +1,15 @@
-"use client";
-import Link from "next/link";
+import { PublicInfoPage } from "@/components/layout/PublicInfoPage";
+
+export const metadata = { title: "Refund Policy", description: "Review how refund requests for IBRANT digital products and services are handled." };
+
 export default function RefundPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F1D] text-[#B7BDD0] py-24 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-[#8B70FF] hover:text-[#A78BFA] mb-8 inline-block font-medium">&larr; Back to Home</Link>
-        <h1 className="text-4xl font-display font-extrabold text-white mb-8">Refund Policy</h1>
-        <div className="space-y-6 text-sm leading-relaxed">
-          <p>Last updated: November 2026</p>
-          <section>
-            <h2 className="text-xl font-bold text-white mb-3">1. Digital Products</h2>
-            <p>Because our products are digital software and downloadable files, all sales are generally considered final. Once you have downloaded the source code, we cannot revoke access.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-white mb-3">2. Exceptions</h2>
-            <p>If the product is completely non-functional and we are unable to fix the issue for you, a refund may be issued within 7 days of purchase.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-white mb-3">3. How to Request</h2>
-            <p>To request a refund, contact us at support@ibrant.com with your order ID and a detailed description of the issue.</p>
-          </section>
-        </div>
+    <PublicInfoPage eyebrow="Legal" title="Refund policy" description="Important information about refund requests for digital products and services." updatedAt="November 2026">
+      <div className="space-y-7">
+          <section key="0"><h2>1. Digital products</h2><p className="mt-2">Because marketplace products are digital software and downloadable files, sales are generally considered final after access or download is provided. Review the product description, requirements, and license before purchasing.</p></section>
+          <section key="1"><h2>2. Exceptions</h2><p className="mt-2">If a purchased product is materially non-functional as described and the issue cannot be resolved, a refund request may be reviewed. Eligibility depends on the circumstances and applicable consumer-protection law.</p></section>
+          <section key="2"><h2>3. How to request a review</h2><p className="mt-2">Contact support@ibrant.com with your order ID, a clear description of the issue, and relevant evidence. Do not include passwords or payment-card details.</p></section>
       </div>
-    </div>
+    </PublicInfoPage>
   );
 }

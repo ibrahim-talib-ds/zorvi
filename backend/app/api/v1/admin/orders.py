@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.rbac import require_role
 from app.models.order import Order, OrderStatus
 from app.models.user import User
+from app.models.notification import Notification
 from app.schemas.order import OrderRead, AdminNoteRequest
 
 router = APIRouter(
@@ -94,46 +95,31 @@ async def mark_paid(
     if payload.admin_note is not None:
         order.admin_note = payload.admin_note
 
-    # Issue download tokens
-    from app.models.marketplace import MarketplaceProductFile
-    from app.models.download_token import DownloadToken
-    import secrets
+    db.add(Notification(
+        user_id=order.user_id,
+        title="Payment approved",
+        message=f"Your payment for order #{str(order.id)[:8]} was approved. Your downloads are ready.",
+        href=f"/account/orders/{order.id}",
+        type="success",
+        is_broadcast=False,
+    ))
+
+    # Issue one package-level download (a ZIP archive unless a single ZIP was uploaded).
     from datetime import timedelta
+    from app.services.downloads import issue_order_download_tokens
     from app.schemas.order import DownloadTokenIssue, MarkPaidResponse
 
-    issued = []
-    expires_at = now + timedelta(minutes=60)
-    
-    for item in order.items:
-        stmt = select(MarketplaceProductFile).where(
-            MarketplaceProductFile.product_id == item.product_id,
-            MarketplaceProductFile.is_active.is_(True),
-        )
-        result = await db.execute(stmt)
-        candidate_files = result.scalars().all()
-        for f in candidate_files:
-            if f.package_id is not None and f.package_id != item.package_id:
-                continue
-            tok = DownloadToken(
-                order_item_id=item.id,
-                product_file_id=f.id,
-                token=secrets.token_urlsafe(32),
-                expires_at=expires_at,
-            )
-            db.add(tok)
-            await db.flush()
-            issued.append(DownloadTokenIssue(
-                order_item_id=item.id,
-                token=tok.token,
-                expires_at=tok.expires_at,
-                file_name=f.file_name,
-            ))
+    issued = await issue_order_download_tokens(
+        db,
+        list(order.items),
+        now + timedelta(minutes=60),
+    )
 
     await db.commit()
     await db.refresh(order)
     return MarkPaidResponse(
         order=OrderRead.model_validate(order),
-        download_tokens=issued,
+        download_tokens=[DownloadTokenIssue.model_validate(item.model_dump()) for item in issued],
     )
 
 @router.post("/{order_id}/mark-cancelled", response_model=OrderRead)
@@ -146,6 +132,14 @@ async def mark_cancelled(
     if not order:
         raise HTTPException(status_code=404)
     order.status = OrderStatus.cancelled
+    db.add(Notification(
+        user_id=order.user_id,
+        title="Order cancelled",
+        message=f"Your order #{str(order.id)[:8]} was cancelled by the marketplace team.",
+        href=f"/account/orders/{order.id}",
+        type="warning",
+        is_broadcast=False,
+    ))
     if payload.admin_note:
         order.admin_note = payload.admin_note
     await db.commit()
@@ -162,6 +156,15 @@ async def mark_refunded(
     if not order:
         raise HTTPException(status_code=404)
     order.status = OrderStatus.refunded
+    order.refunded_at = datetime.now(timezone.utc)
+    db.add(Notification(
+        user_id=order.user_id,
+        title="Order refunded",
+        message=f"Your order #{str(order.id)[:8]} has been marked as refunded.",
+        href=f"/account/orders/{order.id}",
+        type="warning",
+        is_broadcast=False,
+    ))
     if payload.admin_note:
         order.admin_note = payload.admin_note
     await db.commit()

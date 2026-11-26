@@ -414,7 +414,7 @@ export function DashboardShell({
     <div className="min-h-full">
       {/* Sidebar: icon rail on tablet (md), full on desktop (lg+) */}
       <aside className={cn(
-        "fixed bottom-0 left-0 top-16 z-20 hidden flex-col overflow-y-auto border-r border-bg-border bg-bg-surface px-2 py-4 md:top-[76px] md:flex transition-all duration-300",
+        "fixed bottom-0 left-0 top-[72px] z-20 hidden flex-col overflow-y-auto border-r border-bg-border bg-bg-surface px-2 py-4 md:flex transition-all duration-300",
         isCollapsed ? "w-[68px] px-2" : "w-64 px-3"
       )}>
         <div className="flex items-center justify-between w-full mb-2">
@@ -444,7 +444,7 @@ export function DashboardShell({
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-bg-deep/70 backdrop-blur-sm"
           />
-          <div className="absolute bottom-0 left-0 top-16 w-72 max-w-[85vw] overflow-y-auto border-r border-bg-border bg-bg-surface px-3 py-4 md:top-[76px]">
+          <div className="absolute bottom-0 left-0 top-[72px] w-72 max-w-[85vw] overflow-y-auto border-r border-bg-border bg-bg-surface px-3 py-4">
             <div className="flex items-center justify-between">
               <Brand inDrawer />
               <button

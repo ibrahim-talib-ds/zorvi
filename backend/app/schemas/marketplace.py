@@ -79,6 +79,7 @@ class ProductListItem(BaseModel):
     is_featured: bool
     published_at: datetime | None
     created_at: datetime
+    creator_id: uuid.UUID | None = None
     creator_name: str | None = None
     creator_avatar_url: str | None = None
     is_free: bool = False

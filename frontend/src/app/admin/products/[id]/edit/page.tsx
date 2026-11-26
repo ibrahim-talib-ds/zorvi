@@ -206,7 +206,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <Link href="/admin/products" className="inline-flex items-center gap-2 text-sm text-[#7A8199] hover:text-white mb-6 transition">
         <ArrowLeft size={16} /> Back to Products
       </Link>

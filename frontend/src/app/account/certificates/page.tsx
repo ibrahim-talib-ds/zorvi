@@ -47,7 +47,7 @@ export default function CertificatesPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="font-display text-3xl font-extrabold text-white mb-2">My Certificates</h1>
         <p className="text-[#B7BDD0]">View and download your earned certificates.</p>

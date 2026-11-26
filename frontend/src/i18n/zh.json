@@ -24,7 +24,8 @@
     "my_profile": "我的资料",
     "admin_panel": "管理面板",
     "admin": "管理",
-    "create_account": "创建账户"
+    "create_account": "创建账户",
+    "build": "构建"
   },
   "marketplace": {
     "title": "探索项目",

@@ -28,6 +28,8 @@ from app.models.refresh_token import RefreshToken
 from app.models.platform_setting import PlatformSetting
 from app.models.role import Role, UserRole
 from app.models.user import User
+from app.models.user_project import UserProject
+from app.models.build_task import BuildTask
 
 __all__ = [
     "Base", "SoftDeleteMixin", "TimestampMixin", "UUIDPrimaryKeyMixin",
@@ -39,8 +41,9 @@ __all__ = [
     "CourseModule", "Lesson", "VideoProvider",
     "Enrollment", "LessonProgress", "Certificate", "PlatformSetting",
     "Order", "OrderItem", "OrderStatus", "PaymentMethod",
-    "DownloadToken",
+    "DownloadToken", "NotificationReceipt", "UserProject", "BuildTask",
 ]
 from app.models.instructor_application import InstructorApplication
 from app.models.product_image import ProductImage
 from app.models.notification import Notification
+from app.models.notification_receipt import NotificationReceipt

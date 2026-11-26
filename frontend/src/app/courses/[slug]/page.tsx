@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, PlayCircle, GraduationCap } from "lucide-react";
+import { ArrowLeft, Clock, PlayCircle, GraduationCap, FileDown, File, ExternalLink, Link2 } from "lucide-react";
 import { EnrollButton } from "./EnrollButton";
+import { cookies } from "next/headers";
 
 import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,13 @@ interface Module {
   lessons: LessonPreview[];
 }
 
+interface CourseResource {
+  title: string;
+  url: string;
+  resource_type: "link" | "pdf" | "file";
+  description: string;
+}
+
 interface CourseDetail {
   id: string;
   title: string;
@@ -40,9 +48,38 @@ interface CourseDetail {
   learning_path: string | null;
   estimated_hours: number;
   is_featured: boolean;
+  resources: CourseResource[];
   modules: Module[];
 }
 
+
+interface MyCourseProgress {
+  course_slug: string;
+  completed_lessons: number;
+  total_lessons: number;
+  percent_complete: number;
+  is_complete: boolean;
+  next_lesson_id: string | null;
+}
+
+async function fetchEnrollmentProgress(slug: string): Promise<MyCourseProgress | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("ibrant_access_token")?.value;
+    if (!token) return null;
+
+    const res = await fetch(`${API_BASE}/my-courses`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+
+    const courses: MyCourseProgress[] = await res.json();
+    return courses.find((item) => item.course_slug === slug) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 async function fetchCourse(slug: string): Promise<CourseDetail | null> {
   try {
@@ -76,12 +113,14 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const course = await fetchCourse(slug);
   if (!course) notFound();
 
-  const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const enrollmentProgress = await fetchEnrollmentProgress(slug);
+  const allLessons = course.modules.flatMap((module) => module.lessons);
+  const totalLessons = allLessons.length;
   const totalMinutes = course.modules.reduce(
     (sum, m) => sum + m.lessons.reduce((s, l) => s + l.duration_minutes, 0),
     0,
   );
-  const firstLessonId = course.modules[0]?.lessons[0]?.id ?? null;
+  const firstLessonId = allLessons[0]?.id ?? null;
 
   return (
     <div className="relative min-h-screen bg-[#0B0F1D]">
@@ -175,6 +214,21 @@ export default async function CourseDetailPage({ params }: PageProps) {
               </div>
             )}
 
+            {/* Learning resources */}
+            {course.resources?.length > 0 && (
+              <section className="mb-12">
+                <div className="mb-4 flex items-center gap-2"><FileDown size={19} className="text-[#A78BFA]" /><h2 className="font-display text-2xl font-bold text-white">Learning resources</h2></div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {course.resources.map((resource, index) => (
+                    <a key={`${resource.url}-${index}`} href={resource.url} target="_blank" rel="noreferrer" className="group flex min-w-0 items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 transition hover:border-[#7559E8]/35 hover:bg-[#7559E8]/[0.06]">
+                      <span className="rounded-lg bg-[#7559E8]/10 p-2 text-[#A78BFA]">{resource.resource_type === "pdf" ? <FileDown size={17} /> : resource.resource_type === "file" ? <File size={17} /> : <Link2 size={17} />}</span>
+                      <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold text-white group-hover:text-[#C4B5FD]">{resource.title}</span>{resource.description && <span className="mt-1 block text-xs leading-5 text-[#9299AE]">{resource.description}</span>}<span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-[#7A8199]">{resource.resource_type} <ExternalLink size={11} /></span></span>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Curriculum */}
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -248,7 +302,17 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 </p>
               </div>
 
-              <EnrollButton courseSlug={course.slug} firstLessonId={firstLessonId} />
+              <EnrollButton
+                courseSlug={course.slug}
+                firstLessonId={enrollmentProgress?.next_lesson_id || firstLessonId}
+                isEnrolled={!!enrollmentProgress}
+                progress={enrollmentProgress ? {
+                  completedLessons: enrollmentProgress.completed_lessons,
+                  totalLessons: enrollmentProgress.total_lessons,
+                  percentComplete: enrollmentProgress.percent_complete,
+                  isComplete: enrollmentProgress.is_complete,
+                } : undefined}
+              />
 
               <div className="mt-7 pt-7 border-t border-white/5 space-y-3 text-sm">
                 <div className="flex items-center gap-2.5 text-[#B7BDD0]">

@@ -12,6 +12,8 @@ Covers:
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import io
+import zipfile
 
 import pytest
 from sqlalchemy import select
@@ -191,6 +193,9 @@ async def test_submit_payment_sets_awaiting_verification(client, admin_token, cl
     assert data["status"] == "awaiting_verification"
     assert data["payment_method"] == "manual_bank_transfer"
     assert data["payment_reference"] == "TXN123"
+    notes = await client.get("/api/v1/notifications", headers={"Authorization": "Bearer " + buyer})
+    assert notes.status_code == 200
+    assert any(n["title"] == "Payment submitted" and n["href"] == "/account/orders/" + order["id"] for n in notes.json())
 
 
 # ---------- 7. buyer cannot mark paid ----------
@@ -223,6 +228,9 @@ async def test_admin_mark_paid_flips_status(client, admin_token, clean_test_user
     assert body["order"]["status"] == "paid"
     assert body["order"]["paid_at"] is not None
     assert body["order"]["admin_note"] == "verified"
+    buyer_notes = await client.get("/api/v1/notifications", headers={"Authorization": "Bearer " + buyer})
+    assert buyer_notes.status_code == 200
+    assert any(n["title"] == "Payment approved" and n["href"] == "/account/orders/" + order["id"] for n in buyer_notes.json())
 
 
 # ---------- 9. mark-paid issues tokens when files exist ----------
@@ -239,7 +247,7 @@ async def test_admin_mark_paid_issues_download_tokens(client, admin_token, clean
     assert r.status_code == 200, r.text
     issued = r.json()["download_tokens"]
     assert len(issued) == 1
-    assert issued[0]["file_name"] == "test-file.txt"
+    assert issued[0]["file_name"].endswith(".zip")
     assert len(issued[0]["token"]) >= 40
 
 
@@ -259,7 +267,10 @@ async def test_download_with_valid_token_streams_file(client, admin_token, clean
     dl = await client.get(f"/api/v1/downloads/{token}")
     assert dl.status_code == 200
     assert "attachment" in dl.headers.get("content-disposition", "").lower()
-    assert dl.content == ctx["content"]
+    assert zipfile.is_zipfile(io.BytesIO(dl.content))
+    with zipfile.ZipFile(io.BytesIO(dl.content)) as package_zip:
+        assert package_zip.namelist() == ["test-file.txt"]
+        assert package_zip.read("test-file.txt") == ctx["content"]
 
 
 # ---------- 11. single-use ----------
@@ -337,3 +348,59 @@ async def test_reissue_downloads_requires_owner(client, admin_token, clean_test_
         json={},
     )
     assert r.status_code == 404
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_free_product_checkout_without_package_is_paid_and_notifies_buyer(client, admin_token, clean_test_users):
+    product_res = await client.post(
+        "/api/v1/admin/marketplace",
+        headers={"Authorization": "Bearer " + admin_token},
+        json={
+            "title": "Free Product " + uuid.uuid4().hex[:6],
+            "short_description": "A free product for checkout regression testing",
+            "starting_price_cents": 0,
+        },
+    )
+    assert product_res.status_code == 201, product_res.text
+    product = product_res.json()
+    publish = await client.patch(
+        "/api/v1/admin/marketplace/" + product["id"],
+        headers={"Authorization": "Bearer " + admin_token},
+        json={"status": "published"},
+    )
+    assert publish.status_code == 200, publish.text
+
+    _, buyer = await _register_and_login(client, "freebuyer")
+    order_res = await client.post(
+        "/api/v1/orders",
+        headers={"Authorization": "Bearer " + buyer},
+        json={
+            "is_free_checkout": True,
+            "items": [{"product_id": product["id"], "package_id": None}],
+        },
+    )
+    assert order_res.status_code == 201, order_res.text
+    order = order_res.json()
+    assert order["status"] == "paid"
+    assert order["total_cents"] == 0
+    assert order["paid_at"] is not None
+    assert order["items"][0]["package_id"] is None
+
+    notes_res = await client.get("/api/v1/notifications", headers={"Authorization": "Bearer " + buyer})
+    assert notes_res.status_code == 200
+    assert any(note["href"] == "/account/orders/" + order["id"] for note in notes_res.json())
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_free_checkout_rejects_paid_package(client, admin_token, clean_test_users):
+    ctx = await _create_published_product_with_package(client, admin_token, price_cents=1500, with_file=False)
+    _, buyer = await _register_and_login(client, "freebuyer")
+    res = await client.post(
+        "/api/v1/orders",
+        headers={"Authorization": "Bearer " + buyer},
+        json={
+            "is_free_checkout": True,
+            "items": [{"package_id": ctx["package"]["id"]}],
+        },
+    )
+    assert res.status_code == 400

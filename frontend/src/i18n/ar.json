@@ -24,7 +24,8 @@
     "my_profile": "ملفي الشخصي",
     "admin_panel": "لوحة الإدارة",
     "admin": "المشرف",
-    "create_account": "إنشاء حساب"
+    "create_account": "إنشاء حساب",
+    "build": "إنشاء"
   },
   "marketplace": {
     "title": "استكشف المشاريع",

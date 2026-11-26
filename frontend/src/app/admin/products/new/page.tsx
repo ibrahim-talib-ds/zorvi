@@ -135,7 +135,7 @@ export default function NewProductPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       <div className="mb-8">
         <Link
           href="/admin/products"

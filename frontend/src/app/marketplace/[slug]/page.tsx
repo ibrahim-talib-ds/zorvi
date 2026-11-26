@@ -32,6 +32,19 @@ async function fetchImages(slug: string) {
   } catch { return []; }
 }
 
+
+async function fetchMoreFromSeller(creatorId: string, currentSlug: string) {
+  try {
+    const res = await fetch(API_BASE + "/marketplace/creators/" + encodeURIComponent(creatorId), { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data.products)) return [];
+    return data.products.filter((item: any) => item.slug !== currentSlug).slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
@@ -45,6 +58,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   if (!product) notFound();
 
   const images = await fetchImages(slug);
+  const moreFromSeller = product.creator_id
+    ? await fetchMoreFromSeller(product.creator_id, slug)
+    : [];
   const activePackages = (product.packages || []).filter((p: any) => p.is_active);
   const minPrice = activePackages.length > 0 ? Math.min(...activePackages.map((p: any) => p.price_cents)) : product.starting_price_cents;
   const isFree = product.is_free || minPrice === 0;
@@ -104,11 +120,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <h1 className="font-display text-2xl font-extrabold text-white mb-3 leading-tight">{product.title}</h1>
               <p className="text-sm text-[#B7BDD0] mb-6">{product.short_description}</p>
 
-              <div className="flex items-center gap-2 mb-6">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-[#F5A623] text-[#F5A623]" />)}
-                </div>
-                <span className="text-xs text-[#7A8199]">5.0 (New)</span>
+              <div className="mb-6 flex items-center gap-2 text-xs text-[#7A8199]">
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 font-medium text-[#B7BDD0]">New listing</span>
+                <span>Reviews will appear here when available</span>
               </div>
 
               <div className="mb-4">
@@ -155,6 +169,41 @@ export default async function ProductDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {moreFromSeller.length > 0 && (
+          <section className="mt-12 border-t border-white/[0.07] pt-9">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">Seller portfolio</p>
+                <h2 className="font-display text-2xl font-bold text-white">More from {product.creator_name || "this seller"}</h2>
+                <p className="mt-1 text-sm text-[#9299AE]">Discover other projects from the same creator.</p>
+              </div>
+              <Link href={"/creators/" + product.creator_id} className="inline-flex items-center gap-2 rounded-lg border border-white/[0.1] px-3 py-2 text-xs font-semibold text-[#B7BDD0] transition hover:border-[#7559E8]/40 hover:text-white">
+                View seller profile <ArrowLeft size={13} className="rotate-180" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {moreFromSeller.map((item: any) => (
+                <Link key={item.id} href={"/marketplace/" + item.slug} className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] transition hover:-translate-y-0.5 hover:border-[#7559E8]/40 hover:bg-white/[0.045]">
+                  <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+                    {item.cover_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.cover_image_url} alt={item.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center"><span className="font-display text-5xl font-extrabold text-[#7559E8]/25">{String(item.title || "P").charAt(0)}</span></div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="truncate font-display text-base font-bold text-white transition group-hover:text-[#B7A7FF]">{item.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#9299AE]">{item.short_description}</p>
+                    <p className="mt-3 text-sm font-semibold text-white">{item.starting_price_cents === 0 ? "Free" : (item.currency || "USD") + " " + (item.starting_price_cents / 100).toFixed(0)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
       </div>
     </div>
   );

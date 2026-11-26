@@ -1,11 +1,28 @@
 """ZORVI — Admin course schemas (create/update payloads)."""
 import uuid
 from datetime import datetime
+from typing import Literal
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.course import CourseDifficulty, CourseStatus
 from app.models.lesson import VideoProvider
+
+
+class CourseResource(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    url: str = Field(min_length=8, max_length=1000)
+    resource_type: Literal["link", "pdf", "file"] = "link"
+    description: str = Field(default="", max_length=300)
+
+    @field_validator("url")
+    @classmethod
+    def validate_http_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("Resource URL must be an absolute http or https URL")
+        return value
 
 
 class CourseCreate(BaseModel):
@@ -22,6 +39,7 @@ class CourseCreate(BaseModel):
     learning_path: str | None = None
     estimated_hours: int = Field(default=0, ge=0)
     is_featured: bool = False
+    resources: list[CourseResource] = Field(default_factory=list)
 
 
 class CourseUpdate(BaseModel):
@@ -37,6 +55,7 @@ class CourseUpdate(BaseModel):
     learning_path: str | None = None
     estimated_hours: int | None = Field(default=None, ge=0)
     is_featured: bool | None = None
+    resources: list[CourseResource] | None = None
     status: CourseStatus | None = None
 
 
@@ -60,7 +79,10 @@ class LessonCreate(BaseModel):
     video_file_key: str | None = None
     content_markdown: str = ""
     code_example: str | None = None
+    code_language: str = "sql"
     exercise: str | None = None
+    practical_examples: list[dict] = Field(default_factory=list)
+    practice_questions: list[dict] = Field(default_factory=list)
     duration_minutes: int = Field(default=0, ge=0)
     sort_order: int = 0
     is_free_preview: bool = False
@@ -74,7 +96,10 @@ class LessonUpdate(BaseModel):
     video_file_key: str | None = None
     content_markdown: str | None = None
     code_example: str | None = None
+    code_language: str | None = None
     exercise: str | None = None
+    practical_examples: list[dict] | None = None
+    practice_questions: list[dict] | None = None
     duration_minutes: int | None = Field(default=None, ge=0)
     sort_order: int | None = None
     is_free_preview: bool | None = None
@@ -91,7 +116,10 @@ class AdminLessonRead(BaseModel):
     video_file_key: str | None
     content_markdown: str
     code_example: str | None
+    code_language: str = "sql"
     exercise: str | None
+    practical_examples: list[dict] = []
+    practice_questions: list[dict] = []
     duration_minutes: int
     sort_order: int
     is_free_preview: bool
@@ -116,6 +144,7 @@ class AdminCourseRead(BaseModel):
     short_description: str
     long_description: str
     thumbnail_url: str | None
+    cover_image_url: str | None = None
     instructor_id: uuid.UUID
     category_id: uuid.UUID | None
     difficulty: str
@@ -125,6 +154,7 @@ class AdminCourseRead(BaseModel):
     learning_path: str | None
     estimated_hours: int
     is_featured: bool
+    resources: list[CourseResource] = Field(default_factory=list)
     published_at: datetime | None
     created_at: datetime
     updated_at: datetime

@@ -2,12 +2,11 @@
 
 // app/marketplace/page.tsx - IBRANT Marketplace (v15)
 //
-// ONE-FILE redesign: replaces only the marketplace page. Site header, layout,
-// everything else untouched. No new npm dependencies.
+// Marketplace catalog content. The surrounding navigation is shared with product detail pages.
 //
 // v15 changes:
-//  - COMPACT cards: 2 columns on phones, 3 on small tablets, 4 on tablets,
-//    5 on laptops, 6 on desktops. Smaller covers (h-28), tighter padding.
+//  - Catalog cards use a readable 2 / 3 / 4-column responsive grid, with
+//    taller covers on larger screens to preserve image clarity.
 //  - Hearts now PERSIST: localStorage key IBRANT_SAVED_V1 (snapshot map),
 //    synced across tabs. The /account/saved page reads the same key.
 //
@@ -26,19 +25,15 @@ import {
   Globe,
   GraduationCap,
   Heart,
-  Home,
   LayoutGrid,
   Megaphone,
   Palette,
   RefreshCw,
   Search,
-  ShoppingBag,
   Smartphone,
   Star,
   Tag,
-  Terminal,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 
 // ============================================================================
@@ -221,7 +216,7 @@ function ErrorBox({ onRetry }: { onRetry: () => void }) {
 function CardSkeleton() {
   return (
     <div className="animate-pulse rounded-2xl border border-white/5 bg-white/[0.03] p-3" aria-busy="true">
-      <div className="h-28 rounded-xl bg-white/[0.04]" />
+      <div className="h-28 rounded-xl bg-white/[0.04] sm:h-32 xl:h-36" />
       <div className="mt-3 h-3.5 w-3/4 rounded bg-white/[0.04]" />
       <div className="mt-2 h-3 w-full rounded bg-white/[0.04]" />
       <div className="mt-1 h-3 w-2/3 rounded bg-white/[0.04]" />
@@ -233,57 +228,6 @@ function CardSkeleton() {
 // ============================================================================
 // sidebar (page-level; hidden below xl - your site header covers mobile nav)
 // ============================================================================
-const SIDE_LINKS = [
-  { label: "Back to Home", href: "/", icon: <Home size={16} /> },
-  { label: "My Dashboard", href: "/account", icon: <LayoutGrid size={16} /> },
-  { label: "Saved Projects", href: "/account/saved", icon: <Heart size={16} /> },
-  { label: "My Purchases", href: "/account/orders", icon: <ShoppingBag size={16} /> },
-  { label: "Code Playground", href: "/playground", icon: <Terminal size={16} /> },
-];
-function PageSidebar({ name, email }: { name: string; email: string }) {
-  return (
-    <aside className="hidden w-56 flex-shrink-0 xl:block">
-      <nav className="sticky top-8 space-y-1">
-        {SIDE_LINKS.map((l) => (
-          <Link
-            key={l.label}
-            href={l.href}
-            className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-[#B7BDD0] transition hover:bg-white/5 hover:text-white"
-          >
-            {l.icon}
-            {l.label}
-          </Link>
-        ))}
-        <span className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#7559E8]/25">
-          <LayoutGrid size={16} /> Explore Marketplace
-        </span>
-
-        <div className="mt-6 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#201A52] to-[#10142B] p-4 text-center">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7559E8]/20 text-lg" aria-hidden="true">🚀</div>
-          <p className="text-sm font-bold text-white">Go Premium</p>
-          <p className="mt-1 text-[11px] leading-snug text-[#929CBD]">Unlock exclusive projects & features</p>
-          <Link
-            href="/pricing"
-            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-3 py-2 text-xs font-semibold text-white hover:brightness-110 transition"
-          >
-            See Plans <ArrowRight size={12} />
-          </Link>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] text-sm font-bold text-white">
-            {(name || "?").charAt(0).toUpperCase()}
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-white">{name}</span>
-            <span className="block truncate text-[11px] text-[#7A8199]">{email}</span>
-          </span>
-        </div>
-      </nav>
-    </aside>
-  );
-}
-
 // ============================================================================
 // hero
 // ============================================================================
@@ -393,7 +337,7 @@ function ProductCard({
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-[#7559E8]/40 hover:bg-white/[0.05]">
-      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
+      <div className="relative flex h-28 sm:h-32 xl:h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
         <span className="font-display text-3xl font-extrabold text-[#A78BFA]/50">{initial}</span>
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -438,7 +382,11 @@ function ProductCard({
               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7559E8] to-[#8B70FF] text-[9px] font-bold text-white">
                 {author.charAt(0).toUpperCase()}
               </span>
-              <span className="truncate text-[11px] text-[#B7BDD0]">{author}</span>
+              {str(p.creator_id) ? (
+                <Link href={"/creators/" + str(p.creator_id)} onClick={(event) => event.stopPropagation()} className="truncate text-[11px] text-[#B7BDD0] transition hover:text-[#A78BFA] hover:underline" aria-label={"View " + author + " seller profile"}>{author}</Link>
+              ) : (
+                <span className="truncate text-[11px] text-[#B7BDD0]">{author}</span>
+              )}
             </>
           )}
           {rating > 0 && (
@@ -493,16 +441,6 @@ type Sort = (typeof SORTS)[number];
 const PAGE_SIZE = 12;
 
 export default function MarketplacePage() {
-  const auth = useAuth() as unknown;
-  const authObj = (auth && typeof auth === "object" ? auth : {}) as Record<string, unknown>;
-  const authUser = (authObj.user && typeof authObj.user === "object" ? authObj.user : authObj) as Record<string, unknown> | null;
-  const displayName =
-    (typeof authUser?.full_name === "string" && authUser.full_name) ||
-    (typeof authUser?.username === "string" && authUser.username) ||
-    (typeof authUser?.email === "string" && authUser.email ? String(authUser.email).split("@")[0] : "") ||
-    "Guest";
-  const email = typeof authUser?.email === "string" ? authUser.email : "Sign in for purchases";
-
   const [state, setState] = useState<Sec>("loading");
   const [products, setProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState("");
@@ -594,10 +532,7 @@ export default function MarketplacePage() {
   const savedCount = Object.keys(savedMap).length;
 
   return (
-    <div className="flex gap-6">
-      <PageSidebar name={displayName} email={email} />
-
-      <div className="min-w-0 flex-1 space-y-6">
+    <div className="min-w-0 space-y-6">
         <Hero
           query={query}
           onQuery={setQuery}
@@ -666,12 +601,12 @@ export default function MarketplacePage() {
           )}
         </div>
 
-        {/* compact grid: 2 phones / 3 sm / 4 tablet / 5 laptop / 6 desktop */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        {/* Responsive catalog grid: two columns on phones, four on wide screens. */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
           {state === "loading" &&
             Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)}
           {state === "error" && (
-            <div className="col-span-2 sm:col-span-3 md:col-span-4 xl:col-span-5 2xl:col-span-6">
+            <div className="col-span-2 md:col-span-3 xl:col-span-4">
               <ErrorBox onRetry={load} />
             </div>
           )}
@@ -773,7 +708,6 @@ export default function MarketplacePage() {
           Live data from your marketplace API — badges, ratings and downloads appear only where the data exists. Hearts
           save locally and show up on your Saved page.
         </p>
-      </div>
     </div>
   );
 }

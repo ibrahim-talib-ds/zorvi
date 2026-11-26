@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.admin_course import CourseResource
+
 
 class LessonPreview(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -28,7 +30,10 @@ class LessonRead(BaseModel):
     video_file_key: str | None
     content_markdown: str
     code_example: str | None
+    code_language: str = "sql"
     exercise: str | None
+    practical_examples: list[dict] = []
+    practice_questions: list[dict] = []
     duration_minutes: int
     sort_order: int
     is_free_preview: bool
@@ -64,6 +69,7 @@ class CourseListItem(BaseModel):
 
 class CourseRead(CourseListItem):
     long_description: str
+    resources: list[CourseResource] = Field(default_factory=list)
     prerequisites: list[str] = []
     category_id: uuid.UUID | None
     instructor_id: uuid.UUID
@@ -97,6 +103,7 @@ class ProgressResponse(BaseModel):
     is_complete: bool
     certificate_available: bool
     certificate_code: str | None = None
+    completed_lesson_ids: list[uuid.UUID] = []
 
 
 class MyCourseItem(BaseModel):
@@ -105,6 +112,8 @@ class MyCourseItem(BaseModel):
     course_slug: str
     course_cover_image_url: str | None = None
     thumbnail_url: str | None = None
+    technologies: list[str] = []
+    next_lesson_id: uuid.UUID | None = None
     enrolled_at: datetime
     total_lessons: int
     completed_lessons: int

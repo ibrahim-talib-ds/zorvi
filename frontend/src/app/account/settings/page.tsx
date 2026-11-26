@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -121,9 +122,10 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") return;
+    if (deleteConfirmText !== "DEACTIVATE") return;
 
     setDeleting(true);
+    setDeleteError(null);
     try {
       // Soft-delete: mark user as deleted via PATCH
       const res = await fetch(`${API_BASE}/users/me/delete`, {
@@ -143,14 +145,14 @@ export default function SettingsPage() {
       logout();
       router.replace("/");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to delete account");
+      setDeleteError(e instanceof Error ? e.message : "Failed to delete account");
       setDeleting(false);
     }
   };
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F1D] flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="animate-spin text-[#A78BFA]" size={32} />
       </div>
     );
@@ -164,8 +166,8 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0B0F1D] py-16">
-      <div className="mx-auto max-w-3xl px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-4xl">
         <Link
           href="/account/profile"
           className="inline-flex items-center gap-1.5 text-sm text-[#7A8199] hover:text-[#A78BFA] transition-colors mb-8"
@@ -319,27 +321,33 @@ export default function SettingsPage() {
             <h2 className="font-display text-lg font-bold text-[#F05D70]">Danger zone</h2>
           </div>
           <p className="text-sm text-[#B7BDD0] mb-4">
-            Permanently delete your account. This action cannot be undone. Your courses, orders,
-            and progress will be lost.
+            Deactivate your account. You will be signed out and your account will be marked inactive.
+            This request does not immediately erase transaction or learning records that may need to be retained.
           </p>
+
+          {deleteError && (
+            <div role="alert" className="mb-4 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 p-3 text-sm text-[#F05D70]">
+              {deleteError}
+            </div>
+          )}
 
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="inline-flex items-center gap-2 rounded-lg border border-[#F05D70]/40 bg-transparent px-4 py-2 text-sm font-medium text-[#F05D70] hover:bg-[#F05D70]/10 transition"
             >
-              <Trash2 size={14} /> Delete my account
+              <Trash2 size={14} /> Deactivate account
             </button>
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-[#F05D70] font-medium">
-                Type <span className="font-mono bg-[#F05D70]/20 px-2 py-0.5 rounded">DELETE</span> to confirm:
+                Type <span className="font-mono bg-[#F05D70]/20 px-2 py-0.5 rounded">DEACTIVATE</span> to confirm:
               </p>
               <input
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type DELETE"
+                placeholder="Type DEACTIVATE"
                 className="w-full bg-[#0B0F1D] border border-[#F05D70]/30 rounded-lg px-4 py-2 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#F05D70]"
               />
               <div className="flex gap-2">
@@ -347,6 +355,7 @@ export default function SettingsPage() {
                   onClick={() => {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmText("");
+                    setDeleteError(null);
                   }}
                   className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white hover:bg-white/5 transition"
                 >
@@ -354,7 +363,7 @@ export default function SettingsPage() {
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={deleteConfirmText !== "DELETE" || deleting}
+                  disabled={deleteConfirmText !== "DEACTIVATE" || deleting}
                   className="rounded-lg bg-[#F05D70] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E04C5F] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2"
                 >
                   {deleting ? (
@@ -362,7 +371,7 @@ export default function SettingsPage() {
                       <Loader2 size={14} className="animate-spin" /> Deleting...
                     </>
                   ) : (
-                    "Delete permanently"
+                    "Deactivate account"
                   )}
                 </button>
               </div>
