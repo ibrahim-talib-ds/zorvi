@@ -380,3 +380,44 @@ async def test_openrouter_quota_429_without_retry_after_is_not_retried(monkeypat
     assert error.value.status_code == 429
     assert "no paid model was used" in error.value.detail.lower()
     assert FakeAsyncClient.request_count == 1
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_build_plan_repairs_schema_invalid_model_response(monkeypatch):
+    invalid_plan = {"project_name": "Student Portal"}
+    valid_plan = {
+        "project_name": "Student Portal",
+        "summary": "A portal for managing student attendance and records.",
+        "app_type": "web",
+        "stack": {
+            "frontend": "React",
+            "backend": "Python FastAPI",
+            "database": "PostgreSQL",
+            "languages": ["TypeScript", "Python"],
+            "rationale": "A maintainable full-stack choice for the requested portal.",
+        },
+        "architecture": ["React client", "FastAPI service", "PostgreSQL database"],
+        "questions": [],
+        "steps": [
+            {"id": "step-1", "title": "Foundation", "objective": "Create the project foundation.", "acceptance_criteria": ["The app starts locally."]},
+            {"id": "step-2", "title": "Student records", "objective": "Add student record management.", "acceptance_criteria": ["Users can create and view records."]},
+        ],
+        "limitations": ["Production deployment requires external hosting configuration."],
+    }
+    calls = []
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
+        calls.append((system_prompt, user_payload, response_model))
+        return invalid_plan if len(calls) == 1 else valid_plan
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    request = ai_build.BuildPlanRequest(prompt="Build a student attendance web portal")
+
+    plan = await ai_build.create_build_plan(request, user=None)
+
+    assert plan.project_name == "Student Portal"
+    assert len(plan.steps) == 2
+    assert len(calls) == 2
+    assert calls[1][2] is BuildPlan
+    assert calls[1][1]["invalid_plan"] == invalid_plan
+    assert calls[1][1]["validation_errors"]

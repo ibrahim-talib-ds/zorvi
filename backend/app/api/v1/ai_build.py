@@ -948,11 +948,42 @@ async def create_build_plan(
     user: Annotated[User, Depends(get_current_user)],
 ) -> BuildPlan:
     system_prompt = """You are IBRANT Build Architect, a careful senior software architect.
-Return ONE valid JSON object and no markdown with these keys:
-project_name, summary, app_type, stack {frontend, backend, database, languages, rationale},
-architecture (array), questions (0-3 strings), steps (3-8 objects with id as a STRING, title, objective, acceptance_criteria as an ARRAY OF STRINGS),
-limitations (array).
+Return exactly ONE valid JSON object. Do not use markdown, code fences, comments, or prose.
+The JSON object MUST have this exact structure and every shown key:
+{
+  "project_name": "A concise project name",
+  "summary": "A clear one-paragraph summary",
+  "app_type": "web",
+  "stack": {
+    "frontend": "React",
+    "backend": "Python FastAPI",
+    "database": "PostgreSQL",
+    "languages": ["TypeScript", "Python"],
+    "rationale": "Why this stack fits the requirements"
+  },
+  "architecture": ["Major component and its responsibility"],
+  "questions": [],
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "A clear implementation step",
+      "objective": "What this step delivers",
+      "acceptance_criteria": ["A concrete, verifiable outcome"]
+    },
+    {
+      "id": "step-2",
+      "title": "The next implementation step",
+      "objective": "What this step delivers",
+      "acceptance_criteria": ["A concrete, verifiable outcome"]
+    }
+  ],
+  "limitations": ["Relevant external setup or deployment limitation"]
+}
 Rules:
+- Include every key, including empty arrays where appropriate. Do not rename, nest, or omit keys.
+- stack must be an object; languages, architecture, questions, steps, acceptance_criteria, and limitations must be arrays.
+- Return 3-8 implementation steps. Every step must have a non-empty string id, title, and objective. Use string IDs such as "step-1", never numbers.
+- app_type should describe the requested application (for example: web, mobile, full_stack, api, or data_science).
 - Recommend a coherent, maintainable stack that fits the prompt and selected preferences. Do not blindly choose every technology.
 - Ask clarifying questions only when answers materially change architecture or the first deliverable. At most 3, concise and concrete.
 - If mobile is implied, recommend Flutter or the explicitly selected framework. A browser preview is not a Flutter emulator.
@@ -961,26 +992,63 @@ Rules:
 - State that server processes, packages, migrations, secrets and deployments require an external development environment.
 - Preserve explicit technology choices unless incompatible, and explain incompatibilities.
 - No shell commands, secrets or hidden actions."""
-    data = await _ask_model(system_prompt, {
+    original_payload = {
         "idea": request.prompt,
         "requested_app_type": request.app_type,
         "technology_preferences": request.preferences.model_dump(),
         "answers_to_previous_questions": request.answers,
         "previous_plan_to_refine": request.previous_plan,
         "user_context": "Authenticated IBRANT learner building a project step by step.",
-    }, max_tokens=7000, response_model=BuildPlan)
+    }
+    data = await _ask_model(system_prompt, original_payload, max_tokens=7000, response_model=BuildPlan)
     try:
         plan = BuildPlan.model_validate(_normalize_build_plan_data(data))
-    except Exception as exc:
-        # Log schema locations and messages only; never log the prompt or raw model output.
-        validation_errors = []
-        if hasattr(exc, "errors"):
-            validation_errors = [
+    except Exception as first_exc:
+        def validation_details(error: Exception) -> list[dict]:
+            if not hasattr(error, "errors"):
+                return [{"type": type(error).__name__, "msg": str(error)[:300]}]
+            return [
                 {"loc": list(item.get("loc", ())), "type": item.get("type"), "msg": item.get("msg")}
-                for item in exc.errors()
+                for item in error.errors()
             ]
-        logger.warning("AI plan validation failed (%s): %s", type(exc).__name__, validation_errors)
-        raise HTTPException(status_code=502, detail="The AI response did not match the project-plan format. Try again; if it repeats, share the backend validation log.") from exc
+
+        first_errors = validation_details(first_exc)
+        logger.info(
+            "AI plan did not match BuildPlan; requesting one schema-correction attempt: %s",
+            first_errors,
+        )
+        repair_prompt = """You are repairing an AI-generated project plan that failed schema validation.
+Return exactly one corrected JSON object and no markdown or surrounding prose.
+Follow the required structure from the original system instructions exactly. Include every key:
+project_name (string), summary (string), app_type (string),
+stack (object with frontend, backend, database, languages array, rationale),
+architecture (array of strings), questions (array of at most 3 strings),
+steps (array of 3-8 objects, each with string id, title, objective, and acceptance_criteria array),
+limitations (array of strings).
+Do not return an explanation. Correct every validation issue while preserving the user's project requirements."""
+        repaired_data = await _ask_model(
+            repair_prompt,
+            {
+                "original_request": original_payload,
+                "invalid_plan": data,
+                "validation_errors": first_errors,
+            },
+            max_tokens=7000,
+            response_model=BuildPlan,
+        )
+        try:
+            plan = BuildPlan.model_validate(_normalize_build_plan_data(repaired_data))
+        except Exception as repair_exc:
+            repair_errors = validation_details(repair_exc)
+            logger.warning(
+                "AI plan validation failed after one correction attempt (initial=%s, corrected=%s)",
+                first_errors,
+                repair_errors,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider could not produce a valid project plan after one automatic correction. Try again.",
+            ) from repair_exc
     if len(plan.steps) < 2:
         raise HTTPException(status_code=502, detail="The AI plan needs at least two implementation steps. Generate the plan again.")
     return plan
