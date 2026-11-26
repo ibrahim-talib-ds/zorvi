@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from app.api.v1.ai_build import (
     MAX_MODEL_CONTEXT_TOTAL_BYTES,
+    _groq_strict_schema,
     _normalize_build_plan_data,
     _parse_json_content,
     _select_project_file_context,
@@ -147,3 +148,25 @@ def test_project_file_context_is_bounded_and_utf8_safe():
     assert truncated is True
     assert len(selected) < len(files)
     assert all(item["content"].encode("utf-8").decode("utf-8") == item["content"] for item in selected)
+
+
+def test_groq_strict_schema_requires_all_fields_without_extra_properties():
+    for model in (BuildPlan, BuildStepResult):
+        schema = _groq_strict_schema(model)
+
+        def assert_strict(node):
+            if isinstance(node, dict):
+                if node.get("type") == "object":
+                    properties = node.get("properties", {})
+                    assert node.get("additionalProperties") is False
+                    assert set(node.get("required", [])) == set(properties)
+                for value in node.values():
+                    assert_strict(value)
+            elif isinstance(node, list):
+                for value in node:
+                    assert_strict(value)
+
+        assert_strict(schema)
+
+    step_schema = _groq_strict_schema(BuildPlan)["$defs"]["BuildPlanStep"]
+    assert "title" in step_schema["properties"]

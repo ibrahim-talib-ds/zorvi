@@ -170,6 +170,36 @@ def _select_project_file_context(files: list) -> tuple[list[dict[str, str]], int
     return selected, used_bytes, truncated
 
 
+def _groq_strict_schema(model_type) -> dict:
+    """Convert a Pydantic schema to Groq's strict Structured Outputs subset."""
+    schema = json.loads(json.dumps(model_type.model_json_schema()))
+
+    def normalize(node):
+        if isinstance(node, list):
+            return [normalize(item) for item in node]
+        if not isinstance(node, dict):
+            return node
+
+        # Walk schema-valued keywords explicitly so a model field literally
+        # named "title" or "default" is not mistaken for schema metadata.
+        properties = node.get("properties")
+        if isinstance(properties, dict):
+            node["additionalProperties"] = False
+            node["required"] = list(properties.keys())
+            node["properties"] = {key: normalize(value) for key, value in properties.items()}
+        definitions = node.get("$defs")
+        if isinstance(definitions, dict):
+            node["$defs"] = {key: normalize(value) for key, value in definitions.items()}
+        for key in ("items", "anyOf", "allOf", "oneOf", "not"):
+            if key in node:
+                node[key] = normalize(node[key])
+        for key in ("title", "default", "minLength", "maxLength", "minItems", "maxItems"):
+            node.pop(key, None)
+        return node
+
+    return normalize(schema)
+
+
 def _parse_json_content(content: str) -> dict:
     candidate = content.strip()
     candidate = re.sub(r"^\s*```(?:json)?\s*", "", candidate, flags=re.IGNORECASE)
@@ -189,13 +219,23 @@ def _parse_json_content(content: str) -> dict:
     return value
 
 
-async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9000) -> dict:
+async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9000, response_model=None) -> dict:
     base_url, api_key, model, use_bearer = _provider_config()
     settings = get_settings()
     provider = (settings.AI_PROVIDER or "gemini").strip().lower()
+    response_format = {"type": "json_object"}
+    if provider == "groq" and model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"} and response_model is not None:
+        response_format = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "zorvi_build_response",
+                "strict": True,
+                "schema": _groq_strict_schema(response_model),
+            },
+        }
     request_body = {
         "model": model,
-        "response_format": {"type": "json_object"},
+        "response_format": response_format,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
@@ -362,7 +402,7 @@ Hard rules:
         "existing_project_files_context_bytes": context_bytes,
         "existing_project_files_context_truncated": context_truncated,
         "file_size_remaining_bytes": max(0, MAX_PROJECT_BYTES - existing_bytes),
-    }, max_tokens=10000)
+    }, max_tokens=10000, response_model=BuildStepResult)
     try:
         patch = BuildStepResult.model_validate(data)
     except Exception as exc:
@@ -617,7 +657,7 @@ Rules:
         "answers_to_previous_questions": request.answers,
         "previous_plan_to_refine": request.previous_plan,
         "user_context": "Authenticated IBRANT learner building a project step by step.",
-    }, max_tokens=7000)
+    }, max_tokens=7000, response_model=BuildPlan)
     try:
         plan = BuildPlan.model_validate(_normalize_build_plan_data(data))
     except Exception as exc:
