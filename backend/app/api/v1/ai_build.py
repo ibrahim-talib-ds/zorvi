@@ -287,6 +287,33 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
 
     if response is None:
         raise HTTPException(status_code=502, detail="The AI provider did not return a response. Your project files are safe; retry the step.")
+
+    # Groq's strict JSON-schema decoder can reject an otherwise usable response
+    # when a model omits nullable/defaulted fields. Retry once in JSON-object mode;
+    # Pydantic then supplies safe defaults for optional response fields.
+    if response.status_code == 400 and response_format.get("type") == "json_schema":
+        try:
+            error_payload = response.json()
+            error_value = error_payload.get("error", {}) if isinstance(error_payload, dict) else {}
+            schema_error = str(error_value.get("message", "") if isinstance(error_value, dict) else error_value).lower()
+        except (ValueError, TypeError):
+            schema_error = ""
+        if any(marker in schema_error for marker in ("generated json", "missing properties", "does not validate", "expected schema")):
+            logger.info("Groq strict schema validation failed; retrying once with JSON-object mode")
+            fallback_body = dict(request_body)
+            fallback_body["response_format"] = {"type": "json_object"}
+            try:
+                async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
+                    response = await client.post(
+                        f"{base_url}/chat/completions",
+                        headers=headers,
+                        json=fallback_body,
+                    )
+            except httpx.TimeoutException as exc:
+                raise HTTPException(status_code=504, detail="The AI provider timed out while retrying structured output. Your project files are safe; retry this build step shortly.") from exc
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail="The AI provider could not complete the JSON recovery attempt. Your project files are safe; retry this step.") from exc
+
     if response.status_code in (401, 403):
         raise HTTPException(status_code=502, detail="The AI provider rejected its API key. Check the backend AI_API_KEY setting.")
     if response.status_code == 429:
