@@ -209,11 +209,11 @@ def test_openrouter_free_model_is_configured_and_reported_free(monkeypatch):
     base_url, api_key, model, bearer = ai_build._provider_config()
     assert base_url == "https://openrouter.ai/api/v1"
     assert api_key == "test-key"
-    assert model == "inclusionai/ling-3.2-flash:free"
+    assert model == "particle-ai/particle-1:free"
     assert bearer is True
     status = ai_build._provider_status()
     assert status["configured"] is True
-    assert status["model"] == "inclusionai/ling-3.2-flash:free"
+    assert status["model"] == "particle-ai/particle-1:free"
     assert status["free_tier"] is True
 
 
@@ -232,10 +232,24 @@ def test_openrouter_keeps_other_explicit_free_models(monkeypatch):
 def test_ernie_is_replaced_only_for_openrouter():
     assert ai_build._effective_openrouter_model(
         "https://openrouter.ai/api/v1", "baidu/ernie-5.5-flash-preview:free"
-    ) == "inclusionai/ling-3.2-flash:free"
+    ) == "particle-ai/particle-1:free"
     assert ai_build._effective_openrouter_model(
         "https://api.groq.com/openai/v1", "baidu/ernie-5.5-flash-preview:free"
     ) == "baidu/ernie-5.5-flash-preview:free"
+
+
+def test_openrouter_fallback_chain_contains_only_other_free_models():
+    fallbacks = ai_build._openrouter_fallback_models(
+        "https://openrouter.ai/api/v1", "particle-ai/particle-1:free"
+    )
+    assert fallbacks == [
+        "inclusionai/ling-3.2-flash:free",
+        "nvidia/nemotron-3.5-super-vl:free",
+    ]
+    assert all(model.endswith(":free") for model in fallbacks)
+    assert ai_build._openrouter_fallback_models(
+        "https://api.groq.com/openai/v1", "openai/gpt-oss-120b"
+    ) == []
 
 
 def test_openrouter_rejects_non_free_model(monkeypatch):
@@ -310,12 +324,18 @@ async def test_openrouter_retries_empty_content_without_json_mode(monkeypatch):
 
     assert result == {"ok": True}
     assert len(FakeAsyncClient.requests) == 2
-    assert FakeAsyncClient.requests[0]["model"] == "inclusionai/ling-3.2-flash:free"
+    assert FakeAsyncClient.requests[0]["model"] == "particle-ai/particle-1:free"
+    assert FakeAsyncClient.requests[0]["models"] == [
+        "inclusionai/ling-3.2-flash:free", "nvidia/nemotron-3.5-super-vl:free"
+    ]
     assert FakeAsyncClient.requests[0]["response_format"] == {"type": "json_object"}
     assert FakeAsyncClient.requests[0]["reasoning"] == {"effort": "none"}
-    assert FakeAsyncClient.requests[1]["model"] == "inclusionai/ling-3.2-flash:free"
+    assert FakeAsyncClient.requests[1]["model"] == "particle-ai/particle-1:free"
     assert "response_format" not in FakeAsyncClient.requests[1]
     assert FakeAsyncClient.requests[1]["max_tokens"] == 42
+    assert FakeAsyncClient.requests[1]["models"] == [
+        "inclusionai/ling-3.2-flash:free", "nvidia/nemotron-3.5-super-vl:free"
+    ]
     assert FakeAsyncClient.requests[1]["reasoning"] == {"effort": "none"}
 
 
@@ -358,5 +378,5 @@ async def test_openrouter_quota_429_without_retry_after_is_not_retried(monkeypat
         await ai_build._ask_model("Return JSON", {"prompt": "test"})
 
     assert error.value.status_code == 429
-    assert "No paid model was used" in error.value.detail
+    assert "no paid model was used" in error.value.detail.lower()
     assert FakeAsyncClient.request_count == 1

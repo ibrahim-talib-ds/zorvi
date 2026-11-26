@@ -99,18 +99,33 @@ def _provider_config() -> tuple[str, str, str, bool]:
     return normalized_base_url, api_key, model, bearer
 
 
+OPENROUTER_FREE_BUILD_FALLBACKS = (
+    "inclusionai/ling-3.2-flash:free",
+    "nvidia/nemotron-3.5-super-vl:free",
+)
+
+
 def _effective_openrouter_model(base_url: str, configured_model: str) -> str:
-    """Replace the known ERNIE empty-response source with a verified free model."""
+    """Replace the known ERNIE empty-response source with a coding model."""
     if (
         urlparse((base_url or "").rstrip("/")).hostname == "openrouter.ai"
         and configured_model == "baidu/ernie-5.5-flash-preview:free"
     ):
-        # ERNIE 5.5 Flash does not support a thinking budget. Its thinking
-        # tokens consume max_tokens and can leave no assistant content on long
-        # code-generation prompts. Ling 3.2 Flash is a $0 :free model, supports
-        # structured outputs, and allows reasoning to be disabled per request.
-        return "inclusionai/ling-3.2-flash:free"
+        # ERNIE 5.5 Flash can spend its full completion budget on hidden
+        # reasoning, returning HTTP 200 with no assistant content. Particle-1
+        # is a free agentic coding model and supports structured JSON output.
+        return "particle-ai/particle-1:free"
     return configured_model
+
+
+def _openrouter_fallback_models(base_url: str, primary_model: str) -> list[str]:
+    """Return a bounded, explicitly-free failover chain for OpenRouter."""
+    if urlparse((base_url or "").rstrip("/")).hostname != "openrouter.ai":
+        return []
+    return [
+        model for model in OPENROUTER_FREE_BUILD_FALLBACKS
+        if model != primary_model and model.endswith(":free")
+    ][:3]
 
 
 def _provider_status() -> dict:
@@ -341,9 +356,13 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
         request_body["max_tokens"] = max_tokens
     else:
         request_body["max_completion_tokens"] = max_tokens
-    if urlparse(base_url).hostname == "openrouter.ai" and model == "inclusionai/ling-3.2-flash:free":
-        # Keep the completion budget for visible JSON/code instead of hidden
-        # reasoning. This model explicitly supports disabling thinking.
+    if urlparse(base_url).hostname == "openrouter.ai":
+        # OpenRouter tries the primary model, then these free-only alternatives
+        # when its providers are overloaded, rate-limited, or unavailable.
+        # Never include a paid model in this list.
+        request_body["models"] = _openrouter_fallback_models(base_url, model)
+        # The selected free coding models support this setting. It prevents
+        # hidden reasoning from consuming the visible JSON/code output budget.
         request_body["reasoning"] = {"effort": "none"}
 
     headers = {"Content-Type": "application/json"}
@@ -473,7 +492,27 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
         raise HTTPException(status_code=502, detail="The AI provider rejected its API key. Check the backend AI_API_KEY setting.")
     if response.status_code == 429:
         if urlparse(base_url).hostname == "openrouter.ai":
-            raise HTTPException(status_code=429, detail="The OpenRouter free-model quota or temporary capacity is exhausted. No paid model was used. Your project and completed steps are saved; retry after the provider limit resets.")
+            retry_after = response.headers.get("retry-after")
+            try:
+                error_payload = response.json()
+            except ValueError:
+                error_payload = {}
+            error_object = error_payload.get("error") if isinstance(error_payload, dict) else {}
+            error_object = error_object if isinstance(error_object, dict) else {}
+            metadata = error_object.get("metadata") if isinstance(error_object.get("metadata"), dict) else {}
+            provider_code = metadata.get("provider_code")
+            error_type = metadata.get("error_type")
+            limit_remaining = response.headers.get("x-ratelimit-remaining")
+            logger.warning(
+                "OpenRouter exhausted free-model routing (error_type=%s, provider_code=%s, retry_after=%s, rate_limit_remaining=%s)",
+                error_type, provider_code, retry_after, limit_remaining,
+            )
+            detail = "All configured free OpenRouter model providers are temporarily unavailable or rate-limited. ZORVI tried its free-model fallback chain; no paid model was used. Retry shortly."
+            if limit_remaining == "0":
+                detail = "The OpenRouter free-model daily request limit is exhausted. No paid model was used. Your project and completed steps are saved; retry after the daily limit resets."
+            elif retry_after:
+                detail += f" Provider retry window: {retry_after}."
+            raise HTTPException(status_code=429, detail=detail)
         retry_after = response.headers.get("retry-after")
         wait_hint = f" Provider retry window: {retry_after}." if retry_after else " Wait for the provider quota to reset."
         raise HTTPException(status_code=429, detail="The AI provider quota is currently exhausted after automatic retries." + wait_hint + " Your project and completed steps are saved; use Retry failed step when capacity is available.")
@@ -643,7 +682,20 @@ Hard rules:
     try:
         patch = BuildStepResult.model_validate(data)
     except Exception as exc:
-        logger.warning("AI step validation failed: %s", type(exc).__name__)
+        validation_errors = []
+        if hasattr(exc, "errors"):
+            try:
+                validation_errors = [
+                    {
+                        "loc": list(item.get("loc", ())),
+                        "type": item.get("type"),
+                        "msg": item.get("msg"),
+                    }
+                    for item in exc.errors()
+                ]
+            except Exception:
+                validation_errors = []
+        logger.warning("AI step validation failed (%s): %s", type(exc).__name__, validation_errors)
         raise HTTPException(status_code=502, detail="The AI response did not contain valid project files. Retry this step.") from exc
 
     projected_files = {
