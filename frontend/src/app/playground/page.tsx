@@ -629,7 +629,13 @@ export default function PlaygroundPage() {
           buffers[id] = files[path] ?? "";
           return { id, name: path.split("/").pop() || path, language: languageFromFileName(path), projectPath: path, cloudProject: true };
         });
-        const initialFile = project.template === "python" ? projectTabs.find((tab) => tab.language === "python") : undefined;
+        const isFlutterProject = paths.some((path) => path.toLowerCase() === "pubspec.yaml")
+          && paths.some((path) => path.toLowerCase() === "lib/main.dart");
+        const initialFile = project.template === "python"
+          ? projectTabs.find((tab) => tab.language === "python")
+          : isFlutterProject
+            ? projectTabs.find((tab) => tab.projectPath?.toLowerCase() === "lib/main.dart")
+            : undefined;
         setCloudProject(project);
         setCloudProjectFiles(files);
         setCloudProjectPaths(paths);
@@ -647,7 +653,7 @@ export default function PlaygroundPage() {
         })), ...projectTabs]);
         setExtraCode(buffers);
         setActiveProjectFile(null);
-        setProjectFileContent("");
+        setProjectFileContent(initialFile?.projectPath ? files[initialFile.projectPath] ?? "" : "");
         setActiveProjectPath(initialFile?.projectPath ?? "");
         setActiveTabId(initialFile?.id ?? "html");
         setActiveLanguage(initialFile?.language ?? "html");
@@ -1557,6 +1563,10 @@ export default function PlaygroundPage() {
     pushLog("sys", `Example loaded: ${ex.name}`);
   };
 
+  const isFlutterProject = Boolean(
+    cloudProjectPaths.some((path) => path.toLowerCase() === "pubspec.yaml")
+      && cloudProjectPaths.some((path) => path.toLowerCase() === "lib/main.dart"),
+  );
   const isWebLanguage = ["html", "css", "javascript"].includes(activeLanguage);
   const isWebPreviewLanguage = isWebLanguage || activeLanguage === "typescript";
   const activeTabKey: keyof Code =
@@ -1612,6 +1622,7 @@ export default function PlaygroundPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/build" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] hover:bg-white/10">My Projects</Link>
+          {cloudProject && <Link href={`/build/ai?project=${cloudProject.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-[#7559E8]/30 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] hover:bg-[#7559E8]/20"><FilePlus2 size={13} /> Add feature with AI</Link>}
           {cloudProject && (
             <>
               <span className="hidden items-center gap-1 text-[11px] text-[#929CBD] sm:inline-flex">
@@ -1647,7 +1658,7 @@ export default function PlaygroundPage() {
               <option key={x.name} value={x.name}>{x.name}</option>
             ))}
           </select>}
-          <label className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[#B7BDD0]">
+          {!isFlutterProject && <label className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[#B7BDD0]">
             <input
               type="checkbox"
               checked={autoRun}
@@ -1655,7 +1666,7 @@ export default function PlaygroundPage() {
               className="accent-[#7559E8]"
             />
             Auto-run
-          </label>
+          </label>}
           {!cloudProject && <button
             onClick={reset}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] transition hover:bg-white/10 hover:text-white"
@@ -1663,11 +1674,11 @@ export default function PlaygroundPage() {
             <RotateCcw size={13} /> Reset
           </button>}
           <button
-            disabled={pythonRunning}
+            disabled={pythonRunning || isFlutterProject}
             onClick={() => runRef.current()}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-2 text-xs font-bold text-white shadow-lg shadow-[#7559E8]/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Play size={13} fill="currentColor" /> {pythonRunning ? "Running…" : "Run"} <span className="hidden opacity-70 sm:inline">Ctrl+↵</span>
+            <Play size={13} fill="currentColor" /> {pythonRunning ? "Running…" : isFlutterProject ? "Run on device" : "Run"} <span className="hidden opacity-70 sm:inline">{isFlutterProject ? "Flutter SDK" : "Ctrl+↵"}</span>
           </button>
           {activeLanguage === "python" && pythonRunning && (
             <button
@@ -1855,7 +1866,35 @@ export default function PlaygroundPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-[#22C58B]" />
               <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Preview</span>
             </div>
-            {isWebPreviewLanguage ? (
+            {isFlutterProject ? (
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#0B0F1D] p-5 sm:p-7">
+                <div className="mx-auto max-w-xl">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#8B70FF]/30 bg-[#7559E8]/10 px-3 py-1.5 text-[11px] font-semibold text-[#D6CCFF]">
+                    <Terminal size={13} /> Flutter project detected
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-white">Run this app on an Android device</h3>
+                  <p className="mt-2 text-xs leading-5 text-[#AAB3CC]">
+                    Flutter apps cannot run inside this browser preview. Your Dart source is saved here; use the exported project with the Flutter SDK to compile and launch the actual app.
+                  </p>
+                  <ol className="mt-5 space-y-3 text-xs leading-5 text-[#D7DDF3]">
+                    <li><strong>1. Export the project.</strong> Select <strong>Export ZIP</strong> above and extract the archive.</li>
+                    <li><strong>2. Open a terminal</strong> in the extracted folder containing <code>pubspec.yaml</code>. Install Flutter and Android Studio first.</li>
+                    <li><strong>3. Generate Android runner files</strong> (the current project contains the Dart source but not a complete native runner):</li>
+                  </ol>
+                  <pre className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-[#070B16] p-4 text-[11px] leading-6 text-[#C4B5FD]"><code>flutter doctor -v
+flutter create --platforms=android .
+flutter pub get
+flutter devices
+flutter run</code></pre>
+                  <p className="mt-4 text-xs leading-5 text-[#929CBD]">
+                    Keep an Android emulator running in Android Studio, or connect an Android phone with USB debugging enabled. When <code>flutter run</code> launches successfully, the app is running on that device.
+                  </p>
+                  <div className="mt-5 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-xs leading-5 text-emerald-100">
+                    This panel is the Flutter run guide, not a claim that the app has already been compiled or tested.
+                  </div>
+                </div>
+              </div>
+            ) : isWebPreviewLanguage ? (
               <iframe
                 ref={frameRef}
                 title="Live preview"

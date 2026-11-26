@@ -125,6 +125,11 @@ export default function AIBuildPage() {
   const [task, setTask] = useState<BuildTask | null>(null);
   const [taskAnswer, setTaskAnswer] = useState("");
   const [taskActionBusy, setTaskActionBusy] = useState(false);
+  const [featurePrompt, setFeaturePrompt] = useState("");
+  const [featurePlanning, setFeaturePlanning] = useState(false);
+  const [featurePlan, setFeaturePlan] = useState<BuildPlan | null>(null);
+  const [featureBuildPrompt, setFeatureBuildPrompt] = useState("");
+  const [featureStarting, setFeatureStarting] = useState(false);
   const [recentTasks, setRecentTasks] = useState<BuildTask[]>([]);
   const [recentTasksLoading, setRecentTasksLoading] = useState(false);
   const [openingTaskId, setOpeningTaskId] = useState<string | null>(null);
@@ -322,6 +327,111 @@ export default function AIBuildPage() {
       setError(err instanceof Error ? err.message : "Could not update this build task.");
     } finally {
       setTaskActionBusy(false);
+    }
+  };
+
+  const planFeatureExtension = async () => {
+    if (!token || !projectId || !plan || featurePrompt.trim().length < 8) return;
+    setFeaturePlanning(true);
+    setError("");
+    setNotice("");
+    setFeaturePlan(null);
+    try {
+      const projectResponse = await fetchWithAuth(`${API_BASE}/projects/${projectId}`);
+      const project = await readJson(projectResponse) as ProjectRead;
+      const priorityFiles = [...(project.files ?? [])].sort((left, right) => {
+        const score = (path: string) => path.toLowerCase() === "lib/main.dart" ? 0
+          : path.toLowerCase() === "pubspec.yaml" ? 1
+          : path.toLowerCase() === "readme.md" ? 2 : 3;
+        return score(left.path) - score(right.path);
+      });
+      let remainingContext = 6200;
+      const fileContext = priorityFiles.map((file) => {
+        if (remainingContext <= 0) return `FILE: ${file.path} (content omitted to fit context)`;
+        const excerpt = file.content.slice(0, Math.min(file.content.length, remainingContext));
+        remainingContext -= excerpt.length;
+        const clipped = excerpt.length < file.content.length ? "\n[File excerpt truncated]" : "";
+        return `FILE: ${file.path}\n${excerpt}${clipped}`;
+      }).join("\n\n");
+      const extensionPrompt = [
+        "EXTEND THE EXISTING SAVED PROJECT. Do not create a new app or replace the project with a starter template.",
+        `Project name: ${project.name}`,
+        `Original project goal: ${prompt}`,
+        `Existing technology stack: ${JSON.stringify(plan.stack)}`,
+        "Keep the existing languages, frameworks, architecture, naming conventions, and working features. Modify existing files where appropriate and add only the files needed for this request.",
+        `Existing saved project files and source excerpts:\n${fileContext}`,
+        `New feature requested by the project owner: ${featurePrompt.trim()}`,
+        "Create an incremental implementation plan only for this new feature. Make each step compatible with the existing saved source files. Do not claim the application was run or tested."
+      ].join("\n\n").slice(0, 11900);
+      const allowedTypes: AppType[] = ["auto", "web", "mobile", "full_stack", "api", "data_science"];
+      const selectedType = allowedTypes.includes(plan.app_type as AppType) ? plan.app_type as AppType : "auto";
+      const response = await fetchWithAuth(`${API_BASE}/ai/build/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: extensionPrompt,
+          app_type: selectedType,
+          preferences: { frontend: "auto", backend: "auto", database: "auto" },
+          answers: {},
+          previous_plan: plan,
+        }),
+      });
+      const nextPlan = await readJson(response) as BuildPlan;
+      setFeatureBuildPrompt(extensionPrompt);
+      setFeaturePlan(nextPlan);
+      setNotice("The feature plan is ready. Review it before adding the changes to this same project.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not plan this project extension.");
+    } finally {
+      setFeaturePlanning(false);
+    }
+  };
+
+  const startFeatureBuild = async () => {
+    if (!token || !projectId || !featurePlan || !featureBuildPrompt) return;
+    setFeatureStarting(true);
+    setError("");
+    try {
+      const response = await fetchWithAuth(`${API_BASE}/ai/build/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          prompt: featureBuildPrompt,
+          plan: featurePlan,
+          auto_run: true,
+        }),
+      });
+      const createdTask = await readJson(response) as BuildTask;
+      const saved: SavedBuilderState = {
+        projectId,
+        prompt: featureBuildPrompt,
+        plan: featurePlan,
+        stepIndex: 0,
+        completedSteps: [],
+        extraContext: "",
+        nextQuestion: "",
+        taskId: createdTask.id,
+        autoBuild: true,
+      };
+      sessionStorage.setItem(STORAGE_PREFIX + projectId, JSON.stringify(saved));
+      setPrompt(featureBuildPrompt);
+      setPlan(featurePlan);
+      setStepIndex(0);
+      setCompletedSteps([]);
+      setTaskId(createdTask.id);
+      setTask(createdTask);
+      setAutoBuild(true);
+      setFeaturePrompt("");
+      setFeaturePlan(null);
+      setFeatureBuildPrompt("");
+      setNotice("The new feature build has started in your existing project. Earlier saved files are preserved.");
+      setRecentTasks((items) => [createdTask, ...items.filter((item) => item.id !== createdTask.id)].slice(0, 8));
+      router.replace(`/build/ai?project=${projectId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the feature build.");
+    } finally {
+      setFeatureStarting(false);
     }
   };
 
@@ -591,7 +701,7 @@ export default function AIBuildPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A78BFA]">Automatic build task</p>
-                      <h3 className="mt-2 font-display text-xl font-bold text-white">{task?.current_step_title || (task?.status === "completed" ? "Project build completed" : "Preparing build task")}</h3>
+                      <h3 className="mt-2 font-display text-xl font-bold text-white">{task?.current_step_title || (task?.status === "completed" ? "Source generation completed" : "Preparing build task")}</h3>
                       <p className="mt-1 text-xs text-[#929CBD]">Task {taskId.slice(0, 8)} · {task?.status || "queued"}</p>
                     </div>
                     <span className={`rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide ${task?.status === "completed" ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200" : task?.status === "failed" ? "border-rose-400/25 bg-rose-400/10 text-rose-200" : task?.status === "paused" ? "border-amber-400/25 bg-amber-400/10 text-amber-200" : "border-[#7559E8]/25 bg-[#7559E8]/10 text-[#D5CAFF]"}`}>{task?.status || "queued"}</span>
@@ -601,6 +711,7 @@ export default function AIBuildPage() {
                     <p className="text-xs font-semibold text-[#B7A6FF]">{Math.round(((task?.completed_steps.length ?? completedSteps.length) / Math.max(1, task?.total_steps ?? plan.steps.length)) * 100)}%</p>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-[#8B70FF] transition-all" style={{ width: `${Math.round(((task?.completed_steps.length ?? completedSteps.length) / Math.max(1, task?.total_steps ?? plan.steps.length)) * 100)}%` }} /></div>
+                  {task?.status === "completed" && <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 text-xs leading-5 text-amber-100"><strong>Source files are saved; runtime testing is still pending.</strong> Open the Playground for web-previewable projects. For Flutter, export the ZIP and run it on an Android emulator or device using the Flutter SDK.</div>}
                   {task?.last_error && <div role="alert" className="mt-4 rounded-xl border border-rose-400/25 bg-rose-400/10 p-3 text-xs leading-5 text-rose-100"><strong>Build stopped:</strong> {task.last_error}</div>}
                   {task?.status === "paused" && task.events[task.events.length - 1]?.type === "needs_user_input" && task.events.slice(-1).map((event) => <div key={event.at} className="mt-4 rounded-xl border border-amber-400/25 bg-amber-400/10 p-3"><p className="text-xs font-semibold text-amber-100">{event.message}</p><textarea value={taskAnswer} onChange={(inputEvent) => setTaskAnswer(inputEvent.target.value)} rows={2} className="mt-3 w-full rounded-lg border border-white/10 bg-[#0B0F1D] p-3 text-xs text-white outline-none focus:border-[#7559E8]" placeholder="Answer the AI so it can continue…" /><button onClick={() => void controlTask("resume")} disabled={taskActionBusy || !taskAnswer.trim()} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />} Answer & continue</button></div>)}
                   <div className="mt-5 flex flex-wrap gap-2">
@@ -610,6 +721,74 @@ export default function AIBuildPage() {
                     {(task?.status === "queued" || task?.status === "running" || task?.status === "paused") && <button onClick={() => void controlTask("cancel")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg border border-rose-400/25 px-4 py-2.5 text-xs font-semibold text-rose-200 hover:bg-rose-400/10 disabled:opacity-50">Stop build</button>}
                     <Link href={`/playground?project=${projectId}`} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/5"><Code2 size={13} /> Open editor</Link>
                   </div>
+                  {task?.status === "completed" && (
+                    <div className="mt-6 rounded-xl border border-[#7559E8]/30 bg-[#7559E8]/[0.07] p-4">
+                      <div className="flex items-center gap-2 text-[#C4B5FD]">
+                        <WandSparkles size={16} />
+                        <h4 className="text-sm font-bold text-white">Add another feature to this project</h4>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-[#AAB3CC]">
+                        Describe the next change in plain language. IBRANT will inspect your saved files, plan the feature, and add it to this same project. Your existing code stays in place.
+                      </p>
+                      <textarea
+                        value={featurePrompt}
+                        onChange={(event) => setFeaturePrompt(event.target.value)}
+                        rows={3}
+                        maxLength={6000}
+                        placeholder="Example: Add login and registration screens to this Flutter app. Keep the greeting screen and current project structure."
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-[#0B0F1D] p-3 text-xs leading-5 text-white outline-none placeholder:text-[#65708B] focus:border-[#7559E8]"
+                      />
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[10px] text-[#7F8AA5]">The new feature will be saved in this project, not a separate one.</span>
+                        <button
+                          onClick={() => void planFeatureExtension()}
+                          disabled={featurePlanning || featureStarting || featurePrompt.trim().length < 8}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8B70FF] disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                          {featurePlanning ? <Loader2 size={13} className="animate-spin" /> : <WandSparkles size={13} />}
+                          {featurePlanning ? "Planning feature…" : "Plan this feature"}
+                        </button>
+                      </div>
+                      {featurePlan && (
+                        <div className="mt-4 rounded-xl border border-white/10 bg-[#0B0F1D] p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#A78BFA]">Feature plan · {featurePlan.steps.length} steps</p>
+                          <h5 className="mt-2 text-sm font-bold text-white">{featurePlan.project_name}</h5>
+                          <p className="mt-1 text-xs leading-5 text-[#AAB3CC]">{featurePlan.summary}</p>
+                          <ol className="mt-3 space-y-2">
+                            {featurePlan.steps.map((item, index) => (
+                              <li key={item.id} className="flex gap-2 text-xs leading-5 text-[#D7D9E7]">
+                                <span className="font-bold text-[#A78BFA]">{index + 1}.</span>
+                                <span><strong>{item.title}:</strong> {item.objective}</span>
+                              </li>
+                            ))}
+                          </ol>
+                          {featurePlan.questions.length > 0 && (
+                            <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs leading-5 text-amber-100">
+                              Before starting, add answers to the AI questions to the feature description above, then choose Plan this feature again.
+                              <ul className="mt-2 list-disc space-y-1 pl-4">{featurePlan.questions.map((question, index) => <li key={index}>{question}</li>)}</ul>
+                            </div>
+                          )}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => { setFeaturePlan(null); setFeatureBuildPrompt(""); }}
+                              disabled={featureStarting}
+                              className="rounded-lg border border-white/10 px-3 py-2.5 text-xs font-semibold text-[#B7BDD0] hover:bg-white/5 disabled:opacity-50"
+                            >
+                              Discard plan
+                            </button>
+                            <button
+                              onClick={() => void startFeatureBuild()}
+                              disabled={featureStarting || featurePlan.questions.length > 0}
+                              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-45"
+                            >
+                              {featureStarting ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+                              Approve & build in this project
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <p className="mt-4 text-[11px] leading-5 text-[#7F8AA5]">Autopilot safely writes project files. It does not execute code, run database migrations, install dependencies, configure payment gateways, or deploy. You can close this page while the backend stays online; task progress is saved on the server. AI validation notes are suggestions, not executed tests.</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-[#0B0F1D] p-5">
