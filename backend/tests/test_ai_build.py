@@ -421,3 +421,72 @@ async def test_create_build_plan_repairs_schema_invalid_model_response(monkeypat
     assert calls[1][2] is BuildPlan
     assert calls[1][1]["invalid_plan"] == invalid_plan
     assert calls[1][1]["validation_errors"]
+
+
+
+def test_normalize_build_step_supports_common_file_shapes():
+    normalized = ai_build._normalize_build_step_data({
+        "description": "Adds the first page.",
+        "files": [
+            {"filename": "index.html", "code": "<!doctype html><title>App</title>"}
+        ],
+        "validation_notes": "Not run in the hosted environment.",
+        "is_final_step": "false",
+    })
+    result = BuildStepResult.model_validate(normalized)
+    assert result.summary == "Adds the first page."
+    assert result.files[0].path == "index.html"
+    assert result.files[0].content.startswith("<!doctype html>")
+    assert result.validation_notes == ["Not run in the hosted environment."]
+    assert result.is_final_step is False
+
+    mapped = ai_build._normalize_build_step_data({
+        "summary": "Adds styles.",
+        "files": {"styles.css": "body { margin: 0; }"},
+    })
+    assert mapped["files"] == [{"path": "styles.css", "content": "body { margin: 0; }"}]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_repairs_invalid_file_response(monkeypatch):
+    invalid_response = {"summary": "Started the page.", "files": []}
+    valid_response = {
+        "summary": "Creates the initial application page.",
+        "files": [{"path": "index.html", "content": "<!doctype html><html><body>App</body></html>"}],
+        "validation_notes": ["Not executed in this environment."],
+        "user_question": None,
+        "is_final_step": False,
+    }
+    calls = []
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
+        calls.append((system_prompt, user_payload, response_model))
+        return invalid_response if len(calls) == 1 else valid_response
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={
+            "id": "project-1",
+            "name": "Example App",
+            "description": "A simple example application.",
+            "template": "web",
+            "files": [],
+        },
+        prompt="Build a simple example application",
+        plan={
+            "steps": [
+                {
+                    "id": "step-1",
+                    "title": "Create the application shell",
+                    "objective": "Create the initial page.",
+                }
+            ]
+        },
+        step_index=0,
+    )
+
+    assert patch.files[0].path == "index.html"
+    assert len(calls) == 2
+    assert calls[1][2] is BuildStepResult
+    assert calls[1][1]["invalid_previous_response"] == invalid_response
+    assert calls[1][1]["validation_errors"]

@@ -190,6 +190,60 @@ def _normalize_build_plan_data(data: dict) -> dict:
     return normalized
 
 
+def _normalize_build_step_data(data: dict) -> dict:
+    """Normalize common OpenAI-compatible file output shapes without inventing code."""
+    if not isinstance(data, dict):
+        return data
+    normalized = dict(data)
+    if "summary" not in normalized and isinstance(normalized.get("description"), str):
+        normalized["summary"] = normalized["description"]
+
+    raw_files = normalized.get("files")
+    if isinstance(raw_files, dict):
+        # Models sometimes return a single file object or a filename -> content map.
+        if any(key in raw_files for key in ("path", "file_path", "filename", "name")):
+            raw_files = [raw_files]
+        else:
+            raw_files = [
+                {"path": filename, "content": content}
+                for filename, content in raw_files.items()
+                if isinstance(filename, str) and isinstance(content, str)
+            ]
+    if isinstance(raw_files, list):
+        files = []
+        for raw_file in raw_files:
+            if not isinstance(raw_file, dict):
+                files.append(raw_file)
+                continue
+            file_data = dict(raw_file)
+            if "path" not in file_data:
+                for alias in ("file_path", "filename", "name"):
+                    if isinstance(file_data.get(alias), str):
+                        file_data["path"] = file_data[alias]
+                        break
+            if "content" not in file_data:
+                for alias in ("code", "source", "file_content"):
+                    if isinstance(file_data.get(alias), str):
+                        file_data["content"] = file_data[alias]
+                        break
+            files.append(file_data)
+        normalized["files"] = files
+
+    notes = normalized.get("validation_notes")
+    if isinstance(notes, str):
+        normalized["validation_notes"] = [notes] if notes.strip() else []
+    if normalized.get("user_question") == "":
+        normalized["user_question"] = None
+    final_step = normalized.get("is_final_step")
+    if isinstance(final_step, str):
+        lowered = final_step.strip().lower()
+        if lowered in {"true", "yes", "1"}:
+            normalized["is_final_step"] = True
+        elif lowered in {"false", "no", "0", ""}:
+            normalized["is_final_step"] = False
+    return normalized
+
+
 def _select_project_file_context(files: list) -> tuple[list[dict[str, str]], int, bool]:
     """Bound existing-file context so projects cannot exceed model context limits."""
     valid_files = [
@@ -640,14 +694,21 @@ async def _generate_step_patch(
         raise HTTPException(status_code=413, detail="This project has reached its 2 MB account workspace limit. Download the ZIP and continue locally.")
     current_files, context_bytes, context_truncated = _select_project_file_context(files)
     system_prompt = """You are IBRANT Build Engineer. Implement exactly ONE planned step in an existing code project.
-Return ONE valid JSON object and no markdown:
+Return exactly ONE JSON object, with no markdown, code fences, comments, or prose outside the object.
+Use this exact response shape and include every key:
 {
- "summary":"what this step changed",
- "files":[{"path":"relative/path.ext","content":"complete file contents"}],
- "validation_notes":["what can be checked now and what cannot"],
- "user_question":"optional one concise question before the next step, otherwise null",
- "is_final_step":false
+  "summary": "A concise description of the implementation delivered",
+  "files": [
+    {
+      "path": "relative/path.ext",
+      "content": "Complete source code for this file as a JSON string"
+    }
+  ],
+  "validation_notes": ["Checks proposed or actually performed, clearly distinguished"],
+  "user_question": null,
+  "is_final_step": false
 }
+The files array MUST contain at least one real project file. Each file MUST contain a non-empty relative POSIX path and the COMPLETE file content as a string. Never return an empty files array, an explanation instead of files, or a diff.
 Hard rules:
 - Return complete contents for every file you create or modify; never return diffs.
 - Return only files needed for the current step (maximum 8). Do not rewrite unrelated files.
@@ -662,7 +723,7 @@ Hard rules:
 - Use the architecture and current step exactly. Do not silently change language or framework.
 - For browser preview support, keep the user-facing frontend previewable when the stack allows it; do not pretend a Flutter/native app can be previewed in the web iframe.
 - In the validation notes clearly distinguish proposed checks from checks actually performed. Do not state that you ran a test or started a server unless the platform actually did so."""
-    data = await _ask_model(system_prompt, {
+    step_payload = {
         "project": {
             "id": str(project_data.get("id", "")),
             "name": project_data.get("name"),
@@ -678,25 +739,58 @@ Hard rules:
         "existing_project_files_context_bytes": context_bytes,
         "existing_project_files_context_truncated": context_truncated,
         "file_size_remaining_bytes": max(0, MAX_PROJECT_BYTES - existing_bytes),
-    }, max_tokens=10000, response_model=BuildStepResult)
+    }
+    data = await _ask_model(system_prompt, step_payload, max_tokens=10000, response_model=BuildStepResult)
     try:
-        patch = BuildStepResult.model_validate(data)
-    except Exception as exc:
-        validation_errors = []
-        if hasattr(exc, "errors"):
-            try:
-                validation_errors = [
-                    {
-                        "loc": list(item.get("loc", ())),
-                        "type": item.get("type"),
-                        "msg": item.get("msg"),
-                    }
-                    for item in exc.errors()
-                ]
-            except Exception:
-                validation_errors = []
-        logger.warning("AI step validation failed (%s): %s", type(exc).__name__, validation_errors)
-        raise HTTPException(status_code=502, detail="The AI response did not contain valid project files. Retry this step.") from exc
+        patch = BuildStepResult.model_validate(_normalize_build_step_data(data))
+    except Exception as first_exc:
+        def validation_details(error: Exception) -> list[dict]:
+            if not hasattr(error, "errors"):
+                return [{"type": type(error).__name__, "msg": str(error)[:300]}]
+            return [
+                {
+                    "loc": list(item.get("loc", ())),
+                    "type": item.get("type"),
+                    "msg": item.get("msg"),
+                }
+                for item in error.errors()
+            ]
+
+        first_errors = validation_details(first_exc)
+        logger.info(
+            "AI step response failed BuildStepResult validation; requesting one repair: %s",
+            first_errors,
+        )
+        repair_prompt = system_prompt + """
+
+RECOVERY REQUIREMENT:
+The previous response did not satisfy the required project-file schema. Return a corrected response now.
+You MUST return at least one complete source file in files. Each item must use exactly "path" and "content".
+The validation errors below identify what needs correcting. Preserve the agreed stack, project requirements,
+current implementation step, security rules, and existing project files. Do not return an explanation or an empty file list."""
+        repaired_data = await _ask_model(
+            repair_prompt,
+            {
+                "original_project_request": step_payload,
+                "invalid_previous_response": data,
+                "validation_errors": first_errors,
+            },
+            max_tokens=10000,
+            response_model=BuildStepResult,
+        )
+        try:
+            patch = BuildStepResult.model_validate(_normalize_build_step_data(repaired_data))
+        except Exception as repair_exc:
+            repair_errors = validation_details(repair_exc)
+            logger.warning(
+                "AI step validation failed after one repair attempt (initial=%s, corrected=%s)",
+                first_errors,
+                repair_errors,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider could not return valid project files after one automatic correction. Retry this step.",
+            ) from repair_exc
 
     projected_files = {
         str(item.get("path")): str(item.get("content", ""))
