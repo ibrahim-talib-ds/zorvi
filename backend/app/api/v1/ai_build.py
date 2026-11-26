@@ -203,6 +203,21 @@ def _groq_strict_schema(model_type) -> dict:
     return normalize(schema)
 
 
+def _is_json_generation_error(response: httpx.Response) -> bool:
+    """Identify provider-side constrained-output failures eligible for fallback."""
+    try:
+        payload = response.json()
+        error = payload.get("error", {}) if isinstance(payload, dict) else {}
+        message = error.get("message", "") if isinstance(error, dict) else error
+    except (ValueError, TypeError):
+        return False
+    message = str(message).lower()
+    return any(marker in message for marker in (
+        "generated json", "failed to generate json", "missing properties",
+        "does not validate", "expected schema", "failed_generation",
+    ))
+
+
 def _parse_json_content(content: str) -> dict:
     candidate = content.strip()
     candidate = re.sub(r"^\s*```(?:json)?\s*", "", candidate, flags=re.IGNORECASE)
@@ -291,28 +306,45 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
     # Groq's strict JSON-schema decoder can reject an otherwise usable response
     # when a model omits nullable/defaulted fields. Retry once in JSON-object mode;
     # Pydantic then supplies safe defaults for optional response fields.
-    if response.status_code == 400 and response_format.get("type") == "json_schema":
+    if response.status_code == 400 and response_format.get("type") == "json_schema" and _is_json_generation_error(response):
+        logger.info("Groq strict schema generation failed; retrying in JSON-object mode")
+        fallback_body = dict(request_body)
+        fallback_body["response_format"] = {"type": "json_object"}
         try:
-            error_payload = response.json()
-            error_value = error_payload.get("error", {}) if isinstance(error_payload, dict) else {}
-            schema_error = str(error_value.get("message", "") if isinstance(error_value, dict) else error_value).lower()
-        except (ValueError, TypeError):
-            schema_error = ""
-        if any(marker in schema_error for marker in ("generated json", "missing properties", "does not validate", "expected schema")):
-            logger.info("Groq strict schema validation failed; retrying once with JSON-object mode")
-            fallback_body = dict(request_body)
-            fallback_body["response_format"] = {"type": "json_object"}
-            try:
-                async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
-                    response = await client.post(
-                        f"{base_url}/chat/completions",
-                        headers=headers,
-                        json=fallback_body,
-                    )
-            except httpx.TimeoutException as exc:
-                raise HTTPException(status_code=504, detail="The AI provider timed out while retrying structured output. Your project files are safe; retry this build step shortly.") from exc
-            except httpx.HTTPError as exc:
-                raise HTTPException(status_code=502, detail="The AI provider could not complete the JSON recovery attempt. Your project files are safe; retry this step.") from exc
+            async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
+                response = await client.post(
+                    f"{base_url}/chat/completions",
+                    headers=headers,
+                    json=fallback_body,
+                )
+        except httpx.TimeoutException as exc:
+            raise HTTPException(status_code=504, detail="The AI provider timed out while retrying structured output. Your project files are safe; retry this build step shortly.") from exc
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail="The AI provider could not complete the JSON recovery attempt. Your project files are safe; retry this step.") from exc
+
+    # Some Groq model/output combinations fail even in JSON-object mode. Make
+    # one final unconstrained-format attempt; the response is still parsed as JSON
+    # and validated against the endpoint's Pydantic response model before use.
+    if response.status_code == 400 and _is_json_generation_error(response):
+        logger.info("AI provider JSON-object generation failed; retrying without response_format")
+        fallback_body = dict(request_body)
+        fallback_body.pop("response_format", None)
+        fallback_body["messages"] = list(request_body["messages"])
+        fallback_body["messages"][0] = {
+            "role": "system",
+            "content": system_prompt + "\n\nOUTPUT REQUIREMENT: Return exactly one syntactically valid JSON object. No markdown, no prose, no code fences. Include every field in the response shape described above.",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
+                response = await client.post(
+                    f"{base_url}/chat/completions",
+                    headers=headers,
+                    json=fallback_body,
+                )
+        except httpx.TimeoutException as exc:
+            raise HTTPException(status_code=504, detail="The AI provider timed out during the final JSON recovery attempt. Your project files are safe; retry this step shortly.") from exc
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail="The AI provider could not complete the final JSON recovery attempt. Your project files are safe; retry this step.") from exc
 
     if response.status_code in (401, 403):
         raise HTTPException(status_code=502, detail="The AI provider rejected its API key. Check the backend AI_API_KEY setting.")

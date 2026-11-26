@@ -186,3 +186,13 @@ def test_provider_retry_delay_uses_bounded_backoff_without_header():
     response = ai_build.httpx.Response(503)
     assert ai_build._provider_retry_delay(response, 0) == 1.0
     assert ai_build._provider_retry_delay(response, 1) == 2.0
+
+
+def test_groq_json_generation_error_is_detected_for_failed_generation():
+    response = ai_build.httpx.Response(400, json={"error": {"message": "Failed to generate JSON. See failed_generation."}})
+    assert ai_build._is_json_generation_error(response) is True
+
+
+def test_non_json_provider_error_does_not_trigger_output_fallback():
+    response = ai_build.httpx.Response(400, json={"error": {"message": "Invalid model name"}})
+    assert ai_build._is_json_generation_error(response) is False
