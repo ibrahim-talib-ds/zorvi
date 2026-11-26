@@ -16,7 +16,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowDownToLine, CheckCircle2, FilePlus2, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, ChevronDown, ChevronRight, File, FileCode2, FilePlus2, Folder, FolderOpen, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
@@ -114,6 +114,83 @@ interface ProjectNode {
   kind: "directory" | "file";
   handle: FileSystemDirectoryHandle | FileSystemFileHandle;
   children?: ProjectNode[];
+}
+
+interface CloudProjectTreeNode {
+  name: string;
+  path: string;
+  kind: "directory" | "file";
+  children?: CloudProjectTreeNode[];
+}
+
+function buildCloudProjectTree(paths: string[]): CloudProjectTreeNode[] {
+  const root: CloudProjectTreeNode[] = [];
+  const directories = new Map<string, CloudProjectTreeNode>();
+
+  for (const rawPath of paths) {
+    const parts = rawPath.split("/").filter(Boolean);
+    let parent = root;
+    let currentPath = "";
+    parts.forEach((part, index) => {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      const isDirectory = index < parts.length - 1;
+      if (isDirectory) {
+        let directory = directories.get(currentPath);
+        if (!directory) {
+          directory = { name: part, path: currentPath, kind: "directory", children: [] };
+          directories.set(currentPath, directory);
+          parent.push(directory);
+        }
+        parent = directory.children!;
+      } else {
+        parent.push({ name: part, path: currentPath, kind: "file" });
+      }
+    });
+  }
+
+  const sortNodes = (nodes: CloudProjectTreeNode[]) => {
+    nodes.sort((a, b) => a.kind !== b.kind
+      ? a.kind === "directory" ? -1 : 1
+      : a.name.localeCompare(b.name));
+    nodes.forEach((node) => { if (node.children) sortNodes(node.children); });
+  };
+  sortNodes(root);
+  return root;
+}
+
+function CloudProjectTreeItem({
+  node, activePath, onOpen,
+}: {
+  node: CloudProjectTreeNode;
+  activePath: string;
+  onOpen: (path: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  if (node.kind === "directory") {
+    return (
+      <div>
+        <button type="button" onClick={() => setExpanded((value) => !value)}
+          className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[12px] text-[#C5CAD8] transition hover:bg-white/[0.06]">
+          {expanded ? <ChevronDown size={13} className="shrink-0 text-[#8C93A8]" /> : <ChevronRight size={13} className="shrink-0 text-[#8C93A8]" />}
+          {expanded ? <FolderOpen size={14} className="shrink-0 text-[#D6A85C]" /> : <Folder size={14} className="shrink-0 text-[#D6A85C]" />}
+          <span className="truncate">{node.name}</span>
+        </button>
+        {expanded && <div className="ml-[13px] border-l border-white/[0.08] pl-2">
+          {node.children?.map((child) => <CloudProjectTreeItem key={child.path} node={child} activePath={activePath} onOpen={onOpen} />)}
+        </div>}
+      </div>
+    );
+  }
+  const extension = node.name.split(".").pop()?.toLowerCase();
+  return (
+    <button type="button" onClick={() => onOpen(node.path)} title={node.path}
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] transition ${activePath === node.path ? "bg-[#7559E8]/25 text-white" : "text-[#9CA5BE] hover:bg-white/[0.06] hover:text-white"}`}>
+      {extension === "dart" || extension === "tsx" || extension === "ts" || extension === "js" || extension === "py"
+        ? <FileCode2 size={14} className="shrink-0 text-[#8EA9E8]" />
+        : <File size={14} className="shrink-0 text-[#7A8199]" />}
+      <span className="truncate">{node.name}</span>
+    </button>
+  );
 }
 
 const LOCAL_PROJECT_MAX_FILES = 1500;
@@ -1705,8 +1782,8 @@ export default function PlaygroundPage() {
               {cloudProject ? (
                 <>
                   <button onClick={addCloudProjectFile} className="mb-2 flex w-full items-center gap-2 rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-semibold text-[#B7BDD0] hover:border-[#7559E8]/50 hover:text-white"><FilePlus2 size={13} /> New file</button>
-                  {cloudProjectPaths.map((path) => (
-                    <button key={path} onClick={() => openCloudProjectFile(path)} title={path} className={`mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-mono text-[11px] transition ${activeProjectPath === path ? "bg-[#7559E8]/20 text-white" : "text-[#929CBD] hover:bg-white/5 hover:text-white"}`}><span className="truncate">{path}</span></button>
+                  {buildCloudProjectTree(cloudProjectPaths).map((node) => (
+                    <CloudProjectTreeItem key={node.path} node={node} activePath={activeProjectPath} onOpen={openCloudProjectFile} />
                   ))}
                 </>
               ) : projectTree.length === 0 ? (
