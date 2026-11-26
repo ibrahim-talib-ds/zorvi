@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -31,10 +31,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.1.6",
-    "postcss": "^8.5.32",
+    "eslint-config-next": "15.5.29",
+    "postcss": "8.5.33",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   },
-  "overrides": {}
+  "overrides": {
+    "postcss": "8.5.33"
+  }
 }

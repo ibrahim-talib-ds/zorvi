@@ -7,6 +7,15 @@ import { Loader2, ArrowLeft, Check, Save, Trash2, Plus, Image as ImageIcon } fro
 import { useAuth, fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 
+interface GalleryImage { id: string; image_url: string; }
+interface AdminProductRecord {
+  id: string; title?: string; short_description?: string; long_description?: string;
+  status?: string; difficulty?: string; starting_price_cents?: number;
+  cover_image_url?: string | null; live_demo_url?: string | null;
+  instructions?: string; license?: string; external_download_url?: string;
+  is_featured?: boolean; is_free?: boolean;
+}
+
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
@@ -15,7 +24,7 @@ export default function EditProductPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [addingImage, setAddingImage] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -52,8 +61,8 @@ export default function EditProductPage() {
       try {
         const res = await fetchWithAuth(`${API_BASE}/admin/marketplace/${id}/images`, {});
         if (res.ok) {
-          const imgs = await res.json();
-          setGalleryImages(Array.isArray(imgs) ? imgs : []);
+          const imgs: unknown = await res.json();
+          setGalleryImages(Array.isArray(imgs) ? imgs as GalleryImage[] : []);
         }
       } catch (e) {
         console.error("Failed to load images", e);
@@ -65,8 +74,8 @@ export default function EditProductPage() {
       try {
         const res = await fetchWithAuth(`${API_BASE}/admin/marketplace`, {});
         if (!res.ok) throw new Error(await res.text());
-        const all = await res.json();
-        const product = all.find((p: any) => p.id === id);
+        const all: unknown = await res.json();
+        const product = Array.isArray(all) ? (all as AdminProductRecord[]).find((p) => p.id === id) : undefined;
         if (!product) throw new Error("Product not found");
         
         setForm({
@@ -142,7 +151,7 @@ export default function EditProductPage() {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const img = await res.json();
+      const img = await res.json() as GalleryImage;
       setGalleryImages([...galleryImages, img]);
       setNewImageUrl("");
     } catch (e) {
@@ -172,7 +181,7 @@ export default function EditProductPage() {
       });
 
       if (!res.ok) throw new Error(await res.text());
-      const img = await res.json();
+      const img = await res.json() as GalleryImage;
       setGalleryImages([...galleryImages, img]);
       
       // Reset input

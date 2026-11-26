@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,7 +30,7 @@ interface Order {
   items: OrderItem[];
 }
 
-const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
+const STATUS_CONFIG: Record<string, { color: string; icon: LucideIcon; label: string }> = {
   pending: {
     color: "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#F5A623]",
     icon: Clock,

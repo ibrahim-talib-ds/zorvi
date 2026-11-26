@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
-import { Highlight, themes } from "prism-react-renderer";
+import { Highlight, themes, type Language } from "prism-react-renderer";
 
 interface Props {
   code: string;
@@ -55,7 +55,7 @@ export function CodeBlock({ code, language = "python" }: Props) {
 
       {/* Code area with Prism Renderer */}
       <div className="text-sm font-mono leading-relaxed overflow-x-auto">
-        <Highlight theme={themes.vsDark} code={code.trim()} language={language as any}>
+        <Highlight theme={themes.vsDark} code={code.trim()} language={language as Language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre 
               className={className} 

@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 
+interface AdminSettingRecord { key: string; value: unknown; }
+
 const BOOLEAN_SETTING_KEYS = [
   "stripe_enabled",
   "bank_enabled",
@@ -70,11 +72,11 @@ export default function AdminSettingsPage() {
       try {
         const res = await fetchWithAuth(`${API_BASE}/admin/settings`, {});
         if (res.ok) {
-          const data = await res.json();
+          const data = await res.json() as { settings?: AdminSettingRecord[] };
           // Backend returns { settings: [{ key, value, description }, ...] }
           if (data && Array.isArray(data.settings)) {
             const flat: Record<string, unknown> = {};
-            data.settings.forEach((item: any) => {
+            data.settings.forEach((item) => {
               flat[item.key] = item.value;
             });
             setForm((prev) => {

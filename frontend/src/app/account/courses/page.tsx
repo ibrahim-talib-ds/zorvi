@@ -10,12 +10,44 @@ import { TechnologyStrip } from "@/components/courses/TechnologyStrip";
 import { CoursesFilterProvider, useCoursesFilter } from "@/lib/context/CoursesFilterContext";
 import { cn } from "@/lib/design-system/cn";
 
+interface EnrolledCourse {
+  id: string | number;
+  course_title: string;
+  course_slug: string;
+  course_thumbnail: string | null;
+  course_technologies: string[];
+  total_lessons: number;
+  completed_lessons: number;
+  progress_percent: number;
+  enrolled_at: string;
+  next_lesson_id: string | null;
+}
+
+interface CourseApiRecord {
+  id?: string | number;
+  course_id?: string | number;
+  course_title?: string;
+  title?: string;
+  course_slug?: string;
+  slug?: string;
+  course_cover_image_url?: string | null;
+  thumbnail_url?: string | null;
+  course_technologies?: string[];
+  technologies?: string[];
+  total_lessons?: number;
+  completed_lessons?: number;
+  progress_percent?: number;
+  percent_complete?: number;
+  enrolled_at?: string;
+  next_lesson_id?: string | null;
+}
+
 function AccountCoursesContent() {
   const { token, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { activeTech, setActiveTech } = useCoursesFilter();
 
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"all" | "in-progress" | "completed">("all");
@@ -34,18 +66,18 @@ function AccountCoursesContent() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load courses");
-        const data = await res.json();
+        const data: unknown = await res.json();
         
         // Safety mapping to ensure we always have the data we need
-        const mapped = (Array.isArray(data) ? data : []).map((c: any) => ({
-          id: c.id || c.course_id,
+        const mapped = (Array.isArray(data) ? data as CourseApiRecord[] : []).map((c) => ({
+          id: c.id ?? c.course_id ?? "",
           course_title: c.course_title || c.title || "Untitled Course",
           course_slug: c.course_slug || c.slug || "",
-          course_thumbnail: (c as any).course_cover_image_url || c.thumbnail_url || null,
-          course_technologies: c.course_technologies || c.technologies || [],
-          total_lessons: c.total_lessons || 0,
-          completed_lessons: c.completed_lessons || 0,
-          progress_percent: c.progress_percent ?? c.percent_complete ?? 0,
+          course_thumbnail: c.course_cover_image_url || c.thumbnail_url || null,
+          course_technologies: Array.isArray(c.course_technologies) ? c.course_technologies : Array.isArray(c.technologies) ? c.technologies : [],
+          total_lessons: Number(c.total_lessons ?? 0),
+          completed_lessons: Number(c.completed_lessons ?? 0),
+          progress_percent: Number(c.progress_percent ?? c.percent_complete ?? 0),
           enrolled_at: c.enrolled_at || new Date().toISOString(),
           next_lesson_id: c.next_lesson_id || null,
         }));

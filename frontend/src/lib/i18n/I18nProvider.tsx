@@ -17,7 +17,7 @@ import pt from "@/i18n/pt.json";
 import de from "@/i18n/de.json";
 import tg from "@/i18n/tg.json";
 
-type Messages = Record<string, any>;
+type Messages = Record<string, unknown>;
 
 // All dictionaries are bundled statically (they are tiny JSON files).
 // Switching language is a pure state change - no network, no dynamic import -
@@ -25,13 +25,18 @@ type Messages = Record<string, any>;
 // first switch to each language.)
 const dictionaries: Record<string, Messages> = {
   en, sw, fr, ar, es, zh, hi, ru, pt, de, tg,
-};
+} as Record<string, Messages>;
 
 const RTL_LOCALES: string[] = ["ar"];
 const STORAGE_KEY = "ibrant_lang";
 
 function getByPath(obj: Messages, path: string): string | undefined {
-  return path.split(".").reduce<any>((o, k) => o?.[k], obj);
+  let current: unknown = obj;
+  for (const segment of path.split(".")) {
+    if (typeof current !== "object" || current === null || !(segment in current)) return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return typeof current === "string" ? current : undefined;
 }
 
 type I18nContextValue = {

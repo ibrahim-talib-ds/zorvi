@@ -181,3 +181,6 @@ Interested in building practical software products, data-driven solutions, and t
 <p align="center">   <strong>ZORVI</strong><br/>   Learn. Create. Launch. </p>
 
 <p align="center">   Built with passion for technology and innovation. </p>change from zorvi to ibrant
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Docker build configuration, API URL setup, migrations, and persistent upload storage.

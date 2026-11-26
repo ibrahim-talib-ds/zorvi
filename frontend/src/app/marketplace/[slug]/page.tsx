@@ -10,36 +10,52 @@ import { Avatar } from "@/components/ui/Avatar";
 
 export const dynamic = "force-dynamic";
 
+interface MarketplacePackage { id: string; name: string; price_cents: number; currency: string; is_active: boolean; }
+interface MarketplaceImage { image_url: string; }
+interface SellerProduct {
+  id: string; slug: string; title: string; cover_image_url?: string | null;
+  short_description?: string | null; starting_price_cents: number; currency?: string | null;
+}
+interface MarketplaceProduct {
+  id: string; slug: string; title: string; short_description: string;
+  long_description?: string | null; instructions?: string | null; license?: string | null;
+  creator_id?: string | null; creator_name?: string | null; difficulty?: string | null;
+  currency?: string | null; live_demo_url?: string | null;
+  packages?: MarketplacePackage[]; starting_price_cents: number; is_free?: boolean;
+  cover_image_url?: string | null;
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
-async function fetchProduct(slug: string) {
+async function fetchProduct(slug: string): Promise<MarketplaceProduct | null> {
   try {
     const res = await fetch(`${API_BASE}/marketplace/products/${slug}`, { cache: "no-store" });
     if (!res.ok) return null;
-    return await res.json();
+    return await res.json() as MarketplaceProduct;
   } catch { return null; }
 }
 
-async function fetchImages(slug: string) {
+async function fetchImages(slug: string): Promise<MarketplaceImage[]> {
   try {
     const res = await fetch(`${API_BASE}/marketplace/products/${slug}/images`, { cache: "no-store" });
     if (!res.ok) return [];
-    return await res.json();
+    const data: unknown = await res.json();
+    return Array.isArray(data) ? data as MarketplaceImage[] : [];
   } catch { return []; }
 }
 
 
-async function fetchMoreFromSeller(creatorId: string, currentSlug: string) {
+async function fetchMoreFromSeller(creatorId: string, currentSlug: string): Promise<SellerProduct[]> {
   try {
     const res = await fetch(API_BASE + "/marketplace/creators/" + encodeURIComponent(creatorId), { cache: "no-store" });
     if (!res.ok) return [];
-    const data = await res.json();
+    const data = await res.json() as { products?: SellerProduct[] };
     if (!Array.isArray(data.products)) return [];
-    return data.products.filter((item: any) => item.slug !== currentSlug).slice(0, 3);
+    return data.products.filter((item) => item.slug !== currentSlug).slice(0, 3);
   } catch {
     return [];
   }
@@ -61,13 +77,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const moreFromSeller = product.creator_id
     ? await fetchMoreFromSeller(product.creator_id, slug)
     : [];
-  const activePackages = (product.packages || []).filter((p: any) => p.is_active);
-  const minPrice = activePackages.length > 0 ? Math.min(...activePackages.map((p: any) => p.price_cents)) : product.starting_price_cents;
+  const activePackages = (product.packages || []).filter((pkg) => pkg.is_active);
+  const minPrice = activePackages.length > 0 ? Math.min(...activePackages.map((pkg) => pkg.price_cents)) : product.starting_price_cents;
   const isFree = product.is_free || minPrice === 0;
 
   const allImages: string[] = [];
   if (product.cover_image_url) allImages.push(product.cover_image_url);
-  images.forEach((img: any) => {
+  images.forEach((img) => {
     if (!allImages.includes(img.image_url)) allImages.push(img.image_url);
   });
 
@@ -86,9 +102,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div className="min-w-0">
             <ProductGallery images={allImages} title={product.title} />
             <ProductTabs
-              longDescription={product.long_description}
-              instructions={product.instructions}
-              license={product.license}
+              longDescription={product.long_description || ""}
+              instructions={product.instructions || ""}
+              license={product.license || ""}
               reviewCount={0}
             />
           </div>
@@ -183,7 +199,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {moreFromSeller.map((item: any) => (
+              {moreFromSeller.map((item) => (
                 <Link key={item.id} href={"/marketplace/" + item.slug} className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] transition hover:-translate-y-0.5 hover:border-[#7559E8]/40 hover:bg-white/[0.045]">
                   <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#1B2347] to-[#10162E]">
                     {item.cover_image_url ? (

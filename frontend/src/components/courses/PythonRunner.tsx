@@ -34,7 +34,7 @@ export function PythonRunner({ initialCode, onSuccess }: Props) {
         setPyodideLoaded(true);
       }
 
-      // @ts-ignore
+      // @ts-expect-error -- Pyodide worker types omit this supported runtime API.
       const pyodide = await window.loadPyodide({
         indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/",
       });

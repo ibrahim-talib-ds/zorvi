@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { KeyboardEvent } from "react";
 import { Circle, CheckCircle2, Eye, EyeOff, Code2, XCircle, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-react";
 import { CodeBlock } from "./CodeBlock";
 import { PythonRunner } from "./PythonRunner";
@@ -102,7 +103,7 @@ export function ExerciseBlock({ exerciseText, language = "python" }: Props) {
     }
   };
 
-  const handleKeyDown = (e: any) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key === "Tab") {
       e.preventDefault();
       const target = e.target as HTMLTextAreaElement;

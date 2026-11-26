@@ -283,7 +283,7 @@ export default function AdminCourseEditPage() {
     if (!token || !newLessonTitle.trim()) return;
     setAddingLesson(true);
     try {
-      const module = course?.modules.find((m) => m.id === moduleId);
+      const courseModule = course?.modules.find((m) => m.id === moduleId);
       const res = await fetchWithAuth(`${API_BASE}/admin/modules/${moduleId}/lessons`, {
         method: "POST",
         headers: {
@@ -295,7 +295,7 @@ export default function AdminCourseEditPage() {
           video_provider: "none",
           content_markdown: "",
           duration_minutes: parseInt(newLessonDuration) || 0,
-          sort_order: (module?.lessons.length ?? 0) + 1,
+          sort_order: (courseModule?.lessons.length ?? 0) + 1,
           is_free_preview: newLessonIsFree,
         }),
       });

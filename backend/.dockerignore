@@ -1,0 +1,16 @@
+# Never copy local credentials or developer environments into the image.
+.env*
+*.save
+*.backup*
+**/*.backup*
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+logs/
+tests/
+
+# Uploaded user data is stored on persistent deployment storage, not in the image.
+app/storage/avatars/
+storage/products/products/

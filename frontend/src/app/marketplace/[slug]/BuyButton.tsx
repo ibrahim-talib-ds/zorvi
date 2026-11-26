@@ -8,12 +8,16 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 import { cn } from "@/lib/design-system/cn";
 
-interface PackageDetail {
+export interface PackageDetail {
   id: string;
   name: string;
   price_cents: number;
   currency: string;
+  is_active?: boolean;
 }
+
+interface OrderItem { product_id: string; package_id?: string | null; quantity?: number; }
+interface OrderSummary { id: string; status: string; items?: OrderItem[]; }
 
 interface Props {
   productId: string;
@@ -32,7 +36,7 @@ export function BuyButton({ productId, packages }: Props) {
   const [orderId, setOrderId] = useState<string | null>(null);
 
   // State to track if the user already owns/purchased this project
-  const [existingOrder, setExistingOrder] = useState<any>(null);
+  const [existingOrder, setExistingOrder] = useState<OrderSummary | null>(null);
   const [checkingOwnership, setCheckingOwnership] = useState(true);
 
   useEffect(() => {
@@ -46,11 +50,12 @@ export function BuyButton({ productId, packages }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const orders = await res.json();
+          const payload: unknown = await res.json();
+          const orders = Array.isArray(payload) ? payload as OrderSummary[] : [];
           // Find the most recent valid order for this product
           const validOrder = orders.find(
-            (o: any) =>
-              o.items?.some((i: any) => i.product_id === productId) &&
+            (o) =>
+              o.items?.some((item) => item.product_id === productId) &&
               ["pending", "awaiting_verification", "paid"].includes(o.status)
           );
           if (validOrder) {
@@ -126,20 +131,29 @@ export function BuyButton({ productId, packages }: Props) {
       });
       
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
+        const data: unknown = await res.json().catch(() => null);
         // If the order is already paid (409), refresh the page to show the download button
         if (res.status === 409) {
           window.location.reload();
           return;
         }
         let msg = "Failed to submit payment";
-        if (data && typeof data.detail === "string") msg = data.detail;
-        else if (data && Array.isArray(data.detail)) msg = data.detail.map((d: any) => d.msg).join(", ");
+        const detail = data && typeof data === "object" && "detail" in data
+          ? (data as { detail?: unknown }).detail
+          : undefined;
+        if (typeof detail === "string") msg = detail;
+        else if (Array.isArray(detail)) {
+          msg = detail.map((entry: unknown) => {
+            if (typeof entry !== "object" || entry === null || !("msg" in entry)) return "";
+            const message = (entry as { msg?: unknown }).msg;
+            return typeof message === "string" ? message : "";
+          }).filter(Boolean).join(", ");
+        }
         throw new Error(msg);
       }
       setStep("success");
       // Refresh ownership state
-      setExistingOrder({ ...existingOrder, status: "awaiting_verification" });
+      setExistingOrder((current) => current ? { ...current, status: "awaiting_verification" } : current);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to submit payment");
     } finally {

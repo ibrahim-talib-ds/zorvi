@@ -7,6 +7,13 @@ import { AppShell } from "@/components/navigation/AppShell";
 import { Loader2 } from "lucide-react";
 import { useScrollKeeper } from "@/components/admin/ScrollKeeper";
 
+function isAdminRole(role: unknown): boolean {
+  if (role === "admin" || role === "super_admin") return true;
+  if (typeof role !== "object" || role === null || !("name" in role)) return false;
+  const name = (role as { name?: unknown }).name;
+  return name === "admin" || name === "super_admin";
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   useScrollKeeper();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -16,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!isLoading) {
       if (!isAuthenticated) router.replace("/login?return=/admin");
       else {
-        const isAdmin = user?.roles?.some((r: any) => r === "admin" || r === "super_admin" || r?.name === "admin" || r?.name === "super_admin");
+        const isAdmin = user?.roles?.some(isAdminRole);
         if (!isAdmin) router.replace("/account");
       }
     }
@@ -29,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     );
 
-  const isAdmin = user?.roles?.some((r: any) => r === "admin" || r === "super_admin" || r?.name === "admin" || r?.name === "super_admin");
+  const isAdmin = user?.roles?.some(isAdminRole);
   if (!isAuthenticated || !isAdmin) return null;
 
   return <AppShell variant="admin">{children}</AppShell>;

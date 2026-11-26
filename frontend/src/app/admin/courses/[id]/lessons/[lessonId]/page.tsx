@@ -89,7 +89,7 @@ export default function LessonEditorPage() {
       if (!res.ok) throw new Error(await res.text());
       const course = await res.json();
 
-      let foundLesson: any = null;
+      let foundLesson: LessonData | null = null;
       for (const mod of course.modules) {
         for (const l of mod.lessons) {
           if (l.id === lessonId) {

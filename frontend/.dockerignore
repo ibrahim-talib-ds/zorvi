@@ -1,1 +1,11 @@
+# Keep credentials, local caches, and development backups out of the image.
 .git
+node_modules
+.next
+.env*
+*.backup*
+**/*.backup*
+*.save
+backup_*/
+.aider*
+*.log

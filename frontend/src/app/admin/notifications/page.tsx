@@ -64,7 +64,7 @@ export default function AdminNotificationsPage() {
     if (!token || !form.title.trim() || !form.message.trim()) return;
     setSending(true);
     try {
-      const body: any = {
+      const body = {
         title: form.title.trim(),
         message: form.message.trim(),
         href: form.href.trim() || null,

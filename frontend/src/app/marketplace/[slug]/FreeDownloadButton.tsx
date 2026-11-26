@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { Loader2, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
+import type { PackageDetail } from "./BuyButton";
 
 interface Props {
   productId: string;
-  packages: any[];
+  packages: PackageDetail[];
 }
 
 export function FreeDownloadButton({ productId, packages }: Props) {
