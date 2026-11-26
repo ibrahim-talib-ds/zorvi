@@ -614,6 +614,9 @@ export default function PlaygroundPage() {
   const [input, setInput] = useState("");
   const [localAgentToken, setLocalAgentToken] = useState("");
   const [localAgentWorkspace, setLocalAgentWorkspace] = useState("");
+  const [runtimePreviewUrl, setRuntimePreviewUrl] = useState("");
+  const [runtimeSessionId, setRuntimeSessionId] = useState("");
+  const [runtimeStarting, setRuntimeStarting] = useState(false);
   const [editorShare, setEditorShare] = useState(56);
   const [terminalHeight, setTerminalHeight] = useState(320);
 
@@ -1192,7 +1195,151 @@ export default function PlaygroundPage() {
     }
   };
 
+  const startCloudProjectPreview = async () => {
+    if (!localAgentToken || !cloudProject) {
+      pushLog("error", "Connect the local runtime first. No project was executed.");
+      return;
+    }
+    const paths = cloudProjectPaths.map((path) => path.toLowerCase());
+    const files = cloudProjectFiles;
+    const packageText = Object.entries(files).find(([path]) => path.toLowerCase() === "package.json")?.[1];
+    let packageJson: { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; scripts?: Record<string, string> } = {};
+    try { if (packageText) packageJson = JSON.parse(packageText); } catch {
+      pushLog("error", "package.json is invalid JSON. Fix it before running the project.");
+      return;
+    }
+    const deps = { ...(packageJson.dependencies ?? {}), ...(packageJson.devDependencies ?? {}) };
+    const port = 4173;
+    let command = "";
+    let framework = "";
+    if (paths.includes("pubspec.yaml") && paths.includes("lib/main.dart")) {
+      framework = "Flutter Web";
+      command = (paths.includes("web/index.html") ? "" : "flutter create --platforms=web . && ") +
+        "flutter pub get && flutter run -d web-server --web-hostname 0.0.0.0 --web-port " + port;
+    } else if (deps.next) {
+      framework = "Next.js";
+      command = "npm install --no-audit --no-fund && npm run dev -- --hostname 0.0.0.0 --port " + port;
+    } else if (deps.vite) {
+      framework = "Vite";
+      command = "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port " + port + " --base __IBRANT_PREVIEW_BASE__";
+    } else if (packageJson.scripts?.dev) {
+      framework = "Node.js web app";
+      command = "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port " + port;
+    } else if (paths.includes("manage.py")) {
+      framework = "Django";
+      command = "python -m pip install -r requirements.txt && python manage.py runserver 0.0.0.0:" + port;
+    } else if (paths.includes("requirements.txt") &&
+      (files["requirements.txt"] || "").toLowerCase().includes("fastapi")) {
+      framework = "FastAPI (main:app)";
+      command = "python -m pip install -r requirements.txt && python -m uvicorn main:app --host 0.0.0.0 --port " + port;
+    } else if (paths.includes("requirements.txt") &&
+      (files["requirements.txt"] || "").toLowerCase().includes("flask")) {
+      framework = "Flask (app.py)";
+      command = "python -m pip install -r requirements.txt && python -m flask --app app run --host 0.0.0.0 --port " + port;
+    } else if (paths.some((path) => path.endsWith(".html"))) {
+      framework = "Static web project";
+      command = "python -m http.server " + port + " --bind 0.0.0.0";
+    } else {
+      pushLog("error", "No browser-preview adapter found. Supported: HTML, Vite, Next.js, Flutter Web, Django, FastAPI and Flask.");
+      return;
+    }
+    setRuntimeStarting(true);
+    setRuntimePreviewUrl("");
+    pushLog("sys", "Preparing " + framework + " preview…");
+    try {
+      const auth = { Authorization: "Bearer " + localAgentToken };
+      const health = await fetch("http://127.0.0.1:4317/health", { headers: auth });
+      if (!health.ok) throw new Error("Local runtime authentication failed. Reconnect the runtime.");
+      const healthInfo = await health.json();
+      if (healthInfo.runtime_version !== 2) {
+        throw new Error("Your local runtime agent is outdated. Stop it with Ctrl+C, restart tools/ibrant-local-agent/agent.py, then reconnect with its new token.");
+      }
+      if (runtimeSessionId) {
+        await fetch("http://127.0.0.1:4317", {
+          method: "DELETE", headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: runtimeSessionId }),
+        }).catch(() => undefined);
+      }
+      const projectName = cloudProject.id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || "ibrant-project";
+      const synced = await fetch("http://127.0.0.1:4317/sync", {
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ project: projectName, files }),
+      });
+      const syncResult = await synced.json();
+      if (!synced.ok) throw new Error(syncResult.error || "Could not sync project files.");
+      pushLog("out", "Synced " + syncResult.files_written + " project files to the local runtime.");
+      const started = await fetch("http://127.0.0.1:4317/start", {
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ project: projectName, command, port }),
+      });
+      const startResult = await started.json();
+      if (!started.ok) throw new Error(startResult.error || "Could not start the project runtime.");
+      setRuntimeSessionId(startResult.session_id);
+      pushLog("sys", framework + " process started. Installing dependencies / waiting for the preview server…");
+      let lastOutput = "";
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 1000));
+        if (attempt % 4 === 3) {
+          const progressResponse = await fetch("http://127.0.0.1:4317/output/" + startResult.session_id, { headers: auth });
+          if (progressResponse.ok) {
+            const progress = await progressResponse.json();
+            const currentOutput = String(progress.output || "");
+            if (currentOutput.length > lastOutput.length) {
+              const delta = currentOutput.slice(lastOutput.length).trim();
+              if (delta) pushLog("out", delta.slice(-5000));
+              lastOutput = currentOutput;
+            }
+          }
+        }
+        const readyResponse = await fetch("http://127.0.0.1:4317/ready/" + startResult.session_id, { headers: auth });
+        if (!readyResponse.ok) throw new Error("Lost connection to the local preview runtime.");
+        const ready = await readyResponse.json();
+        if (ready.ready) {
+          setRuntimePreviewUrl(startResult.preview_url);
+          pushLog("out", framework + " is responding. Embedded preview connected.");
+          return;
+        }
+        if (!ready.running) {
+          const outputResponse = await fetch("http://127.0.0.1:4317/output/" + startResult.session_id, { headers: auth });
+          const output = await outputResponse.json();
+          if (output.output) pushLog("error", output.output.slice(-12000));
+          throw new Error(framework + " exited before the preview server became ready.");
+        }
+      }
+      const outputResponse = await fetch("http://127.0.0.1:4317/output/" + startResult.session_id, { headers: auth });
+      const output = await outputResponse.json();
+      if (output.output) pushLog("out", output.output.slice(-12000));
+      throw new Error(framework + " did not open port " + port + " within 120 seconds.");
+    } catch (error) {
+      pushLog("error", error instanceof Error ? error.message : "Could not start project preview.");
+    } finally {
+      setRuntimeStarting(false);
+    }
+  };
+
   const run = async () => {
+    if (cloudProject && cloudProjectPaths.length > 0) {
+      const packageText = cloudProjectFiles["package.json"];
+      let hasWebServer = false;
+      try {
+        const parsed = packageText ? JSON.parse(packageText) as {
+          dependencies?: Record<string,string>; devDependencies?: Record<string,string>; scripts?: Record<string,string>
+        } : {};
+        const deps = { ...parsed.dependencies, ...parsed.devDependencies };
+        hasWebServer = Boolean(deps.next || deps.vite || parsed.scripts?.dev);
+      } catch { /* invalid manifest is reported by the adapter */ }
+      const requirements = (cloudProjectFiles["requirements.txt"] || "").toLowerCase();
+      const pubspec = (cloudProjectFiles["pubspec.yaml"] || "").toLowerCase();
+      const isRunnableProject = hasWebServer ||
+        (pubspec.includes("flutter:") && cloudProjectPaths.includes("lib/main.dart")) ||
+        cloudProjectPaths.some((path) => ["manage.py"].includes(path.toLowerCase())) ||
+        requirements.includes("fastapi") || requirements.includes("flask") ||
+        cloudProjectPaths.some((path) => path.toLowerCase().endsWith(".html"));
+      if (isRunnableProject) {
+        await startCloudProjectPreview();
+        return;
+      }
+    }
     const activeSource = activeProjectFile
       ? projectFileContent
       : extraCode[activeTabId] ?? LANGUAGE_STARTERS[activeLanguage] ?? "";
@@ -1391,6 +1538,7 @@ export default function PlaygroundPage() {
       const response = await fetch("http://127.0.0.1:4317/health", { headers: { Authorization: `Bearer ${entered.trim()}` } });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "The local runtime did not authenticate.");
+      if (result.runtime_version !== 2) throw new Error("Update your local runtime: stop the old agent with Ctrl+C, restart it from the updated project, then connect using its new token.");
       localStorage.setItem("IBRANT_LOCAL_AGENT_TOKEN_V1", entered.trim());
       setLocalAgentToken(entered.trim());
       setLocalAgentWorkspace(String(result.workspace || "Local workspace"));
@@ -1715,6 +1863,23 @@ export default function PlaygroundPage() {
       ? code[activeTabKey]
       : extraCode[activeTabId] ?? LANGUAGE_STARTERS[activeLanguage] ?? "";
 
+  const stopRuntimePreview = async () => {
+    if (!runtimeSessionId || !localAgentToken) return;
+    try {
+      const response = await fetch("http://127.0.0.1:4317", {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + localAgentToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: runtimeSessionId }),
+      });
+      if (!response.ok) throw new Error("The local runtime could not stop this preview process.");
+      setRuntimeSessionId("");
+      setRuntimePreviewUrl("");
+      pushLog("sys", "Preview process stopped.");
+    } catch (error) {
+      pushLog("error", error instanceof Error ? error.message : "Could not stop preview.");
+    }
+  };
+
   const updateEditorValue = (value: string | undefined) => {
     const next = value ?? "";
 
@@ -1810,12 +1975,18 @@ export default function PlaygroundPage() {
             <RotateCcw size={13} /> Reset
           </button>}
           <button
-            disabled={pythonRunning || isFlutterProject}
+            disabled={pythonRunning || runtimeStarting}
             onClick={() => runRef.current()}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-2 text-xs font-bold text-white shadow-lg shadow-[#7559E8]/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Play size={13} fill="currentColor" /> {pythonRunning ? "Running…" : isFlutterProject ? "Run on device" : "Run"} <span className="hidden opacity-70 sm:inline">{isFlutterProject ? "Flutter SDK" : "Ctrl+↵"}</span>
+            <Play size={13} fill="currentColor" /> {runtimeStarting ? "Starting…" : pythonRunning ? "Running…" : runtimePreviewUrl ? "Restart Preview" : "Run Preview"} <span className="hidden opacity-70 sm:inline">Ctrl+↵</span>
           </button>
+          {runtimeSessionId && (
+            <button type="button" onClick={() => void stopRuntimePreview()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#F05D70]/30 bg-[#F05D70]/10 px-3 py-2 text-xs font-semibold text-[#FF9AA6] hover:bg-[#F05D70]/20">
+              Stop Preview
+            </button>
+          )}
           {activeLanguage === "python" && pythonRunning && (
             <button
               type="button"
@@ -2002,7 +2173,10 @@ export default function PlaygroundPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-[#22C58B]" />
               <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Preview</span>
             </div>
-            {isFlutterProject ? (
+            {runtimePreviewUrl ? (
+              <iframe key={runtimePreviewUrl} title="Running project preview" src={runtimePreviewUrl}
+                className="min-h-0 w-full flex-1 bg-[#0B0F1D]" allow="clipboard-read; clipboard-write" />
+            ) : isFlutterProject ? (
               <div className="min-h-0 flex-1 overflow-y-auto bg-[#0B0F1D] p-5 sm:p-7">
                 <div className="mx-auto max-w-xl">
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#8B70FF]/30 bg-[#7559E8]/10 px-3 py-1.5 text-[11px] font-semibold text-[#D6CCFF]">
@@ -2010,7 +2184,7 @@ export default function PlaygroundPage() {
                   </div>
                   <h3 className="mt-4 text-lg font-bold text-white">Run this app on an Android device</h3>
                   <p className="mt-2 text-xs leading-5 text-[#AAB3CC]">
-                    Flutter apps cannot run inside this browser preview. Your Dart source is saved here; use the exported project with the Flutter SDK to compile and launch the actual app.
+                    Connect your local runtime and press Run Preview. IBRANT will sync this project, run Flutter Web, and connect the browser preview. This requires Flutter Web support in your local Flutter SDK.
                   </p>
                   <ol className="mt-5 space-y-3 text-xs leading-5 text-[#D7DDF3]">
                     <li><strong>1. Export the project.</strong> Select <strong>Export ZIP</strong> above and extract the archive.</li>
