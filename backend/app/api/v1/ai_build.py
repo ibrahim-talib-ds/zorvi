@@ -9,6 +9,7 @@ import json
 import logging
 import re
 import uuid
+from email.utils import parsedate_to_datetime
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -42,6 +43,8 @@ MAX_MODEL_CONTEXT_FILES = 24
 MAX_MODEL_CONTEXT_FILE_BYTES = 12_000
 MAX_MODEL_CONTEXT_TOTAL_BYTES = 128_000
 MAX_TASK_EVENTS = 200
+AI_PROVIDER_MAX_ATTEMPTS = 3
+AI_PROVIDER_MAX_RETRY_WAIT_SECONDS = 30
 ACTIVE_TASK_LOCKS: dict[str, asyncio.Lock] = {}
 ACTIVE_TASK_LOCKS_GUARD = asyncio.Lock()
 ALLOWED_TASK_STATES = {"queued", "running", "paused", "completed", "failed", "cancelled"}
@@ -249,23 +252,47 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
     headers = {"Content-Type": "application/json"}
     if use_bearer:
         headers["Authorization"] = f"Bearer {api_key}"
+    response = None
     try:
         async with httpx.AsyncClient(timeout=float(settings.AI_REQUEST_TIMEOUT_SECONDS)) as client:
-            response = await client.post(
-                f"{base_url}/chat/completions",
-                headers=headers,
-                json=request_body,
-            )
-    except httpx.TimeoutException as exc:
-        raise HTTPException(status_code=504, detail="The AI request timed out. Try a smaller step or a faster local/provider model.") from exc
-    except httpx.HTTPError as exc:
-        logger.warning("AI provider network request failed: %s", type(exc).__name__)
-        raise HTTPException(status_code=502, detail="Could not reach the configured AI provider. Check its URL and whether the local model server is running.") from exc
+            for attempt in range(AI_PROVIDER_MAX_ATTEMPTS):
+                try:
+                    response = await client.post(
+                        f"{base_url}/chat/completions",
+                        headers=headers,
+                        json=request_body,
+                    )
+                except httpx.TimeoutException as exc:
+                    if attempt + 1 >= AI_PROVIDER_MAX_ATTEMPTS:
+                        raise HTTPException(status_code=504, detail="The AI provider timed out after automatic retries. Your project files are safe; retry this build step shortly.") from exc
+                    await asyncio.sleep(min(2 ** attempt, AI_PROVIDER_MAX_RETRY_WAIT_SECONDS))
+                    continue
+                except httpx.HTTPError as exc:
+                    if attempt + 1 >= AI_PROVIDER_MAX_ATTEMPTS:
+                        logger.warning("AI provider network request failed after retries: %s", type(exc).__name__)
+                        raise HTTPException(status_code=502, detail="The AI provider is temporarily unreachable. Your project files are safe; retry this build step when the provider is available.") from exc
+                    await asyncio.sleep(min(2 ** attempt, AI_PROVIDER_MAX_RETRY_WAIT_SECONDS))
+                    continue
 
+                if response.status_code == 429 or 500 <= response.status_code <= 599:
+                    if attempt + 1 < AI_PROVIDER_MAX_ATTEMPTS:
+                        delay = _provider_retry_delay(response, attempt)
+                        if delay is not None:
+                            logger.info("AI provider returned HTTP %s; retrying in %.1f seconds (attempt %s/%s)", response.status_code, delay, attempt + 1, AI_PROVIDER_MAX_ATTEMPTS)
+                            await asyncio.sleep(delay)
+                            continue
+                break
+    except HTTPException:
+        raise
+
+    if response is None:
+        raise HTTPException(status_code=502, detail="The AI provider did not return a response. Your project files are safe; retry the step.")
     if response.status_code in (401, 403):
         raise HTTPException(status_code=502, detail="The AI provider rejected its API key. Check the backend AI_API_KEY setting.")
     if response.status_code == 429:
-        raise HTTPException(status_code=429, detail="The AI provider rate limit or free quota was reached. No paid fallback is enabled.")
+        retry_after = response.headers.get("retry-after")
+        wait_hint = f" Provider retry window: {retry_after}." if retry_after else " Wait for the provider quota to reset."
+        raise HTTPException(status_code=429, detail="The AI provider quota is currently exhausted after automatic retries." + wait_hint + " Your project and completed steps are saved; use Retry failed step when capacity is available.")
     if response.status_code >= 400:
         # Provider error messages identify invalid models/parameters; do not log the
         # request body, prompt, or credentials.
@@ -294,6 +321,29 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
     except (ValueError, KeyError, IndexError, TypeError) as exc:
         raise HTTPException(status_code=502, detail="The AI provider returned an empty or unsupported response.") from exc
     return _parse_json_content(content)
+
+
+def _provider_retry_delay(response: httpx.Response, attempt: int) -> float | None:
+    """Return a bounded retry delay for transient provider failures.
+
+    Long Retry-After values usually indicate exhausted daily/token quota; do not
+    keep a request worker asleep for minutes or hours in that case.
+    """
+    retry_after = response.headers.get("retry-after")
+    if retry_after:
+        try:
+            delay = float(retry_after)
+        except ValueError:
+            try:
+                retry_at = parsedate_to_datetime(retry_after)
+                delay = max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
+            except (TypeError, ValueError, OverflowError):
+                delay = 0.0
+        if delay > AI_PROVIDER_MAX_RETRY_WAIT_SECONDS:
+            return None
+        return max(0.0, delay)
+    return float(min(2 ** attempt, AI_PROVIDER_MAX_RETRY_WAIT_SECONDS))
+
 
 
 def _append_event(
@@ -622,6 +672,28 @@ async def _run_build_task(task_id: str) -> None:
             async with ACTIVE_TASK_LOCKS_GUARD:
                 if ACTIVE_TASK_LOCKS.get(task_id) is lock:
                     ACTIVE_TASK_LOCKS.pop(task_id, None)
+
+
+async def recover_interrupted_build_tasks() -> int:
+    """Requeue durable tasks left running/queued by an API process restart."""
+    recovered_ids: list[str] = []
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(BuildTask).where(BuildTask.status.in_(["queued", "running"]))
+        )
+        tasks = result.scalars().all()
+        for task in tasks:
+            if task.status == "running":
+                task.status = "queued"
+                _append_event(task, "task_recovered", "The API restarted. The saved build has been safely re-queued from its last completed step.", "warning")
+            recovered_ids.append(str(task.id))
+        if recovered_ids:
+            await db.commit()
+    for task_id in recovered_ids:
+        asyncio.create_task(_run_build_task(task_id))
+    if recovered_ids:
+        logger.info("Recovered %s interrupted AI build task(s) after startup", len(recovered_ids))
+    return len(recovered_ids)
 
 
 @router.get("/status")

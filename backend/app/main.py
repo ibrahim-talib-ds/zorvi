@@ -1,3 +1,6 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,7 +30,24 @@ from app.api.v1.admin import (
     messages as admin_messages,
 )
 
-app = FastAPI(title="Zorvi API")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Resume persisted build tasks after an API process restart."""
+    try:
+        recovered = await ai_build.recover_interrupted_build_tasks()
+        if recovered:
+            logger.info("Queued %s interrupted AI build task(s) for recovery", recovered)
+    except Exception:
+        # A database outage should not prevent the API from starting. The next
+        # startup can recover these durable tasks once the database is available.
+        logger.exception("Could not recover interrupted AI build tasks during startup")
+    yield
+
+
+app = FastAPI(title="Zorvi API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

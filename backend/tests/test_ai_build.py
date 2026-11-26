@@ -170,3 +170,19 @@ def test_groq_strict_schema_requires_all_fields_without_extra_properties():
 
     step_schema = _groq_strict_schema(BuildPlan)["$defs"]["BuildPlanStep"]
     assert "title" in step_schema["properties"]
+
+
+def test_provider_retry_delay_uses_short_retry_after():
+    response = ai_build.httpx.Response(429, headers={"Retry-After": "5"})
+    assert ai_build._provider_retry_delay(response, 0) == 5.0
+
+
+def test_provider_retry_delay_skips_long_quota_windows():
+    response = ai_build.httpx.Response(429, headers={"Retry-After": "3600"})
+    assert ai_build._provider_retry_delay(response, 0) is None
+
+
+def test_provider_retry_delay_uses_bounded_backoff_without_header():
+    response = ai_build.httpx.Response(503)
+    assert ai_build._provider_retry_delay(response, 0) == 1.0
+    assert ai_build._provider_retry_delay(response, 1) == 2.0
