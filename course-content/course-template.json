@@ -1,0 +1,21 @@
+{
+  "course": {
+    "title": "Complete SQL Course: From Beginner to Advanced",
+    "slug": "complete-sql-course-from-beginner-to-advanced"
+  },
+  "modules": [
+    {
+      "title": "REPLACE WITH EXACT EXISTING MODULE TITLE",
+      "lessons": [
+        {
+          "title": "REPLACE WITH EXACT EXISTING LESSON TITLE",
+          "description": "Write the lesson description.",
+          "content_markdown": "# Lesson title\n\nWrite the complete lesson content here.",
+          "code_example": "-- Write a complete SQL example here\nSELECT 1;",
+          "exercise": "--- QUESTION ---\n\n### Exercise 1\nWrite the first practical task.\n\n### Exercise 2\nWrite the second practical task.\n\n### Exercise 3\nWrite the third practical task.\n\n### Exercise 4\nWrite the fourth practical task.\n\n--- SOLUTION ---\n\n### Solution 1\nWrite the complete correct solution.\n\n### Solution 2\nWrite the complete correct solution.\n\n### Solution 3\nWrite the complete correct solution.\n\n### Solution 4\nWrite the complete correct solution.",
+          "duration_minutes": 12
+        }
+      ]
+    }
+  ]
+}

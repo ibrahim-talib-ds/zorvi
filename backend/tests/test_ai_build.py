@@ -2,7 +2,12 @@
 import pytest
 from fastapi import HTTPException
 
-from app.api.v1.ai_build import _normalize_build_plan_data, _parse_json_content
+from app.api.v1.ai_build import (
+    MAX_MODEL_CONTEXT_TOTAL_BYTES,
+    _normalize_build_plan_data,
+    _parse_json_content,
+    _select_project_file_context,
+)
 from app.schemas.ai_build import BuildPlan, BuildStepResult
 from app.schemas.user_project import ProjectFile
 
@@ -128,3 +133,17 @@ def test_task_timeline_can_keep_the_completed_step_index():
     task = BuildTask(current_step_index=2, events=[])
     ai_build._append_event(task, "step_applied", "Finished step two", "success", step_index_override=1)
     assert task.events[0]["step_index"] == 1
+
+
+def test_project_file_context_is_bounded_and_utf8_safe():
+    files = [
+        {"path": f"src/file-{index}.txt", "content": "é" * 7000}
+        for index in range(20)
+    ]
+    selected, used_bytes, truncated = _select_project_file_context(files)
+
+    assert used_bytes <= MAX_MODEL_CONTEXT_TOTAL_BYTES
+    assert used_bytes == sum(len(item["content"].encode("utf-8")) for item in selected)
+    assert truncated is True
+    assert len(selected) < len(files)
+    assert all(item["content"].encode("utf-8").decode("utf-8") == item["content"] for item in selected)

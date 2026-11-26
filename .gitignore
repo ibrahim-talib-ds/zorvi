@@ -16,3 +16,17 @@ backup_language_fix_*/
 backup_courses_v*
 scroll_report_
 scroll_report_*.log
+
+# Local secrets and environment overrides (keep only example templates in Git)
+.env*
+!.env.example
+
+# Local snapshots and editor-generated backups
+/backup_*/
+**/*.backup*
+**/*.before-*
+**/*.save
+
+# Runtime user uploads; persist these with deployment storage, not Git
+backend/app/storage/
+backend/storage/

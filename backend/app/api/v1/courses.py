@@ -502,35 +502,6 @@ async def list_my_courses(
 
     return items
 
-# ---------- Technology filter endpoint ----------
-
-@router.get("/technologies", response_model=list[dict])
-async def list_technologies(
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> list[dict]:
-    """Return unique technologies across all published courses with counts."""
-    result = await db.execute(
-        select(Course).where(
-            Course.status == CourseStatus.published,
-            Course.deleted_at.is_(None),
-        )
-    )
-    courses = result.scalars().all()
-
-    tech_counts: dict[str, int] = {}
-    for c in courses:
-        for tech in (c.technologies or []):
-            if isinstance(tech, str) and tech.strip():
-                name = tech.strip()
-                tech_counts[name] = tech_counts.get(name, 0) + 1
-
-    # Sort by count desc, then alphabetically
-    sorted_techs = sorted(
-        tech_counts.items(),
-        key=lambda x: (-x[1], x[0].lower()),
-    )
-    return [{"name": name, "count": count} for name, count in sorted_techs]
-
 @router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role("admin", "super_admin"))])
 async def delete_course(
     course_id: str,
