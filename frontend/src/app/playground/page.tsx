@@ -612,6 +612,8 @@ export default function PlaygroundPage() {
   const [autoRun, setAutoRun] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [input, setInput] = useState("");
+  const [localAgentToken, setLocalAgentToken] = useState("");
+  const [localAgentWorkspace, setLocalAgentWorkspace] = useState("");
   const [editorShare, setEditorShare] = useState(56);
   const [terminalHeight, setTerminalHeight] = useState(250);
 
@@ -1378,6 +1380,26 @@ export default function PlaygroundPage() {
     return () => window.clearTimeout(t);
   }, [code]);
 
+  useEffect(() => {
+    try { setLocalAgentToken(localStorage.getItem("IBRANT_LOCAL_AGENT_TOKEN_V1") || ""); } catch { /* storage may be unavailable */ }
+  }, []);
+
+  const connectLocalRuntime = async () => {
+    const entered = window.prompt("Paste the one-time token printed by your IBRANT local runtime agent:", localAgentToken);
+    if (!entered?.trim()) return;
+    try {
+      const response = await fetch("http://127.0.0.1:4317/health", { headers: { Authorization: `Bearer ${entered.trim()}` } });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "The local runtime did not authenticate.");
+      localStorage.setItem("IBRANT_LOCAL_AGENT_TOKEN_V1", entered.trim());
+      setLocalAgentToken(entered.trim());
+      setLocalAgentWorkspace(String(result.workspace || "Local workspace"));
+      pushLog("out", `Connected to local runtime: ${result.workspace}. Shell commands execute on this computer.`);
+    } catch (error) {
+      pushLog("error", error instanceof Error ? error.message : "Could not connect to the local runtime. Start the agent and try again.");
+    }
+  };
+
   // Restore scratch tabs. Project-file handles are intentionally session-only.
   useEffect(() => {
     try {
@@ -1545,7 +1567,7 @@ export default function PlaygroundPage() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [logs]);
 
-  const execCommand = () => {
+  const execCommand = async () => {
     const src = input.trim();
     if (!src) return;
 
@@ -1562,6 +1584,27 @@ export default function PlaygroundPage() {
         "sys",
         "Type JavaScript and press Enter. Built-ins: clear, help"
       );
+      return;
+    }
+
+    const isNativeProjectCommand = cloudProjectPaths.some((path) => path.toLowerCase() === "pubspec.yaml")
+      && cloudProjectPaths.some((path) => path.toLowerCase() === "lib/main.dart");
+    const isShellLanguage = !["html", "css", "javascript", "typescript", "python", "json", "xml"].includes(activeLanguage);
+    if (localAgentToken && (isNativeProjectCommand || isShellLanguage)) {
+      try {
+        const response = await fetch("http://127.0.0.1:4317/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${localAgentToken}` },
+          body: JSON.stringify({ command: src }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || `Local runtime returned HTTP ${response.status}`);
+        if (result.stdout) pushLog("out", result.stdout.trimEnd());
+        if (result.stderr) pushLog(result.exit_code === 0 ? "warn" : "error", result.stderr.trimEnd());
+        pushLog(result.exit_code === 0 ? "sys" : "error", `Process exited with code ${result.exit_code} · ${result.cwd}`);
+      } catch (error) {
+        pushLog("error", error instanceof Error ? error.message : "Local runtime connection failed.");
+      }
       return;
     }
 
@@ -1700,6 +1743,9 @@ export default function PlaygroundPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/build" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[#B7BDD0] hover:bg-white/10">My Projects</Link>
           {cloudProject && <Link href={`/build/ai?project=${cloudProject.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-[#7559E8]/30 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] hover:bg-[#7559E8]/20"><FilePlus2 size={13} /> Add feature with AI</Link>}
+          <button type="button" onClick={() => void connectLocalRuntime()} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold ${localAgentToken ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-white/[0.03] text-[#B7BDD0] hover:bg-white/10"}`} title={localAgentWorkspace ? `Connected workspace: ${localAgentWorkspace}` : "Connect the terminal to your local computer"}>
+            <Terminal size={13} /> {localAgentToken ? `Local runtime${localAgentWorkspace ? ` · ${localAgentWorkspace}` : " connected"}` : "Connect local runtime"}
+          </button>
           {cloudProject && (
             <>
               <span className="hidden items-center gap-1 text-[11px] text-[#929CBD] sm:inline-flex">
@@ -2042,7 +2088,7 @@ flutter run</code></pre>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type JavaScript and press Enter — try document.title"
+                placeholder={localAgentToken ? "Enter a shell command (e.g. flutter pub get)" : "Type JavaScript and press Enter — try document.title"}
                 aria-label="Terminal input"
                 autoCapitalize="off"
                 autoCorrect="off"
