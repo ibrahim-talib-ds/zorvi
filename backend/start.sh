@@ -14,6 +14,8 @@ else
     exit 1
 fi
 
+echo "[startup] Checking migration baseline..."
+"$PYTHON_BIN" scripts/bootstrap_alembic.py
 echo "[startup] Applying database migrations..."
 "$PYTHON_BIN" -m alembic upgrade head
 echo "[startup] Database migrations are up to date. Starting API..."
