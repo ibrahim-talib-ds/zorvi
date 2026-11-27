@@ -261,12 +261,12 @@ export function DashboardShell({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/logo/ibrant-mark.png"
+        src="/images/logo/ibrant-mark.svg"
         alt=""
         className="h-8 w-8 object-contain"
       />
-      <span className="hidden min-w-0 whitespace-nowrap font-display text-lg font-extrabold tracking-tight text-text-primary lg:inline">
-        ibrant
+      <span className="hidden min-w-0 whitespace-nowrap font-display text-lg font-extrabold tracking-tight lg:inline">
+        <span className="text-[#8B5CF6]">ibr</span><span className="text-[#F2A900]">ant</span>
         {admin && <span className="text-[#7559E8]"> Admin</span>}
       </span>
     </Link>
@@ -419,7 +419,7 @@ export function DashboardShell({
       )}>
         <div className="flex items-center justify-between w-full mb-2">
           {!isCollapsed && <Brand />}
-          {isCollapsed && <div className="w-full flex justify-center"><img src="/images/logo/ibrant-mark.png" className="h-8 w-8 object-contain" alt="" /></div>}
+          {isCollapsed && <div className="w-full flex justify-center"><img src="/images/logo/ibrant-mark.svg" className="h-8 w-8 object-contain" alt="" /></div>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:flex items-center justify-center w-full py-2 mb-4 rounded-lg bg-bg-elevated text-text-muted hover:text-text-primary transition-all"

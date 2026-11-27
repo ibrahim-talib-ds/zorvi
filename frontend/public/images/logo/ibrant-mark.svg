@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="purple" x1="22" y1="20" x2="100" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/><stop offset="1" stop-color="#4C1D95"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="25" y1="25" x2="103" y2="101" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24"/><stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- compact orbit -->
+  <path d="M17 83C5 56 23 24 55 16c25-6 51 5 62 27" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M111 45c9 27-7 55-34 66-26 10-55 0-68-22" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
+  <!-- stylized i -->
+  <circle cx="64" cy="58" r="9" fill="url(#purple)"/>
+  <path d="M52 75c0-4 3-7 7-7h10c4 0 7 3 7 7v22c0 4-3 7-7 7H59c-4 0-7-3-7-7V75Z" fill="url(#purple)"/>
+  <!-- graduation cap -->
+  <path d="m24 38 40-17 40 17-40 17-40-17Z" fill="#4C1D95" stroke="#7C3AED" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M42 46v11c0 7 10 13 22 13s22-6 22-13V46L64 55 42 46Z" fill="#6D28D9"/>
+  <path d="M104 39v19" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="104" cy="61" r="4" fill="#FBBF24"/>
+</svg>

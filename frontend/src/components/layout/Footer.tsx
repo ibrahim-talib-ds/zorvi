@@ -12,8 +12,8 @@ export function Footer() {
                 {/* Brand */}
         <div className="mb-10">
           <Link href="/" className="flex items-center gap-3 mb-4">
-            <img src="/images/logo/ibrant-mark.png" alt="ibrant" className="h-8 w-auto object-contain" />
-            <span className="font-display text-xl font-extrabold tracking-tight text-[#8B70FF]">ibrant</span>
+            <img src="/images/logo/ibrant-mark.svg" alt="ibrant" className="h-8 w-auto object-contain" />
+            <span className="font-display text-xl font-extrabold tracking-tight"><span className="text-[#8B5CF6]">ibr</span><span className="text-[#F2A900]">ant</span></span>
           </Link>
           <p className="text-sm text-text-muted mb-6 max-w-xs">
             <Tr k="footer.learn_create_launch" /> <br />
