@@ -105,7 +105,19 @@ export function encodeExercise(config: ExerciseConfig) {
 export function parseExercise(value: string | null): ExerciseConfig | null {
   if (!value) return null;
   if (!value.startsWith(PREFIX)) return { ...defaultConfig, instructions: value };
-  try { return { ...defaultConfig, ...JSON.parse(value.slice(PREFIX.length)) }; } catch { return { ...defaultConfig, instructions: value }; }
+  try {
+    return { ...defaultConfig, ...JSON.parse(value.slice(PREFIX.length)) };
+  } catch {
+    // Admins sometimes paste JSON copied from Markdown/HTML where punctuation
+    // is escaped as \* or \<. Those are not valid JSON escapes; normalize
+    // only invalid JSON escape sequences, then parse the original structure.
+    try {
+      const raw = value.slice(PREFIX.length).replace(/\\(?!["\\/bfnrtu])/g, "");
+      return { ...defaultConfig, ...JSON.parse(raw) };
+    } catch {
+      return { ...defaultConfig, instructions: value };
+    }
+  }
 }
 
 const languages: Record<string, string> = {
