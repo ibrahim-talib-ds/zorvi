@@ -30,11 +30,12 @@ Each lesson must include:
 - `description`
 - `content_markdown`
 - `exercise` with exactly one `--- QUESTION ---` and one `--- SOLUTION ---`
-- optional `code_example`
+- optional `code_example` and `code_language`
+- optional `practical_examples` (title, explanation, code, language, expected_output)
+- optional `practice_questions` with supported types and answer keys
 - optional `duration_minutes`
 
-The exercise field is text for the existing lesson schema. This importer does not execute SQL.
-SQL code examples and exercises are stored as course content only.
+The exercise field is text for the existing lesson schema. This importer does not execute code. Code examples and exercises are stored as lesson content; answer-keyed knowledge checks are rendered by the learner interface.
 
 ## Commands
 
@@ -63,3 +64,25 @@ The current lesson exercise UI launches a Python runner for code exercises. This
 does not pretend that SQL executes in that Python runner. Before publishing SQL coding
 exercises, the frontend exercise component should be updated to present SQL tasks as
 self-check/reference solutions or connected to a real SQL execution sandbox.
+
+## API import path (for the hosted Academy)
+
+The admin API supports creating modules and lessons under an existing course. Use
+backend/scripts/import_course_via_api.py when the hosted API is reachable and an
+administrator token is available.
+
+Set IBRANT_API_BASE to the API base ending in /api/v1 and IBRANT_ADMIN_TOKEN
+to an administrator bearer token. Do not store either value in Git.
+
+The API importer is dry-run by default. It requires the exact existing course slug,
+matches modules and lessons by normalized title, creates missing selected modules or
+lessons, updates matching lesson content, writes a backup before changes, and verifies
+the result. It never creates a new course and never publishes one.
+
+Commands:
+  python backend/scripts/import_course_via_api.py
+  python backend/scripts/import_course_via_api.py --apply
+
+If the course is already published, updates are blocked unless the administrator
+explicitly adds --allow-published. The script never changes the course publication
+status. Do not use that flag until a live content update is approved.
