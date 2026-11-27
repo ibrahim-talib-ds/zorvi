@@ -117,6 +117,35 @@ def test_ollama_local_provider_needs_no_api_key(monkeypatch):
     assert bearer is False
 
 
+def test_build_step_retry_policy_only_retries_recoverable_provider_errors():
+    assert ai_build._is_retryable_build_step_error(
+        HTTPException(status_code=502, detail="The AI provider returned malformed project data.")
+    )
+    assert ai_build._is_retryable_build_step_error(
+        HTTPException(status_code=504, detail="The AI provider timed out.")
+    )
+    assert not ai_build._is_retryable_build_step_error(
+        HTTPException(status_code=502, detail="The AI provider rejected its API key.")
+    )
+    assert not ai_build._is_retryable_build_step_error(
+        HTTPException(status_code=429, detail="The AI provider quota is exhausted.")
+    )
+    short_rate_limit = HTTPException(
+        status_code=429,
+        detail="The AI provider quota is exhausted. Provider retry window: 4.",
+    )
+    assert ai_build._is_retryable_build_step_error(short_rate_limit)
+    assert ai_build._build_step_retry_delay_seconds(short_rate_limit, 1) == 4.0
+    long_rate_limit = HTTPException(
+        status_code=429,
+        detail="The AI provider quota is exhausted. Provider retry window: 3600.",
+    )
+    assert not ai_build._is_retryable_build_step_error(long_rate_limit)
+    assert not ai_build._is_retryable_build_step_error(
+        HTTPException(status_code=422, detail="The build step does not exist.")
+    )
+
+
 def test_merge_replaces_existing_files_without_counting_twice():
     merged = ai_build._merge_files(
         [{"path": "index.html", "content": "old"}, {"path": "README.md", "content": "notes"}],
@@ -345,6 +374,113 @@ async def test_openrouter_retries_empty_content_without_json_mode(monkeypatch):
         "inclusionai/ling-3.2-flash:free", "nvidia/nemotron-3.5-super-vl:free"
     ]
     assert FakeAsyncClient.requests[1]["reasoning"] == {"effort": "none"}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_openrouter_nemotron_free_omits_unsupported_response_format(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="nvidia/nemotron-3-ultra-550b-a55b:free",
+        AI_REQUEST_TIMEOUT_SECONDS=10,
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+
+        def json(self):
+            return {
+                "choices": [{
+                    "message": {"role": "assistant", "content": '{"ok":true}'},
+                    "finish_reason": "stop",
+                }]
+            }
+
+    class FakeAsyncClient:
+        request_body = None
+
+        def __init__(self, timeout):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+        async def post(self, url, headers, json):
+            type(self).request_body = json
+            return FakeResponse()
+
+    monkeypatch.setattr(ai_build.httpx, "AsyncClient", FakeAsyncClient)
+    result = await ai_build._ask_model("Return one JSON object", {"task": "code"})
+
+    body = FakeAsyncClient.request_body
+    assert result == {"ok": True}
+    assert "response_format" not in body
+    assert body["max_tokens"] == 9000
+    assert "max_completion_tokens" not in body
+    assert body["reasoning"] == {"effort": "none"}
+    assert body["temperature"] == 0.1
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_nvidia_nemotron_uses_native_token_parameter_and_coding_settings(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://integrate.api.nvidia.com/v1",
+        AI_MODEL="nvidia/nemotron-3-ultra-550b-a55b",
+        AI_REQUEST_TIMEOUT_SECONDS=10,
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+
+        def json(self):
+            return {
+                "choices": [{
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"summary":"ok","files":[]}',
+                    },
+                    "finish_reason": "stop",
+                }]
+            }
+
+    class FakeAsyncClient:
+        request_body = None
+
+        def __init__(self, timeout):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+        async def post(self, url, headers, json):
+            type(self).request_body = json
+            return FakeResponse()
+
+    monkeypatch.setattr(ai_build.httpx, "AsyncClient", FakeAsyncClient)
+    result = await ai_build._ask_model("Return JSON", {"task": "generate code"}, max_tokens=6400)
+
+    body = FakeAsyncClient.request_body
+    assert result == {"summary": "ok", "files": []}
+    assert body["max_tokens"] == 6400
+    assert "max_completion_tokens" not in body
+    assert body["chat_template_kwargs"] == {
+        "enable_thinking": False,
+        "force_nonempty_content": True,
+    }
+    assert body["temperature"] == 0.1
 
 
 @pytest.mark.asyncio(loop_scope="session")
