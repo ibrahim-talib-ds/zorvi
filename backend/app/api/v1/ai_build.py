@@ -1107,7 +1107,33 @@ Rules:
         "previous_plan_to_refine": request.previous_plan,
         "user_context": "Authenticated IBRANT learner building a project step by step.",
     }
-    data = await _ask_model(system_prompt, original_payload, max_tokens=7000, response_model=BuildPlan)
+    try:
+        data = await _ask_model(system_prompt, original_payload, max_tokens=7000, response_model=BuildPlan)
+    except HTTPException as parse_exc:
+        # JSON parsing happens inside _ask_model, before Pydantic validation.
+        # Recover malformed provider output here so users are not forced to
+        # rewrite an otherwise valid project idea.
+        recoverable_details = {
+            "The AI provider returned malformed project data. Try again.",
+            "The AI provider returned a response that was not valid JSON. Try again.",
+            "The AI provider returned an unexpected response format.",
+        }
+        if parse_exc.status_code != 502 or parse_exc.detail not in recoverable_details:
+            raise
+        logger.warning("AI provider returned unparseable plan JSON; requesting one clean structured retry")
+        try:
+            data = await _ask_model(
+                system_prompt + "\n\nRECOVERY REQUIREMENT: The previous response was not parseable. Return a complete, syntactically valid JSON object matching every required field. Do not use markdown, comments, or trailing commas. Keep the plan concise and preserve the user's exact project goal.",
+                original_payload,
+                max_tokens=7000,
+                response_model=BuildPlan,
+            )
+        except HTTPException as retry_exc:
+            logger.warning("AI plan JSON recovery failed: status=%s", retry_exc.status_code)
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider had trouble formatting the plan. Your project idea is safe; please retry in a moment.",
+            ) from retry_exc
     try:
         plan = BuildPlan.model_validate(_normalize_build_plan_data(data))
     except Exception as first_exc:
