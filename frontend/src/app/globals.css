@@ -801,3 +801,131 @@ html.light .course-mobile-lesson .course-lesson-icon-complete {
 html.light .course-mobile-lesson .text-\[\#7A8199\] {
   color: #62594D !important;
 }
+
+
+/* ===== Practice questions: dedicated light-theme readability =====
+   Keep this scoped to the knowledge-check cards. Dark mode remains unchanged. */
+html.light .practice-questions-eyebrow {
+  color: #6540B5 !important;
+}
+html.light .practice-questions-title {
+  color: #25212B !important;
+}
+html.light .practice-questions-description {
+  color: #575047 !important;
+}
+html.light .practice-question-card {
+  background: #FFFEFA !important;
+  border: 1px solid #D9D0C1 !important;
+  box-shadow: 0 8px 24px rgba(69, 53, 29, 0.07) !important;
+  color: #29241F !important;
+}
+html.light .practice-question-meta {
+  color: #5634A8 !important;
+  font-weight: 800 !important;
+}
+html.light .practice-question-points,
+html.light .practice-question-code-note {
+  color: #62594D !important;
+}
+html.light .practice-question-prompt {
+  color: #25212B !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.75 !important;
+}
+html.light .practice-question-option {
+  background: #F7F3EB !important;
+  color: #332D27 !important;
+  border: 1px solid #D9D0C1 !important;
+  font-weight: 550 !important;
+}
+html.light .practice-question-option:hover {
+  background: #EEE8F8 !important;
+  color: #34215F !important;
+  border-color: #A993D7 !important;
+}
+html.light .practice-question-option.is-selected {
+  background: #E9E0F8 !important;
+  color: #351B76 !important;
+  border: 1.5px solid #6540B5 !important;
+  box-shadow: inset 3px 0 0 #6540B5 !important;
+  font-weight: 750 !important;
+}
+html.light .practice-question-answer {
+  background: #FAF8F2 !important;
+  color: #20202B !important;
+  caret-color: #5634C2 !important;
+  border: 1px solid #BEB3A1 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+  -webkit-text-fill-color: #20202B !important;
+  box-shadow: inset 0 1px 2px rgba(54, 43, 28, 0.045) !important;
+}
+html.light .practice-question-answer::placeholder {
+  color: #776E62 !important;
+  -webkit-text-fill-color: #776E62 !important;
+  opacity: 1 !important;
+}
+html.light .practice-question-answer:focus {
+  border-color: #6540B5 !important;
+  outline: 2px solid rgba(101, 64, 181, 0.16) !important;
+  outline-offset: 1px !important;
+}
+html.light .practice-question-secondary-button {
+  background: #F5F0E7 !important;
+  color: #403A34 !important;
+  border: 1px solid #D0C5B4 !important;
+  font-weight: 650 !important;
+}
+html.light .practice-question-secondary-button:hover {
+  background: #EAE2F5 !important;
+  color: #351B76 !important;
+  border-color: #A993D7 !important;
+}
+html.light .practice-question-card button:not(.practice-question-option):not(.practice-question-secondary-button) {
+  background: #5634C2 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #4828AD !important;
+  font-weight: 750 !important;
+}
+html.light .practice-question-card button:not(.practice-question-option):not(.practice-question-secondary-button):hover {
+  background: #4729AA !important;
+}
+html.light .practice-question-card button:disabled {
+  opacity: 0.48 !important;
+}
+html.light .practice-question-hint {
+  background: #F8EFD9 !important;
+  color: #68430C !important;
+  border: 1px solid #E9D6A9 !important;
+  line-height: 1.7 !important;
+}
+html.light .practice-question-feedback.is-correct {
+  background: #E7F4EC !important;
+  color: #176A42 !important;
+  border: 1px solid #B9DEC8 !important;
+}
+html.light .practice-question-feedback.is-incorrect {
+  background: #FBEAEC !important;
+  color: #9E293A !important;
+  border: 1px solid #EBC2C8 !important;
+}
+html.light .practice-question-feedback.is-unconfigured {
+  background: #F0ECE5 !important;
+  color: #514B42 !important;
+  border: 1px solid #D9D0C1 !important;
+}
+html.light .practice-question-solution {
+  background: #EDF5EF !important;
+  border: 1px solid #C6DDCC !important;
+}
+html.light .practice-question-answer-label {
+  color: #176A42 !important;
+}
+html.light .practice-question-solution-text,
+html.light .practice-question-explanation {
+  color: #34483B !important;
+  line-height: 1.75 !important;
+}
