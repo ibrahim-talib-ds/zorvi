@@ -1,4 +1,4 @@
-"""Fast unit tests for IBRANT's AI response boundary."""
+"""Fast unit tests for ibrant's AI response boundary."""
 import pytest
 from fastapi import HTTPException
 

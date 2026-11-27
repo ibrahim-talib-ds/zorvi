@@ -1,4 +1,4 @@
-# IBRANT AI Build — free-first setup
+# ibrant AI Build — free-first setup
 
 AI requests run on the FastAPI backend. Provider credentials belong only in the backend environment; never put a key in frontend code, a public environment variable, a project file, or Git.
 
@@ -33,7 +33,7 @@ AI_BASE_URL=http://127.0.0.1:11434/v1
 AI_REQUEST_TIMEOUT_SECONDS=180
 ```
 
-No hosted inference tokens are billed for local inference, but your own computer/server supplies the electricity and hardware, and speed depends on its memory and GPU. For a remote IBRANT deployment, Ollama must run on the backend host or an accessible private inference server.
+No hosted inference tokens are billed for local inference, but your own computer/server supplies the electricity and hardware, and speed depends on its memory and GPU. For a remote ibrant deployment, Ollama must run on the backend host or an accessible private inference server.
 
 ## Paid providers
 

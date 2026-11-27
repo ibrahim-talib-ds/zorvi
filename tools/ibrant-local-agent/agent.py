@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Authenticated loopback runtime and HTTP preview proxy for IBRANT Studio."""
+"""Authenticated loopback runtime and HTTP preview proxy for ibrant Studio."""
 import argparse
 import http.client
 import json
@@ -15,7 +15,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-parser = argparse.ArgumentParser(description="Connect IBRANT Studio to a local project runtime")
+parser = argparse.ArgumentParser(description="Connect ibrant Studio to a local project runtime")
 parser.add_argument("--workspace", required=True, help="Absolute path to the local project workspace")
 parser.add_argument("--port", type=int, default=4317)
 args = parser.parse_args()
@@ -36,7 +36,7 @@ def safe_project_dir(name):
     return target
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "IBRANTLocalAgent/2.0"
+    server_version = "ibrantLocalAgent/2.0"
 
     def cors(self):
         origin = self.headers.get("Origin", "")
@@ -159,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
                 except OSError:
                     pass
                 sid = secrets.token_urlsafe(18)
-                command = command.replace("__IBRANT_PREVIEW_BASE__", f"/preview/{sid}/")
+                command = command.replace("__ibrant_PREVIEW_BASE__", f"/preview/{sid}/")
                 proc = subprocess.Popen(command, shell=True, cwd=project, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT, text=True, bufsize=1,
                                         env={**os.environ, "HOST": "0.0.0.0", "PORT": str(port)},
@@ -282,10 +282,10 @@ class Handler(BaseHTTPRequestHandler):
             conn.close()
 
     def log_message(self, fmt, *values):
-        print("[IBRANT agent]", fmt % values)
+        print("[ibrant agent]", fmt % values)
 
 server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
-print("\nIBRANT local runtime agent is ready")
+print("\nibrant local runtime agent is ready")
 print(f"Workspace: {WORKSPACE}")
 print(f"Endpoint: http://127.0.0.1:{args.port}")
 print(f"One-time connection token: {TOKEN}")
@@ -293,7 +293,7 @@ print("Keep this terminal open. Press Ctrl+C to stop.\n", flush=True)
 try:
     server.serve_forever()
 except KeyboardInterrupt:
-    print("\nStopping IBRANT local runtime agent.")
+    print("\nStopping ibrant local runtime agent.")
 finally:
     with LOCK:
         for item in SESSIONS.values():

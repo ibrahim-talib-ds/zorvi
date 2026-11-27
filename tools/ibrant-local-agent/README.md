@@ -1,8 +1,8 @@
-# IBRANT local runtime agent
+# ibrant local runtime agent
 
-This opt-in helper connects IBRANT Studio to a project workspace on your own computer. It binds only to `127.0.0.1`, authenticates requests with a random bearer token, and keeps preview traffic on the local machine.
+This opt-in helper connects ibrant Studio to a project workspace on your own computer. It binds only to `127.0.0.1`, authenticates requests with a random bearer token, and keeps preview traffic on the local machine.
 
-**Security:** commands and development servers execute with your operating-system user's permissions. The agent is not a sandbox. Only connect it to your own trusted IBRANT session, and stop it when you finish.
+**Security:** commands and development servers execute with your operating-system user's permissions. The agent is not a sandbox. Only connect it to your own trusted ibrant session, and stop it when you finish.
 
 ## Start or upgrade
 
@@ -14,7 +14,7 @@ This opt-in helper connects IBRANT Studio to a project workspace on your own com
    ```
 
 3. Copy the newly printed one-time token.
-4. In IBRANT Studio select **Connect local runtime** and paste the token.
+4. In ibrant Studio select **Connect local runtime** and paste the token.
 5. Keep this terminal open while previewing projects.
 
 ## Project preview workflow

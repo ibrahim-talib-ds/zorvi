@@ -1,6 +1,6 @@
 # Deployment
 
-ZORVI/IBRANT uses a separate Next.js frontend and FastAPI backend. Deploy the API first, apply database migrations, then build the frontend with the public API URL. The repository's `docker-compose.yml` is intentionally empty; local PostgreSQL currently runs natively.
+ZORVI/ibrant uses a separate Next.js frontend and FastAPI backend. Deploy the API first, apply database migrations, then build the frontend with the public API URL. The repository's `docker-compose.yml` is intentionally empty; local PostgreSQL currently runs natively.
 
 ## Backend
 
