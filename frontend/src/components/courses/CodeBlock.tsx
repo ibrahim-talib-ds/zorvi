@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Highlight, themes, type Language } from "prism-react-renderer";
+import { useTheme } from "@/lib/theme/ThemeProvider";
 
 interface Props {
   code: string;
@@ -42,9 +43,59 @@ const readableVsDarkTheme: typeof themes.vsDark = {
   }),
 };
 
+const readableVsLightTheme: typeof themes.vsLight = {
+  ...themes.vsLight,
+  plain: {
+    ...themes.vsLight.plain,
+    color: "#252234",
+    backgroundColor: "#FAF8F2",
+  },
+  styles: themes.vsLight.styles.map((rule) => {
+    if (rule.types.includes("comment")) {
+      return { ...rule, style: { ...rule.style, color: "#386641", fontStyle: "italic" } };
+    }
+    if (rule.types.includes("builtin")) {
+      return { ...rule, style: { ...rule.style, color: "#075985" } };
+    }
+    if (rule.types.includes("number")) {
+      return { ...rule, style: { ...rule.style, color: "#6D28D9" } };
+    }
+    if (rule.types.includes("variable")) {
+      return { ...rule, style: { ...rule.style, color: "#0F4C81" } };
+    }
+    if (rule.types.includes("constant") || rule.types.includes("char")) {
+      return { ...rule, style: { ...rule.style, color: "#9D174D" } };
+    }
+    if (rule.types.includes("operator")) {
+      return { ...rule, style: { ...rule.style, color: "#353044" } };
+    }
+    if (rule.types.includes("tag")) {
+      return { ...rule, style: { ...rule.style, color: "#0F766E" } };
+    }
+    if (rule.types.includes("attr-name")) {
+      return { ...rule, style: { ...rule.style, color: "#7C2D12" } };
+    }
+    if (rule.types.includes("string")) {
+      return { ...rule, style: { ...rule.style, color: "#166534" } };
+    }
+    if (rule.types.includes("punctuation")) {
+      return { ...rule, style: { ...rule.style, color: "#334155" } };
+    }
+    if (rule.types.includes("function") || rule.types.includes("keyword")) {
+      return { ...rule, style: { ...rule.style, color: "#5125AD" } };
+    }
+    if (rule.types.includes("class-name")) {
+      return { ...rule, style: { ...rule.style, color: "#155E75" } };
+    }
+    return rule;
+  }),
+};
+
 export function CodeBlock({ code, language = "text" }: Props) {
   const [copied, setCopied] = useState(false);
+  const { resolved } = useTheme();
   const resolvedLanguage = resolveCodeLanguage(code, language.toLowerCase());
+  const activeTheme = resolved === "light" ? readableVsLightTheme : readableVsDarkTheme;
 
   const handleCopy = async () => {
     try {
@@ -57,9 +108,9 @@ export function CodeBlock({ code, language = "text" }: Props) {
   };
 
   return (
-    <div className="group relative rounded-xl border border-white/10 bg-[#1E1E1E] overflow-hidden shadow-xl shadow-black/50 not-prose">
+    <div className="code-block-shell group relative overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] shadow-xl shadow-black/20 not-prose">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#2D2D2D] border-b border-[#404040]">
+      <div className="code-block-header flex items-center justify-between border-b border-[#404040] bg-[#2D2D2D] px-4 py-2">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
@@ -73,7 +124,7 @@ export function CodeBlock({ code, language = "text" }: Props) {
         
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 rounded bg-white/5 px-2.5 py-1 text-xs font-medium text-[#A9B7C6] hover:bg-white/10 hover:text-white transition"
+          className="code-block-copy flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-[#A9B7C6] transition hover:bg-white/10 hover:text-white"
         >
           {copied ? (
             <>
@@ -89,7 +140,7 @@ export function CodeBlock({ code, language = "text" }: Props) {
 
       {/* Code area with Prism Renderer */}
       <div className="overflow-x-auto font-mono text-[15.5px] leading-7">
-        <Highlight theme={readableVsDarkTheme} code={code.trim()} language={resolvedLanguage as Language}>
+        <Highlight theme={activeTheme} code={code.trim()} language={resolvedLanguage as Language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre 
               className={className} 

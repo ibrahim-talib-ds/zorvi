@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowUpRight, Code2 } from "lucide-react";
+import { useTheme } from "@/lib/theme/ThemeProvider";
 
 interface Props {
   code: string;
@@ -32,6 +33,7 @@ function detectLanguage(code: string, declared?: string): string {
 
 export function PracticeInPlaygroundButton({ code, language, lessonTitle }: Props) {
   const [error, setError] = useState("");
+  const { resolved } = useTheme();
 
   const openPlayground = () => {
     try {
@@ -52,7 +54,13 @@ export function PracticeInPlaygroundButton({ code, language, lessonTitle }: Prop
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button type="button" onClick={openPlayground} className="inline-flex items-center gap-2 rounded-lg border border-[#7559E8]/30 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] transition hover:bg-[#7559E8]/20">
+      <button
+        type="button"
+        onClick={openPlayground}
+        className={resolved === "light"
+          ? "light-playground-button inline-flex items-center gap-2 rounded-lg border border-[#4828AD] bg-[#5634C2] px-3.5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#5634C2]/20 transition hover:border-[#3E219C] hover:bg-[#4729AA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5634C2]"
+          : "inline-flex items-center gap-2 rounded-lg border border-[#7559E8]/30 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] transition hover:bg-[#7559E8]/20"
+        }>
         <Code2 size={14} /> Try in Playground <ArrowUpRight size={13} />
       </button>
       {error && <p role="alert" className="max-w-xs text-right text-[10px] text-[#FF9AA6]">{error}</p>}

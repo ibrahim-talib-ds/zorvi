@@ -556,3 +556,121 @@ html.light [class~="bg-[#0A0E24]"] .text-\[\#D7DDF3\] {
 html.light [class~="bg-[#0A0E24]"] .text-\[\#929CBD\] {
   color: #B7C2D6 !important;
 }
+
+
+/* ===== Higher-contrast light palette: rich ink, strong violet, quiet grid ===== */
+html.light {
+  --bg-deep: #F4F0E7;
+  --bg-surface: #FFFEFA;
+  --bg-elevated: #F1ECE2;
+  --bg-border: #D9D0C1;
+  --text-primary: #25212B;
+  --text-secondary: #403A34;
+  --text-muted: #575047;
+  --brand: #5634C2;
+  --brand-bright: #6541D5;
+  --brand-subtle: #7454D8;
+  color-scheme: light;
+}
+
+/* The paper texture stays in the background rather than competing with text. */
+html.light body {
+  background-image:
+    linear-gradient(to right, rgba(116, 101, 76, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(116, 101, 76, 0.025) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, rgba(211, 190, 150, 0.08), transparent 58%) !important;
+}
+html.light .bg-grid,
+html.light [class~="bg-bg-deep"],
+html.light [class~="bg-[#0B0F1D]"],
+html.light [class~="bg-[#0B1020]"],
+html.light [class~="bg-[#0A0E24]"],
+html.light [class~="bg-[#080D19]"] {
+  background-image:
+    linear-gradient(to right, rgba(116, 101, 76, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(116, 101, 76, 0.025) 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
+}
+
+/* A darker neutral makes secondary copy and navigation clearly readable. */
+html.light .text-text-secondary { color: #403A34 !important; }
+html.light .text-text-muted { color: #575047 !important; }
+html.light .text-\[\#929CBD\],
+html.light .text-\[\#9299AE\],
+html.light .text-\[\#7A8199\],
+html.light .text-\[\#5A6285\] {
+  color: #575047 !important;
+}
+html.light .text-\[\#B7BDD0\],
+html.light .text-\[\#D7DDF3\] {
+  color: #403A34 !important;
+}
+
+/* Use a strong, consistent violet instead of pale lavender on warm paper. */
+html.light .text-\[\#7559E8\],
+html.light .text-\[\#8B70FF\],
+html.light .text-\[\#A78BFA\],
+html.light .text-\[\#C4B5FD\],
+html.light .text-\[\#B9A8FF\] {
+  color: #5125AD !important;
+}
+html.light .border-\[\#7559E8\],
+html.light .border-\[\#8B70FF\] {
+  border-color: #7652CC !important;
+}
+
+/* Sidebar navigation labels must look enabled, not disabled. */
+html.light #app-sidebar-nav a:not([aria-current="page"]) {
+  color: #403A34 !important;
+}
+html.light #app-sidebar-nav a[aria-current="page"] {
+  color: #5125AD !important;
+  background: rgba(86, 52, 194, 0.12) !important;
+  box-shadow: inset 3px 0 0 #5634C2;
+}
+html.light #app-sidebar-nav a svg {
+  color: currentColor;
+}
+html.light aside[aria-label="Application sidebar"] [class*="text-[#929CBD]"],
+html.light aside[aria-label="Application sidebar"] [class*="text-[#7A8199]"],
+html.light aside[aria-label="Application sidebar"] [class*="text-[#5A6285]"] {
+  color: #575047 !important;
+}
+
+/* Code samples become warm paper with rich, dark syntax colors in light mode. */
+html.light .code-block-shell {
+  background: #FAF8F2 !important;
+  border-color: #D7CFBF !important;
+  box-shadow: 0 8px 24px rgba(69, 53, 29, 0.09) !important;
+}
+html.light .code-block-header {
+  background: #EEE9DF !important;
+  border-color: #D7CFBF !important;
+}
+html.light .code-block-shell pre {
+  background: transparent !important;
+  color: #252234 !important;
+}
+html.light .code-block-copy {
+  color: #4B299D !important;
+  background: #E8E0F7 !important;
+  border-color: #BBAAE5 !important;
+}
+html.light .code-block-copy:hover {
+  color: #381B82 !important;
+  background: #DDD1F2 !important;
+  border-color: #9F88D9 !important;
+}
+
+/* "Try in Playground" is a real action, so give it a solid violet treatment. */
+html.light .light-playground-button {
+  color: #FFFFFF !important;
+  background: #5634C2 !important;
+  border-color: #4828AD !important;
+  box-shadow: 0 4px 12px rgba(86, 52, 194, 0.22);
+}
+html.light .light-playground-button:hover {
+  color: #FFFFFF !important;
+  background: #4729AA !important;
+  border-color: #3E219C !important;
+}
