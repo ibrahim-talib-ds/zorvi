@@ -39,7 +39,7 @@ html.light {
   --bg-border: #E5DDCF;
   --text-primary: #292720;
   --text-secondary: #5F5A50;
-  --text-muted: #817A6E;
+  --text-muted: #6D665B;
   --brand: #6047D8;
   --brand-bright: #7559E8;
   --brand-subtle: #8B72EE;
@@ -57,8 +57,10 @@ body {
   color: var(--text-primary);
   font-family: var(--font-inter), system-ui, sans-serif;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  line-height: 1.6;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+  line-height: 1.65;
   transition: background-color 0.3s, color 0.3s;
 }
 
@@ -112,7 +114,7 @@ html.light {
   --bg-border: #E5DDCF;
   --text-primary: #292720;
   --text-secondary: #5F5A50;
-  --text-muted: #817A6E;
+  --text-muted: #6D665B;
   color-scheme: light;
 }
 /* ===== END ibrant THEME TOKENS ===== */
@@ -422,4 +424,135 @@ html.light .text-\[\#A78BFA\] {
 html.light [class~="bg-black/35"].text-white {
   color: #FFFFFF !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+
+/* ===== Readability pass: sharper text, comfortable sizes and clear course copy ===== */
+html,
+body,
+body * {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  letter-spacing: 0.005em;
+}
+
+/* Tiny metadata was too small at normal laptop viewing distance. */
+body .text-\[9px\] { font-size: 11px !important; }
+body .text-\[10px\] { font-size: 12px !important; }
+body .text-\[11px\] { font-size: 13px !important; }
+
+/* Stronger readable contrast for the light palette. */
+html.light {
+  --text-primary: #292720;
+  --text-secondary: #514B42;
+  --text-muted: #6D665B;
+}
+html.light .text-text-primary { color: var(--text-primary) !important; }
+html.light .text-text-secondary { color: var(--text-secondary) !important; }
+html.light .text-text-muted { color: var(--text-muted) !important; }
+
+/* Course lesson articles use an inverted prose palette for dark mode.
+   Reassign every prose role for the warm light canvas. */
+html.light .prose.prose-invert {
+  --tw-prose-body: #514B42;
+  --tw-prose-headings: #292720;
+  --tw-prose-lead: #514B42;
+  --tw-prose-links: #5B43C7;
+  --tw-prose-bold: #292720;
+  --tw-prose-counters: #6D665B;
+  --tw-prose-bullets: #82796B;
+  --tw-prose-hr: #E5DDCF;
+  --tw-prose-quotes: #514B42;
+  --tw-prose-quote-borders: #D8CDBB;
+  --tw-prose-captions: #6D665B;
+  --tw-prose-code: #5B43C7;
+  --tw-prose-pre-code: #E8ECF4;
+  --tw-prose-pre-bg: #1E1E1E;
+  --tw-prose-th-borders: #D8CDBB;
+  --tw-prose-td-borders: #E5DDCF;
+  color: #514B42 !important;
+}
+html.light .prose.prose-invert p,
+html.light .prose.prose-invert li,
+html.light .prose.prose-invert blockquote,
+html.light .prose.prose-invert .text-\[\#C5CCDA\] {
+  color: #514B42 !important;
+}
+html.light .prose.prose-invert h1,
+html.light .prose.prose-invert h2,
+html.light .prose.prose-invert h3,
+html.light .prose.prose-invert h4,
+html.light .prose.prose-invert strong {
+  color: #292720 !important;
+}
+html.light .prose.prose-invert blockquote.text-\[\#F2D9A5\] {
+  color: #6B4B1E !important;
+}
+html.light .prose.prose-invert code:not(pre code) {
+  color: #5B43C7 !important;
+  background: #EFE8DC !important;
+}
+
+/* Keep teaching workspaces readable while preserving their dark code canvas. */
+html.light .not-prose .text-\[\#9299AE\],
+html.light .not-prose .text-\[\#929CBD\],
+html.light .not-prose .text-\[\#7A8199\] {
+  color: #6D665B !important;
+}
+html.light .not-prose .text-\[\#C4CBD8\],
+html.light .not-prose .text-\[\#B7BDD0\] {
+  color: #514B42 !important;
+}
+html.light .not-prose .text-\[\#F5C56D\],
+html.light .not-prose .text-\[\#F5D58E\] {
+  color: #82540E !important;
+}
+html.light .not-prose .text-\[\#75E0B8\],
+html.light .not-prose .text-\[\#65DDB0\],
+html.light .not-prose .text-\[\#D4E8DF\] {
+  color: #176A4B !important;
+}
+html.light .not-prose .text-\[\#F3A0AA\] {
+  color: #A82C3F !important;
+}
+
+/* Code examples: larger monospace text and comfortable line spacing. */
+html.light pre,
+html.dark pre {
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+}
+
+
+/* Light-mode answer fields and expected-output panels use a paper surface.
+   The actual syntax editor and code samples remain dark for reliable contrast. */
+html.light [class~="bg-[#0B1020]"] {
+  background-color: var(--bg-surface) !important;
+  background-image: none !important;
+  border-color: var(--bg-border) !important;
+}
+html.light [class~="bg-[#0B1020]"].text-white {
+  color: var(--text-primary) !important;
+}
+html.light [class~="bg-[#0B1020]"] .text-\[\#D6DEEA\] {
+  color: var(--text-secondary) !important;
+}
+
+/* The terminal stays dark, so preserve bright text inside it in light mode. */
+html.light [class~="bg-[#0A0E24]"] .text-\[\#7A8199\] {
+  color: #AEB9CC !important;
+}
+html.light [class~="bg-[#0A0E24]"] .text-\[\#3D4568\] {
+  color: #8792A8 !important;
+}
+html.light [class~="bg-[#0A0E24]"] .text-\[\#D7DDF3\] {
+  color: #E8ECF4 !important;
+}
+html.light [class~="bg-[#0A0E24]"] .text-\[\#929CBD\] {
+  color: #B7C2D6 !important;
 }

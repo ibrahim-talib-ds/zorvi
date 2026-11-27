@@ -19,6 +19,29 @@ function resolveCodeLanguage(code: string, declared: string): string {
   return declared || "text";
 }
 
+const readableVsDarkTheme: typeof themes.vsDark = {
+  ...themes.vsDark,
+  plain: {
+    ...themes.vsDark.plain,
+    color: "#E2E8F0",
+  },
+  styles: themes.vsDark.styles.map((rule) => {
+    if (rule.types.includes("comment")) {
+      return { ...rule, style: { ...rule.style, color: "#9BCB95" } };
+    }
+    if (rule.types.includes("constant")) {
+      return { ...rule, style: { ...rule.style, color: "#BCB9FF" } };
+    }
+    if (rule.types.includes("char")) {
+      return { ...rule, style: { ...rule.style, color: "#F08C8C" } };
+    }
+    if (rule.types.includes("punctuation")) {
+      return { ...rule, style: { ...rule.style, color: "#E2E8F0" } };
+    }
+    return rule;
+  }),
+};
+
 export function CodeBlock({ code, language = "text" }: Props) {
   const [copied, setCopied] = useState(false);
   const resolvedLanguage = resolveCodeLanguage(code, language.toLowerCase());
@@ -65,8 +88,8 @@ export function CodeBlock({ code, language = "text" }: Props) {
       </div>
 
       {/* Code area with Prism Renderer */}
-      <div className="text-sm font-mono leading-relaxed overflow-x-auto">
-        <Highlight theme={themes.vsDark} code={code.trim()} language={resolvedLanguage as Language}>
+      <div className="overflow-x-auto font-mono text-[15.5px] leading-7">
+        <Highlight theme={readableVsDarkTheme} code={code.trim()} language={resolvedLanguage as Language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre 
               className={className} 
@@ -75,7 +98,13 @@ export function CodeBlock({ code, language = "text" }: Props) {
                 margin: 0, 
                 padding: "1.25rem", 
                 backgroundColor: "transparent",
-                fontSize: "0.875rem",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                fontSize: "15.5px",
+                fontWeight: 500,
+                lineHeight: 1.75,
+                letterSpacing: "0.01em",
+                WebkitFontSmoothing: "auto",
+                fontVariantLigatures: "none",
               }}
             >
               {tokens.map((line, i) => (

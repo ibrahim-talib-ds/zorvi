@@ -2190,7 +2190,41 @@ export default function PlaygroundPage() {
             <MonacoEditor
               height="100%"
               language={activeLanguage}
-              theme="vs-dark"
+              theme="ibrant-readable-dark"
+              beforeMount={(monaco) => {
+                monaco.editor.defineTheme("ibrant-readable-dark", {
+                  base: "vs-dark",
+                  inherit: true,
+                  rules: [
+                    { token: "", foreground: "E2E8F0" },
+                    { token: "comment", foreground: "9BCB95", fontStyle: "italic" },
+                    { token: "keyword", foreground: "78B9FF" },
+                    { token: "string", foreground: "F2AA80" },
+                    { token: "number", foreground: "C4E1A3" },
+                    { token: "constant", foreground: "BCB9FF" },
+                    { token: "variable", foreground: "A6D7FF" },
+                    { token: "type.identifier", foreground: "79D8C8" },
+                    { token: "function", foreground: "F1E5A0" },
+                    { token: "delimiter", foreground: "E2E8F0" },
+                    { token: "operator", foreground: "E2E8F0" },
+                    { token: "tag", foreground: "79D8C8" },
+                    { token: "attribute.name", foreground: "A6D7FF" },
+                    { token: "attribute.value", foreground: "F2AA80" },
+                  ],
+                  colors: {
+                    "editor.background": "#1E1E1E",
+                    "editor.foreground": "#E2E8F0",
+                    "editorLineNumber.foreground": "#8792A5",
+                    "editorLineNumber.activeForeground": "#E2E8F0",
+                    "editorCursor.foreground": "#F8FAFC",
+                    "editor.selectionBackground": "#264F78",
+                    "editor.lineHighlightBackground": "#272A30",
+                    "editorIndentGuide.background": "#414752",
+                    "editorIndentGuide.activeBackground": "#7C8798",
+                    "editorWidget.border": "#414752",
+                  },
+                });
+              }}
               value={editorValue}
               onChange={updateEditorValue}
               onMount={(editor, monaco) => {
@@ -2210,9 +2244,12 @@ export default function PlaygroundPage() {
               options={{
                 automaticLayout: true,
                 minimap: { enabled: true },
-                fontSize: 13,
-                fontFamily: "JetBrains Mono, Fira Code, monospace",
-                fontLigatures: true,
+                fontSize: 15,
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                fontWeight: "500",
+                fontLigatures: false,
+                letterSpacing: 0.15,
+                lineHeight: 24,
                 scrollBeyondLastLine: false,
                 wordWrap: "on",
                 tabSize: 2,

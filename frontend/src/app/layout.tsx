@@ -44,7 +44,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         suppressHydrationWarning
-        className="antialiased min-h-screen flex flex-col bg-bg-deep text-text-primary"
+        className="min-h-screen flex flex-col bg-bg-deep text-text-primary"
       >
         {/* Set the saved theme before the first visible frame. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BLOCKER }} />

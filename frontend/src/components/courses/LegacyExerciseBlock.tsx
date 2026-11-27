@@ -229,11 +229,16 @@ export function LegacyExerciseBlock({ exerciseText, language = "python" }: Props
                 onKeyDown={handleKeyDown}
                 textareaClassName="focus:outline-none"
                 style={{
-                  fontFamily: '"Fira code", "Fira Mono", monospace',
-                  fontSize: 14,
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                  fontSize: 15.5,
+                  fontWeight: 500,
+                  lineHeight: 1.7,
+                  letterSpacing: '0.01em',
                   minHeight: '150px',
                   color: '#E8ECF4',
                   backgroundColor: 'transparent',
+                  WebkitFontSmoothing: 'auto',
+                  fontVariantLigatures: 'none',
                 }}
               />
             </div>
