@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, Loader2, Plus, Edit3, Trash2, Eye, EyeOff, Save,
-  BookOpen, Video, FileText, Check, X, AlertCircle, Clock, Layers, GraduationCap, Sparkles,
+  BookOpen, FileText, Check, X, AlertCircle, Clock, Layers, GraduationCap, Sparkles,
   ChevronDown, ChevronRight, ArrowUp, ArrowDown, ExternalLink, File, FileDown, Link2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -524,7 +524,7 @@ export default function AdminCourseEditPage() {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={`/courses/${course.slug}`}
+                  href={`/admin/courses/${courseId}/preview`}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
                   <Eye size={16} /> Preview course

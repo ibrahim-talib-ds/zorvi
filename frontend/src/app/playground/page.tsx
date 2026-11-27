@@ -272,7 +272,7 @@ async function readProjectTree(
 function languageFromFileName(name: string): string {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   const map: Record<string, string> = {
-    html: "html", htm: "html", css: "css", js: "javascript",
+    html: "html", htm: "html", css: "css", js: "javascript", jsx: "javascript",
     mjs: "javascript", cjs: "javascript", ts: "typescript",
     tsx: "typescript", py: "python", json: "json", xml: "xml",
     md: "markdown", yml: "yaml", yaml: "yaml", sql: "sql",

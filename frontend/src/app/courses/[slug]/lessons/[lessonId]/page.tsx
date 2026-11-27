@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, PlayCircle, AlertCi
 import { cookies } from "next/headers";
 import { MarkCompleteButton, ProgressBar } from "./LessonViewer";
 import { CodeBlock } from "@/components/courses/CodeBlock";
+import { LessonMarkdown } from "@/components/courses/LessonMarkdown";
 import { PracticeInPlaygroundButton } from "@/components/courses/PracticeInPlaygroundButton";
 import { ExerciseBlock } from "@/components/courses/ExerciseBlock";
 import { PracticalExamples, PracticeQuestions } from "@/components/courses/StructuredLessonActivities";
@@ -333,7 +334,7 @@ export default async function LessonPage({ params }: PageProps) {
           {/* Written content */}
           {lesson.content_markdown && (
             <article className="prose prose-invert prose-lg max-w-none mb-12">
-              <MarkdownRenderer text={lesson.content_markdown} />
+              <LessonMarkdown content={lesson.content_markdown} />
             </article>
           )}
 
@@ -426,91 +427,4 @@ export default async function LessonPage({ params }: PageProps) {
 function extractYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return match ? match[1] : null;
-}
-
-function MarkdownRenderer({ text }: { text: string }) {
-  const lines = text.split("\n");
-  const elements: React.ReactElement[] = [];
-  let key = 0;
-  let listType: "ul" | "ol" | null = null;
-  let listItems: React.ReactElement[] = [];
-
-  const flushList = () => {
-    if (!listType || !listItems.length) return;
-    const ListTag = listType;
-    elements.push(
-      <ListTag key={key++} className="mb-5 space-y-2 pl-6">
-        {listItems}
-      </ListTag>
-    );
-    listType = null;
-    listItems = [];
-  };
-
-  const parseInlineFormatting = (value: string): React.ReactNode => {
-    const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
-    const parts = value.split(pattern).filter(Boolean);
-    return parts.map((part, index) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={index} className="font-bold text-white">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith("`") && part.endsWith("`")) {
-        return <code key={index} className="rounded bg-[#1E1E1E] px-1.5 py-0.5 font-mono text-sm text-[#F5A623]">{part.slice(1, -1)}</code>;
-      }
-      if (part.startsWith("*") && part.endsWith("*")) {
-        return <em key={index} className="italic text-[#B7BDD0]">{part.slice(1, -1)}</em>;
-      }
-      const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
-      if (link) {
-        return <a key={index} href={link[2]} target="_blank" rel="noopener noreferrer" className="text-[#A78BFA] underline underline-offset-4 hover:text-white">{link[1]}</a>;
-      }
-      return <span key={index}>{part}</span>;
-    });
-  };
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      flushList();
-      continue;
-    }
-
-    const heading = line.match(/^(#{1,3})\s+(.+)$/);
-    if (heading) {
-      flushList();
-      const text = heading[2];
-      if (heading[1].length === 1) {
-        elements.push(<h2 key={key++} className="mt-8 mb-4 border-b border-white/10 pb-2 font-display text-3xl font-bold text-white">{text}</h2>);
-      } else if (heading[1].length === 2) {
-        elements.push(<h3 key={key++} className="mt-6 mb-3 font-display text-2xl font-bold text-[#A78BFA]">{text}</h3>);
-      } else {
-        elements.push(<h4 key={key++} className="mt-5 mb-2 font-display text-xl font-bold text-white">{text}</h4>);
-      }
-      continue;
-    }
-
-    const bullet = line.match(/^\s*[-*]\s+(.+)$/);
-    const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
-    if (bullet || numbered) {
-      const nextType = bullet ? "ul" : "ol";
-      if (listType && listType !== nextType) flushList();
-      listType = nextType;
-      listItems.push(
-        <li key={key++} className={nextType === "ol" ? "list-decimal text-[#B7BDD0] leading-relaxed" : "list-disc text-[#B7BDD0] leading-relaxed"}>
-          {parseInlineFormatting((bullet || numbered)![1])}
-        </li>
-      );
-      continue;
-    }
-
-    flushList();
-    elements.push(
-      <p key={key++} className="mb-4 text-lg leading-relaxed text-[#B7BDD0]">
-        {parseInlineFormatting(line)}
-      </p>
-    );
-  }
-
-  flushList();
-  return <div>{elements}</div>;
 }

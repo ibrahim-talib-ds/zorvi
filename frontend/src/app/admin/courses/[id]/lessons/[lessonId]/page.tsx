@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
-  ArrowLeft, Loader2, Save, Check, Eye, AlertCircle,
+  ArrowLeft, Loader2, Save, Check, Eye,
   Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered,
   Code, Link as LinkIcon, Quote,
 } from "lucide-react";
@@ -29,6 +29,20 @@ interface LessonData {
   practice_questions?: { type?: string; prompt?: string; options?: string[]; answer?: string; explanation?: string; hint?: string; points?: number }[];
 }
 
+const LESSON_CODE_LANGUAGES = [
+  { value: "html", label: "HTML" }, { value: "css", label: "CSS" },
+  { value: "javascript", label: "JavaScript" }, { value: "typescript", label: "TypeScript" },
+  { value: "jsx", label: "JSX" }, { value: "tsx", label: "TSX" },
+  { value: "python", label: "Python" }, { value: "sql", label: "SQL" },
+  { value: "bash", label: "Bash" }, { value: "json", label: "JSON" },
+  { value: "yaml", label: "YAML" }, { value: "xml", label: "XML" },
+  { value: "markdown", label: "Markdown" }, { value: "java", label: "Java" },
+  { value: "php", label: "PHP" }, { value: "c", label: "C" },
+  { value: "cpp", label: "C++" }, { value: "csharp", label: "C#" },
+  { value: "go", label: "Go" }, { value: "rust", label: "Rust" },
+  { value: "ruby", label: "Ruby" }, { value: "text", label: "Plain text" },
+];
+
 const VIDEO_PROVIDERS = [
   { value: "none", label: "No video (text only)" },
   { value: "youtube", label: "YouTube" },
@@ -44,7 +58,6 @@ export default function LessonEditorPage() {
   const { token, isLoading: authLoading, isAuthenticated } = useAuth();
 
   const [lesson, setLesson] = useState<LessonData | null>(null);
-  const [courseSlug, setCourseSlug] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +68,7 @@ export default function LessonEditorPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [content, setContent] = useState("");
   const [codeExample, setCodeExample] = useState("");
-  const [codeLanguage, setCodeLanguage] = useState("sql");
+  const [codeLanguage, setCodeLanguage] = useState("html");
   const [exercise, setExercise] = useState("");
   const [examples, setExamples] = useState<NonNullable<LessonData["practical_examples"]>>([]);
   const [questions, setQuestions] = useState<NonNullable<LessonData["practice_questions"]>>([]);
@@ -71,15 +84,6 @@ export default function LessonEditorPage() {
     if (!token) return;
     setLoading(true);
     try {
-      // Get course info (for slug)
-      const courseRes = await fetchWithAuth(`${API_BASE}/admin/courses/${courseId}`, {
-        headers: { },
-      });
-      if (courseRes.ok) {
-        const course = await courseRes.json();
-        setCourseSlug(course.slug);
-      }
-
       // Get lesson content (admin needs full access — use public endpoint while enrolled OR use admin)
       // Admin endpoint isn't listed for GET single lesson, so we use course detail endpoint
       // and find the lesson ID via modules
@@ -119,7 +123,7 @@ export default function LessonEditorPage() {
       setVideoUrl(fullLesson.video_url || "");
       setContent(fullLesson.content_markdown || "");
       setCodeExample(fullLesson.code_example || "");
-      setCodeLanguage(fullLesson.code_language || "sql");
+      setCodeLanguage(fullLesson.code_language || "html");
       setExercise(fullLesson.exercise || "");
       setExamples(fullLesson.practical_examples || []);
       setQuestions(fullLesson.practice_questions || []);
@@ -241,7 +245,7 @@ export default function LessonEditorPage() {
         </div>
         <div className="flex gap-2">
           <Link
-            href={courseSlug ? `/courses/${courseSlug}/lessons/${lessonId}` : "#"}
+            href={`/admin/courses/${courseId}/lessons/${lessonId}/preview`}
             target="_blank"
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
           >
@@ -483,8 +487,8 @@ export default function LessonEditorPage() {
             onChange={(e) => setCodeLanguage(e.target.value)}
             className="mb-4 w-full rounded-lg border border-white/10 bg-[#0B0F1D] px-4 py-3 text-sm text-white focus:border-[#7559E8] focus:outline-none"
           >
-            {["sql", "python", "javascript", "typescript", "bash", "html", "css", "json", "text"].map((language) => (
-              <option key={language} value={language}>{language.toUpperCase()}</option>
+            {LESSON_CODE_LANGUAGES.map((language) => (
+              <option key={language.value} value={language.value}>{language.label}</option>
             ))}
           </select>
           <textarea
@@ -512,16 +516,16 @@ export default function LessonEditorPage() {
 
         {/* Practical examples builder */}
         <section className="rounded-2xl border border-[#7559E8]/25 bg-[#111827] p-6 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-[#A78BFA]">Learning by doing</p><h2 className="mt-1 text-lg font-bold text-white">Practical examples</h2><p className="mt-1 text-sm text-[#9299AE]">Add several worked examples with code and expected output.</p></div><button type="button" onClick={() => setExamples([...examples,{title:`Example ${examples.length+1}`,explanation:"",code:"",language:"sql",expected_output:""}])} className="rounded-xl bg-[#7559E8]/15 px-4 py-2.5 text-sm font-semibold text-[#C7B9FF] hover:bg-[#7559E8]/25">+ Add example</button></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-[#A78BFA]">Learning by doing</p><h2 className="mt-1 text-lg font-bold text-white">Practical examples</h2><p className="mt-1 text-sm text-[#9299AE]">Add several worked examples with code and expected output.</p></div><button type="button" onClick={() => setExamples([...examples,{title:`Example ${examples.length+1}`,explanation:"",code:"",language:"html",expected_output:""}])} className="rounded-xl bg-[#7559E8]/15 px-4 py-2.5 text-sm font-semibold text-[#C7B9FF] hover:bg-[#7559E8]/25">+ Add example</button></div>
           {examples.length===0 && <div className="rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-[#7A8199]">No practical examples yet. Add your first example.</div>}
-          {examples.map((item,index)=><div key={index} className="space-y-3 rounded-xl border border-white/10 bg-[#0B1020] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Example {index+1}</span><button type="button" onClick={()=>setExamples(examples.filter((_,i)=>i!==index))} className="text-xs text-[#F3A0AA] hover:text-white">Remove</button></div><input value={item.title||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,title:e.target.value}:x))} placeholder="Example title" className={inputClass}/><textarea value={item.explanation||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,explanation:e.target.value}:x))} rows={2} placeholder="Explain what this example demonstrates" className={inputClass}/><div className="grid gap-3 sm:grid-cols-[160px_1fr]"><select value={item.language||"sql"} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,language:e.target.value}:x))} className={inputClass}><option value="sql">SQL</option><option value="python">Python</option><option value="javascript">JavaScript</option><option value="bash">Bash</option></select><textarea value={item.code||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,code:e.target.value}:x))} rows={5} placeholder="Write the code for this example" className={`${inputClass} font-mono`}/></div><textarea value={item.expected_output||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,expected_output:e.target.value}:x))} rows={3} placeholder="Expected output (optional)" className={`${inputClass} font-mono`}/></div>)}
+          {examples.map((item,index)=><div key={index} className="space-y-3 rounded-xl border border-white/10 bg-[#0B1020] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Example {index+1}</span><button type="button" onClick={()=>setExamples(examples.filter((_,i)=>i!==index))} className="text-xs text-[#F3A0AA] hover:text-white">Remove</button></div><input value={item.title||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,title:e.target.value}:x))} placeholder="Example title" className={inputClass}/><textarea value={item.explanation||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,explanation:e.target.value}:x))} rows={2} placeholder="Explain what this example demonstrates" className={inputClass}/><div className="grid gap-3 sm:grid-cols-[160px_1fr]"><select aria-label={`Example ${index + 1} programming language`} value={item.language||"html"} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,language:e.target.value}:x))} className={inputClass}>{LESSON_CODE_LANGUAGES.map(language=><option key={language.value} value={language.value}>{language.label}</option>)}</select><textarea value={item.code||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,code:e.target.value}:x))} rows={5} placeholder="Write the code for this example" className={`${inputClass} font-mono`}/></div><textarea value={item.expected_output||""} onChange={e=>setExamples(examples.map((x,i)=>i===index?{...x,expected_output:e.target.value}:x))} rows={3} placeholder="Expected output (optional)" className={`${inputClass} font-mono`}/></div>)}
         </section>
 
         {/* Structured practice question builder */}
         <section className="rounded-2xl border border-[#F5A623]/20 bg-[#111827] p-6 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-[#F5A623]">Knowledge check</p><h2 className="mt-1 text-lg font-bold text-white">Practice questions</h2><p className="mt-1 text-sm text-[#9299AE]">Each question becomes its own interactive student card.</p></div><button type="button" onClick={()=>setQuestions([...questions,{type:"multiple_choice",prompt:"",options:["Option A","Option B"],answer:"Option A",explanation:"",hint:"",points:1}])} className="rounded-xl bg-[#F5A623]/10 px-4 py-2.5 text-sm font-semibold text-[#F5C56D] hover:bg-[#F5A623]/20">+ Add question</button></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-[#F5A623]">Knowledge check</p><h2 className="mt-1 text-lg font-bold text-white">Practice questions</h2><p className="mt-1 text-sm text-[#9299AE]">Each question becomes its own interactive student card.</p><p className="mt-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-[#B7BDD0]">Multiple choice: enter one answer option per line, then select the correct answer from the dropdown. True / False: choose the correct answer. Short answer and Code task: type the expected answer in the answer field.</p></div><button type="button" onClick={()=>setQuestions([...questions,{type:"multiple_choice",prompt:"",options:["Option A","Option B"],answer:"",explanation:"",hint:"",points:1}])} className="rounded-xl bg-[#F5A623]/10 px-4 py-2.5 text-sm font-semibold text-[#F5C56D] hover:bg-[#F5A623]/20">+ Add question</button></div>
           {questions.length===0 && <div className="rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-[#7A8199]">No practice questions yet. Add a question to build the lesson assessment.</div>}
-          {questions.map((item,index)=><div key={index} className="space-y-3 rounded-xl border border-white/10 bg-[#0B1020] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Question {index+1}</span><button type="button" onClick={()=>setQuestions(questions.filter((_,i)=>i!==index))} className="text-xs text-[#F3A0AA] hover:text-white">Remove</button></div><div className="grid gap-3 sm:grid-cols-[1fr_110px]"><select value={item.type||"short_answer"} onChange={e=>setQuestions(questions.map((x,i)=>{if(i!==index)return x;const type=e.target.value;return type==="true_false"?{...x,type,options:["True","False"],answer:""}:{...x,type};}))} className={inputClass}><option value="multiple_choice">Multiple choice</option><option value="true_false">True / False</option><option value="short_answer">Short answer</option><option value="code">Code task</option></select><input type="number" min="1" value={item.points||1} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,points:Number(e.target.value)}:x))} className={inputClass} placeholder="Points"/></div><textarea value={item.prompt||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,prompt:e.target.value}:x))} rows={2} placeholder="Question prompt" className={inputClass}/>{(item.type==="multiple_choice"||item.type==="true_false")&&<div><label className={labelClass}>Answer options · one per line</label><textarea value={(item.options||[]).join("\n")} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,options:e.target.value.split("\n").map(option=>option.trim()).filter(Boolean)}:x))} rows={3} className={inputClass}/></div>}<input value={item.answer||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,answer:e.target.value}:x))} placeholder="Correct / suggested answer" className={inputClass}/><textarea value={item.explanation||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,explanation:e.target.value}:x))} rows={2} placeholder="Explanation shown with the answer" className={inputClass}/><input value={item.hint||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,hint:e.target.value}:x))} placeholder="Optional hint" className={inputClass}/></div>)}
+          {questions.map((item,index)=><div key={index} className="space-y-3 rounded-xl border border-white/10 bg-[#0B1020] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Question {index+1}</span><button type="button" onClick={()=>setQuestions(questions.filter((_,i)=>i!==index))} className="text-xs text-[#F3A0AA] hover:text-white">Remove</button></div><div className="grid gap-3 sm:grid-cols-[1fr_110px]"><select value={item.type||"short_answer"} onChange={e=>setQuestions(questions.map((x,i)=>{if(i!==index)return x;const type=e.target.value;return type==="true_false"?{...x,type,options:["True","False"],answer:""}:type==="multiple_choice"?{...x,type,options:(x.options?.length||0)>=2?x.options:["Option A","Option B"],answer:""}:{...x,type,options:[],answer:""};}))} className={inputClass}><option value="multiple_choice">Multiple choice</option><option value="true_false">True / False</option><option value="short_answer">Short answer</option><option value="code">Code task</option></select><input type="number" min="1" value={item.points||1} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,points:Number(e.target.value)}:x))} className={inputClass} placeholder="Points"/></div><textarea value={item.prompt||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,prompt:e.target.value}:x))} rows={2} placeholder="Question prompt" className={inputClass}/>{(item.type==="multiple_choice"||item.type==="true_false")&&<div><label className={labelClass}>Answer options · one per line</label><textarea aria-label={`Question ${index + 1} answer options`} value={(item.type==="true_false"?["True","False"]:(item.options||[])).join("\n")} readOnly={item.type==="true_false"} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,options:e.target.value.split("\n").map(option=>option.trim()).filter(Boolean),answer:(e.target.value.split("\n").map(option=>option.trim()).includes(x.answer||"")?x.answer:"")}:x))} rows={3} className={inputClass}/></div>}{(item.type==="multiple_choice"||item.type==="true_false")?<div><label className={labelClass}>Correct answer · select one option</label><select value={item.answer||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,answer:e.target.value}:x))} className={inputClass}><option value="">Choose the correct answer</option>{(item.type==="true_false"?["True","False"]:item.options||[]).map(option=><option key={option} value={option}>{option}</option>)}</select></div>:<div><label className={labelClass}>Correct / suggested answer</label><textarea value={item.answer||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,answer:e.target.value}:x))} rows={item.type==="code"?5:2} placeholder={item.type==="code"?"Enter the expected code solution":"Enter the expected answer"} className={`${inputClass} font-mono`}/></div>}<textarea value={item.explanation||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,explanation:e.target.value}:x))} rows={2} placeholder="Explanation shown with the answer" className={inputClass}/><input value={item.hint||""} onChange={e=>setQuestions(questions.map((x,i)=>i===index?{...x,hint:e.target.value}:x))} placeholder="Optional hint" className={inputClass}/></div>)}
         </section>
 
         {/* Bottom save */}
