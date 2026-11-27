@@ -334,7 +334,7 @@ export default async function LessonPage({ params }: PageProps) {
           {/* Written content */}
           {lesson.content_markdown && (
             <article className="prose prose-invert prose-lg max-w-none mb-12">
-              <LessonMarkdown content={lesson.content_markdown} />
+              <LessonMarkdown content={lesson.content_markdown} lessonId={lesson.id} courseSlug={slug} />
             </article>
           )}
 
@@ -345,9 +345,9 @@ export default async function LessonPage({ params }: PageProps) {
                 <h2 className="font-display text-xl font-bold text-white flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#7559E8]" /> Code Example
                 </h2>
-                <PracticeInPlaygroundButton code={lesson.code_example} language={lesson.code_language || "sql"} lessonTitle={lesson.title} />
+                <PracticeInPlaygroundButton code={lesson.code_example} language={lesson.code_language || undefined} lessonTitle={lesson.title} />
               </div>
-              <CodeBlock code={lesson.code_example} language={lesson.code_language || "sql"} />
+              <CodeBlock code={lesson.code_example} language={lesson.code_language || undefined} />
             </div>
           )}
 
@@ -356,7 +356,7 @@ export default async function LessonPage({ params }: PageProps) {
           <PracticeQuestions questions={lesson.practice_questions || []} />
 
           {/* Legacy exercise content retained for existing lessons */}
-          {lesson.exercise && (
+          {lesson.exercise && !lesson.content_markdown?.includes("IBRANT_EXERCISE_V1:") && (
             <ExerciseBlock exerciseText={lesson.exercise} language="python" lessonId={lesson.id} courseSlug={slug} />
           )}
 

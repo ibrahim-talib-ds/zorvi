@@ -14,6 +14,7 @@ import "prismjs/themes/prism-tomorrow.css";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 import { LegacyExerciseBlock } from "./LegacyExerciseBlock";
+import { PracticeInPlaygroundButton } from "./PracticeInPlaygroundButton";
 
 type ExerciseConfig = {
   version: 1;
@@ -29,6 +30,74 @@ type ExerciseConfig = {
 };
 const PREFIX = "IBRANT_EXERCISE_V1:";
 const defaultConfig: ExerciseConfig = { version: 1, type: "written", title: "Practice exercise", instructions: "", min_words: 150, max_words: 200 };
+
+function starterForLanguage(language: string): string {
+  if (language === "html") return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile</title>
+</head>
+<body>
+  <h1>Your Name</h1>
+  <p>Write a short introduction about yourself.</p>
+  <h2>My interests</h2>
+  <ul>
+    <li>Interest one</li>
+    <li>Interest two</li>
+    <li>Interest three</li>
+  </ul>
+  <a href="https://example.com">A website I like</a>
+  <button>Contact Me</button>
+</body>
+</html>`;
+  if (language === "javascript") return 'console.log("Hello from ibrant!");';
+  if (language === "python") return 'print("Hello from ibrant!")';
+  return "";
+}
+
+
+function ExerciseInstructions({ text, title }: { text: string; title: string }) {
+  const lines = text.replace(/\\([*`])/g, "$1").replace(/\r\n/g, "\n").split("\n");
+  const nodes: React.ReactNode[] = [];
+  const inline = (value: string) => value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("`") && part.endsWith("`")) return <code key={index} className="rounded bg-black/25 px-1 py-0.5 font-mono text-xs text-[#F5C56D]">{part.slice(1, -1)}</code>;
+    return <span key={index}>{part}</span>;
+  });
+  const normalizedTitle = title.trim().toLowerCase();
+  for (let i = 0; i < lines.length;) {
+    const value = lines[i].trim();
+    if (!value) { i++; continue; }
+    const heading = value.match(/^#{1,3}\s+(.+)$/);
+    if (heading) {
+      i++;
+      if (heading[1].trim().toLowerCase() === normalizedTitle) continue;
+      nodes.push(<h3 key={nodes.length} className="text-sm font-bold text-white">{inline(heading[1])}</h3>);
+      continue;
+    }
+    const bullet = value.match(/^[-*]\s+(.+)$/);
+    const ordered = value.match(/^\d+\.\s+(.+)$/);
+    if (bullet || ordered) {
+      const isOrdered = Boolean(ordered);
+      const items: React.ReactNode[] = [];
+      while (i < lines.length) {
+        const match = lines[i].trim().match(isOrdered ? /^\d+\.\s+(.+)$/ : /^[-*]\s+(.+)$/);
+        if (!match) break;
+        items.push(<li key={items.length}>{inline(match[1])}</li>);
+        i++;
+      }
+      nodes.push(isOrdered
+        ? <ol key={nodes.length} className="list-decimal space-y-1.5 pl-5 marker:text-[#A78BFA]">{items}</ol>
+        : <ul key={nodes.length} className="list-disc space-y-1.5 pl-5 marker:text-[#F5C56D]">{items}</ul>);
+      continue;
+    }
+    nodes.push(<p key={nodes.length}>{inline(value)}</p>);
+    i++;
+  }
+  return <div className="space-y-3 text-sm leading-6 text-[#D2D8E5]">{nodes}</div>;
+}
 
 export function encodeExercise(config: ExerciseConfig) {
   return PREFIX + JSON.stringify(config);
@@ -47,6 +116,12 @@ const languages: Record<string, string> = {
 function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, courseSlug }: { exerciseText: string; language?: string; lessonId?: string; courseSlug?: string }) {
   const { token } = useAuth();
   const config = useMemo(() => parseExercise(exerciseText) || defaultConfig, [exerciseText]);
+  // Older lessons sometimes saved an HTML-building prompt as a written activity.
+  // Recognize an explicit request to write HTML and present the proper code workspace.
+  const inferredHtmlCode = config.type === "written" && /write\s+(?:your\s+)?html\s+code|html\s+code\s+(?:in|below)|create\s+(?:a|your)\s+(?:simple\s+)?html\s+(?:page|profile)|build\s+(?:a|your)\s+(?:simple\s+)?html\s+(?:page|profile)/i.test(config.instructions);
+  const isCodeTask = config.type === "code" || inferredHtmlCode;
+  const exerciseLanguage = (config.language || (inferredHtmlCode ? "html" : language)).trim().toLowerCase();
+  const starterCode = starterForLanguage(exerciseLanguage);
   const storageKey = `ibrant-exercise:${token ? token.slice(-16) : "guest"}:${lessonId || "lesson"}`;
   const [answer, setAnswer] = useState("");
   const [hintOpen, setHintOpen] = useState(false);
@@ -61,7 +136,11 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      try { setAnswer(localStorage.getItem(storageKey) || ""); } catch { /* storage may be unavailable */ }
+      try {
+        const savedAnswer = localStorage.getItem(storageKey) || "";
+        const usableSavedAnswer = inferredHtmlCode && savedAnswer.trim() && !/<[a-z][\s\S]*>/i.test(savedAnswer) ? "" : savedAnswer;
+        setAnswer(usableSavedAnswer || (isCodeTask ? starterCode : ""));
+      } catch { if (isCodeTask) setAnswer(starterCode); }
       if (!token || !courseSlug || !lessonId) { setSubmissionStatus("Sign in and enrol in this course to submit work to your instructor."); return; }
       try {
         const response = await fetch(`${API_BASE}/courses/${courseSlug}/lessons/${lessonId}/exercise-submission`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
@@ -69,7 +148,9 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
         if (!response.ok) throw new Error("Could not load your saved submission.");
         const data = await response.json();
         if (!cancelled && data) {
-          setAnswer(data.answer || "");
+          const serverAnswer = data.answer || "";
+          const usableServerAnswer = inferredHtmlCode && serverAnswer.trim() && !/<[a-z][\s\S]*>/i.test(serverAnswer) ? "" : serverAnswer;
+          setAnswer(usableServerAnswer || (isCodeTask ? starterCode : ""));
           setSubmitted(data.status === "submitted" || data.status === "reviewed");
       setReviewInfo(data.feedback || data.grade != null ? { grade: data.grade, feedback: data.feedback } : null);
           setSubmissionStatus(data.status === "reviewed" ? `Reviewed${data.grade != null ? ` · ${data.grade}/100` : ""}` : data.status === "submitted" ? "Submitted · awaiting instructor review" : data.feedback ? "Returned for revision · update your work and submit again" : "Draft saved to your account");
@@ -79,7 +160,7 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
     };
     void load();
     return () => { cancelled = true; };
-  }, [storageKey, token, courseSlug, lessonId]);
+  }, [storageKey, token, courseSlug, lessonId, isCodeTask, starterCode, inferredHtmlCode]);
 
   const updateAnswer = (value: string) => {
     setAnswer(value);
@@ -105,35 +186,38 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
     finally { setSaving(false); }
   };
 
-  const prismLanguage = languages[config.language || language] || "plain";
-  const canRunHtml = config.type === "code" && (config.language || language) === "html";
+  const prismLanguage = languages[exerciseLanguage] || "plain";
+  const canRunHtml = isCodeTask && exerciseLanguage === "html";
 
   return (
     <section className="not-prose my-12 overflow-hidden rounded-2xl border border-[#7559E8]/35 bg-[#111827] shadow-xl shadow-[#7559E8]/5">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#7559E8]/20 via-[#7559E8]/5 to-[#F5A623]/10 px-5 py-4 sm:px-7">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7559E8]/20 text-[#C4B5FD]">
-            {config.type === "code" ? <Code2 size={20}/> : config.type === "written" ? <FileText size={20}/> : config.type === "multiple_choice" || config.type === "true_false" ? <ListChecks size={20}/> : <CircleHelp size={20}/>}
+            {isCodeTask ? <Code2 size={20}/> : config.type === "written" ? <FileText size={20}/> : config.type === "multiple_choice" || config.type === "true_false" ? <ListChecks size={20}/> : <CircleHelp size={20}/>}
           </span>
           <div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#B9A8FF]">Your practice workspace</p><h2 className="text-lg font-bold text-white">{config.title || "Practice exercise"}</h2></div>
         </div>
-        <span className="rounded-full border border-[#F5A623]/25 bg-[#F5A623]/10 px-3 py-1 text-xs font-semibold capitalize text-[#F5C56D]">{config.type.replace("_", " ")}</span>
+        <span className="rounded-full border border-[#F5A623]/25 bg-[#F5A623]/10 px-3 py-1 text-xs font-semibold capitalize text-[#F5C56D]">{isCodeTask ? `${exerciseLanguage} code task` : config.type.replace("_", " ")}</span>
       </header>
       <div className="space-y-5 p-5 sm:p-7">
-        <div className="whitespace-pre-wrap text-sm leading-7 text-[#D2D8E5]">{config.instructions || "Complete the task below and submit your response."}</div>
+        <ExerciseInstructions text={config.instructions || "Complete the task below and submit your response."} title={config.title || "Practice exercise"} />
 
-        {config.type === "written" && <>
+        {config.type === "written" && !isCodeTask && <>
           <div className="flex flex-wrap items-center justify-between gap-2"><label className="text-sm font-semibold text-white">Your response</label><span className={`text-xs tabular-nums ${config.max_words && words > config.max_words ? "text-[#F3A0AA]" : "text-[#9299AE]"}`}>{words} words{config.min_words || config.max_words ? ` · target ${config.min_words || 0}–${config.max_words || "∞"}` : ""}</span></div>
           <textarea value={answer} onChange={e => updateAnswer(e.target.value)} rows={10} placeholder="Start writing your response here..." className="w-full resize-y rounded-xl border border-white/10 bg-[#0B1020] p-4 text-sm leading-7 text-white outline-none transition focus:border-[#8B70FF] focus:ring-2 focus:ring-[#7559E8]/20"/>
           {config.min_words && words < config.min_words && <p className="text-xs text-[#9299AE]">Add {config.min_words - words} more words to reach the suggested minimum.</p>}
         </>}
 
-        {config.type === "code" && <>
-          <div className="flex flex-wrap items-center justify-between gap-2"><label className="text-sm font-semibold text-white">Write your code</label><select aria-label="Code language" value={config.language || language} disabled className="rounded-lg border border-white/10 bg-[#0B1020] px-3 py-2 text-xs text-[#B7BDD0]"><option>{(config.language || language).toUpperCase()}</option></select></div>
+        {isCodeTask && <>
+          <div className="flex flex-wrap items-center justify-between gap-2"><label className="text-sm font-semibold text-white">Write your code</label><select aria-label="Code language" value={exerciseLanguage} disabled className="rounded-lg border border-white/10 bg-[#0B1020] px-3 py-2 text-xs text-[#B7BDD0]"><option>{exerciseLanguage.toUpperCase()}</option></select></div>
           <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plaintext || {}, prismLanguage)} padding={16} textareaClassName="focus:outline-none" style={{fontFamily:'"Fira Code",monospace',fontSize:14,minHeight:220,color:"#E8ECF4",background:"transparent"}}/></div>
-          {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Preview HTML"}</button>}
-          {canRunHtml && previewOpen && <iframe title="HTML exercise preview" sandbox="" srcDoc={answer} className="h-64 w-full rounded-xl border border-white/10 bg-white"/>}
-          <p className="text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Save or submit it to send your work to the instructor. HTML can be previewed here.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <PracticeInPlaygroundButton code={answer.trim() || starterCode} language={exerciseLanguage} lessonTitle={config.title || "Lesson exercise"} />
+            {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Preview HTML"}</button>}
+          </div>
+          {canRunHtml && previewOpen && <iframe title="HTML exercise preview" sandbox="" srcDoc={answer || starterCode} className="h-64 w-full rounded-xl border border-white/10 bg-white"/>}
+          <p className="text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Open it in Playground to continue building and run supported code. HTML can also be previewed here.</p>
         </>}
 
         {isChoice && <div className="grid gap-3">{(config.type === "true_false" ? ["True", "False"] : config.options || []).map((option, index) => <button type="button" key={option} onClick={() => updateAnswer(option)} className={`rounded-xl border p-4 text-left text-sm transition ${answer === option ? "border-[#8B70FF] bg-[#7559E8]/15 text-white" : "border-white/10 bg-[#0B1020] text-[#C4CBD8] hover:border-white/25"}`}><span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-xs text-[#A78BFA]">{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>}

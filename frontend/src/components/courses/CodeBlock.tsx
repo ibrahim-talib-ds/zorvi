@@ -9,8 +9,19 @@ interface Props {
   language?: string;
 }
 
-export function CodeBlock({ code, language = "python" }: Props) {
+function resolveCodeLanguage(code: string, declared: string): string {
+  const source = code.trim();
+  if (/<!doctype\s+html|<(?:html|head|body|h[1-6]|p|div|button|ul|ol|li|a|section|main)\b/i.test(source)) return "html";
+  if (/(?:^|\n)\s*[.#]?[\w-]+\s*\{\s*[\w-]+\s*:/m.test(source)) return "css";
+  if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/im.test(source)) return "sql";
+  if (/^\s*(def |print\(|import |from .* import |if __name__)/m.test(source)) return "python";
+  if (/\b(const|let|var|function|console\.log|document\.)\b/.test(source) || /=>/.test(source)) return "javascript";
+  return declared || "text";
+}
+
+export function CodeBlock({ code, language = "text" }: Props) {
   const [copied, setCopied] = useState(false);
+  const resolvedLanguage = resolveCodeLanguage(code, language.toLowerCase());
 
   const handleCopy = async () => {
     try {
@@ -33,7 +44,7 @@ export function CodeBlock({ code, language = "python" }: Props) {
             <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
           </div>
           <span className="ml-2 text-xs font-mono text-[#A9B7C6] uppercase tracking-wider">
-            {language}
+            {resolvedLanguage}
           </span>
         </div>
         
@@ -55,7 +66,7 @@ export function CodeBlock({ code, language = "python" }: Props) {
 
       {/* Code area with Prism Renderer */}
       <div className="text-sm font-mono leading-relaxed overflow-x-auto">
-        <Highlight theme={themes.vsDark} code={code.trim()} language={language as Language}>
+        <Highlight theme={themes.vsDark} code={code.trim()} language={resolvedLanguage as Language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre 
               className={className} 

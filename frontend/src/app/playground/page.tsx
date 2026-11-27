@@ -821,42 +821,52 @@ export default function PlaygroundPage() {
     setActiveLanguage(language);
   };
 
-  // A learner can send a lesson's code example straight into a fresh editor tab.
+  // Lesson handoff opens the correct language and immediately prepares a runnable web preview.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("handoff") !== "lesson") return;
     const raw = localStorage.getItem("ibrant_PLAYGROUND_HANDOFF_V1");
     if (!raw) return;
     try {
-      const handoff = JSON.parse(raw) as { code?: string; language?: string; title?: string };
-      if (typeof handoff.code !== "string") throw new Error("Lesson example is missing code.");
+      const handoff = JSON.parse(raw) as { code?: string; language?: string; title?: string; mode?: string; autoRun?: boolean };
+      if (typeof handoff.code !== "string") throw new Error("Lesson code is missing.");
       localStorage.removeItem("ibrant_PLAYGROUND_HANDOFF_V1");
-      const language = languageFromFileName(`example.${(handoff.language || "python").toLowerCase()}`);
-      const title = (handoff.title || "Lesson example").slice(0, 60);
-      if (["html", "css", "javascript"].includes(language)) {
-        const key = language === "javascript" ? "js" : language;
-        setCode((current) => ({ ...current, [key]: handoff.code! }));
-        setEditorTabs(current => {
-          const withoutPlaceholder = current.filter(tab => tab.id !== "plaintext");
-          return withoutPlaceholder.some(tab => tab.id === language) ? withoutPlaceholder : [...withoutPlaceholder, { ...WEB_CORE_TABS.find(tab => tab.id === language)!, core: false }];
-        });
-        setActiveTabId(language);
-        setActiveLanguage(language);
-      } else {
-        const id = `lesson-${Date.now()}-${nextTabCounterRef.current++}`;
-        const tab: EditorTab = { id, name: title || `${language} lesson`, language };
-        setEditorTabs([tab]);
-        setExtraCode((current) => ({ ...current, [id]: handoff.code! }));
-        setActiveTabId(id);
-        setActiveLanguage(language);
-      }
+      const declared = (handoff.language || "").trim().toLowerCase();
+      const aliases: Record<string, string> = { js: "javascript", javascript: "javascript", htm: "html", html: "html", css: "css", py: "python", python: "python", ts: "typescript", typescript: "typescript" };
+      const language = aliases[declared] || languageFromFileName(`example.${declared || "txt"}`);
+      const title = (handoff.title || "Lesson code").slice(0, 60);
       setActiveProjectFile(null);
       setActiveProjectPath("");
       setProjectFileContent("");
       setCloudProject(null);
-      pushLog("sys", `Lesson example opened: ${title}`);
+      setCloudProjectFiles({});
+      setCloudProjectPaths([]);
+      setCloudProjectDirty(false);
+
+      if (["html", "css", "javascript"].includes(language)) {
+        const nextCode: Code = {
+          html: language === "html" ? handoff.code : "",
+          css: language === "css" ? handoff.code : "",
+          js: language === "javascript" ? handoff.code : "",
+        };
+        setCode(nextCode);
+        setSrcDoc(build(nextCode));
+        setEditorTabs(WEB_CORE_TABS.map(tab => ({ ...tab, core: false })));
+        setActiveTabId(language);
+        setActiveLanguage(language);
+        setExtraCode({});
+        setLogs(current => [...current.slice(-499), { level: "sys", text: `${title} opened as ${language.toUpperCase()}. The preview is ready; press Run after editing to refresh it.`, tabId: language, t: new Date().toLocaleTimeString([], { hour12: false }) }]);
+      } else {
+        const id = `lesson-${Date.now()}-${nextTabCounterRef.current++}`;
+        const tab: EditorTab = { id, name: title || `${language} lesson`, language };
+        setEditorTabs([tab]);
+        setExtraCode({ [id]: handoff.code });
+        setActiveTabId(id);
+        setActiveLanguage(language);
+        setLogs(current => [...current.slice(-499), { level: "sys", text: `${title} opened in the ${language} editor.`, tabId: id, t: new Date().toLocaleTimeString([], { hour12: false }) }]);
+      }
     } catch (error) {
-      setCloudProjectError(error instanceof Error ? error.message : "Unable to open the lesson example.");
+      setCloudProjectError(error instanceof Error ? error.message : "Unable to open the lesson code.");
     }
   }, []);
 
@@ -1548,6 +1558,7 @@ export default function PlaygroundPage() {
 
   // load saved work once
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("handoff") === "lesson") return;
     try {
       const raw = localStorage.getItem(PG_KEY);
       if (!raw) return;
@@ -1601,6 +1612,7 @@ export default function PlaygroundPage() {
 
   // Restore scratch tabs. Project-file handles are intentionally session-only.
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("handoff") === "lesson") return;
     try {
       const savedTabsRaw = localStorage.getItem(PG_TABS_KEY);
 

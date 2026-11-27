@@ -1,8 +1,9 @@
 "use client";
 
 import { CodeBlock } from "@/components/courses/CodeBlock";
+import { ExerciseBlock } from "@/components/courses/ExerciseBlock";
 
-export function LessonMarkdown({ content }: { content: string }) {
+export function LessonMarkdown({ content, lessonId, courseSlug }: { content: string; lessonId?: string; courseSlug?: string }) {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const nodes: React.ReactNode[] = [];
   let i = 0;
@@ -17,6 +18,13 @@ export function LessonMarkdown({ content }: { content: string }) {
     const line = lines[i];
     const trimmed = line.trim();
     if (!trimmed) { i++; continue; }
+    // Render embedded structured exercise markers as an actual student workspace,
+    // rather than exposing the serialized config string in lesson prose.
+    if (trimmed.startsWith("IBRANT_EXERCISE_V1:")) {
+      nodes.push(<ExerciseBlock key={key++} exerciseText={trimmed} lessonId={lessonId} courseSlug={courseSlug} />);
+      i++;
+      continue;
+    }
     const fence = trimmed.match(/^```([a-zA-Z0-9_+#.-]*)\s*$/);
     if (fence) {
       const language = fence[1] || "text";

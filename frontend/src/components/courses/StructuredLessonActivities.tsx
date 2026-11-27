@@ -66,7 +66,7 @@ export function PracticalExamples({ examples }: { examples: Example[] }) {
     {examples.map((example, index) => <article key={index} className="overflow-hidden rounded-2xl border border-white/10 bg-[#111827]">
       <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7559E8]/15 text-sm font-bold text-[#B9A8FF]">{index + 1}</span><h3 className="font-semibold text-white">{example.title || `Example ${index + 1}`}</h3></div>
       {example.explanation && <p className="px-5 pt-4 text-sm leading-7 text-[#B7BDD0]">{example.explanation}</p>}
-      {example.code && <div className="px-5 py-4 space-y-3"><div className="flex justify-end"><PracticeInPlaygroundButton code={example.code} language={example.language || "sql"} lessonTitle={example.title || `Example ${index + 1}`} /></div><CodeBlock code={example.code} language={example.language || "sql"} /></div>}
+      {example.code && <div className="px-5 py-4 space-y-3"><div className="flex justify-end"><PracticeInPlaygroundButton code={example.code} language={example.language || undefined} lessonTitle={example.title || `Example ${index + 1}`} /></div><CodeBlock code={example.code} language={example.language || undefined} /></div>}
       {example.expected_output && <div className="border-t border-white/10 bg-[#0B1020] px-5 py-4"><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#22C58B]">Expected output</p><pre className="overflow-x-auto whitespace-pre-wrap font-mono text-sm text-[#D6DEEA]">{example.expected_output}</pre></div>}
     </article>)}
   </section>;
