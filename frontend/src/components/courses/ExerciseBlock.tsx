@@ -97,7 +97,7 @@ function ExerciseInstructions({ text, title }: { text: string; title: string }) 
     nodes.push(<p key={nodes.length}>{inline(value)}</p>);
     i++;
   }
-  return <div className="space-y-3 text-sm leading-6 text-[#D2D8E5]">{nodes}</div>;
+  return <div className="practice-workspace-instructions space-y-3 text-sm leading-6 text-[#D2D8E5]">{nodes}</div>;
 }
 
 export function encodeExercise(config: ExerciseConfig) {
@@ -210,17 +210,17 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
   const canRunHtml = isCodeTask && exerciseLanguage === "html";
 
   return (
-    <section className="not-prose my-12 overflow-hidden rounded-2xl border border-[#7559E8]/35 bg-[#111827] shadow-xl shadow-[#7559E8]/5">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#7559E8]/20 via-[#7559E8]/5 to-[#F5A623]/10 px-5 py-4 sm:px-7">
+    <section className="practice-workspace not-prose my-12 overflow-hidden rounded-2xl border border-[#7559E8]/35 bg-[#111827] shadow-xl shadow-[#7559E8]/5">
+      <header className="practice-workspace-header flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#7559E8]/20 via-[#7559E8]/5 to-[#F5A623]/10 px-5 py-4 sm:px-7">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7559E8]/20 text-[#C4B5FD]">
+          <span className="practice-workspace-icon flex h-10 w-10 items-center justify-center rounded-xl bg-[#7559E8]/20 text-[#C4B5FD]">
             {isCodeTask ? <Code2 size={20}/> : config.type === "written" ? <FileText size={20}/> : config.type === "multiple_choice" || config.type === "true_false" ? <ListChecks size={20}/> : <CircleHelp size={20}/>}
           </span>
-          <div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#B9A8FF]">Your practice workspace</p><h2 className="text-lg font-bold text-white">{config.title || "Practice exercise"}</h2></div>
+          <div><p className="practice-workspace-eyebrow text-xs font-bold uppercase tracking-[.16em] text-[#B9A8FF]">Your practice workspace</p><h2 className="practice-workspace-title text-lg font-bold text-white">{config.title || "Practice exercise"}</h2></div>
         </div>
-        <span className="rounded-full border border-[#F5A623]/25 bg-[#F5A623]/10 px-3 py-1 text-xs font-semibold capitalize text-[#F5C56D]">{isCodeTask ? `${exerciseLanguage} code task` : config.type.replace("_", " ")}</span>
+        <span className="practice-workspace-type rounded-full border border-[#F5A623]/25 bg-[#F5A623]/10 px-3 py-1 text-xs font-semibold capitalize text-[#F5C56D]">{isCodeTask ? `${exerciseLanguage} code task` : config.type.replace("_", " ")}</span>
       </header>
-      <div className="space-y-5 p-5 sm:p-7">
+      <div className="practice-workspace-body space-y-5 p-5 sm:p-7">
         <ExerciseInstructions text={config.instructions || "Complete the task below and submit your response."} title={config.title || "Practice exercise"} />
 
         {config.type === "written" && !isCodeTask && <>
@@ -230,14 +230,14 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
         </>}
 
         {isCodeTask && <>
-          <div className="flex flex-wrap items-center justify-between gap-2"><label className="text-sm font-semibold text-white">Write your code</label><select aria-label="Code language" value={exerciseLanguage} disabled className="rounded-lg border border-white/10 bg-[#0B1020] px-3 py-2 text-xs text-[#B7BDD0]"><option>{exerciseLanguage.toUpperCase()}</option></select></div>
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plaintext || {}, prismLanguage)} padding={16} textareaClassName="focus:outline-none" style={{fontFamily:'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',fontSize:15.5,fontWeight:500,lineHeight:1.7,letterSpacing:"0.01em",minHeight:220,color:"#E8ECF4",background:"transparent",WebkitFontSmoothing:"auto",fontVariantLigatures:"none"}}/></div>
+          <div className="practice-workspace-code-toolbar flex flex-wrap items-center justify-between gap-2"><label className="practice-workspace-code-label text-sm font-semibold text-white">Write your code</label><select aria-label="Code language" value={exerciseLanguage} disabled className="practice-workspace-language rounded-lg border border-white/10 bg-[#0B1020] px-3 py-2 text-xs text-[#B7BDD0]"><option>{exerciseLanguage.toUpperCase()}</option></select></div>
+          <div className="practice-workspace-code-editor overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plaintext || {}, prismLanguage)} padding={16} textareaClassName="practice-workspace-code-input focus:outline-none" style={{fontFamily:'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',fontSize:15.5,fontWeight:500,lineHeight:1.7,letterSpacing:"0.01em",minHeight:220,color:"#E8ECF4",background:"transparent",WebkitFontSmoothing:"auto",fontVariantLigatures:"none"}}/></div>
           <div className="flex flex-wrap items-center gap-2">
             <PracticeInPlaygroundButton code={answer.trim() || starterCode} language={exerciseLanguage} lessonTitle={config.title || "Lesson exercise"} />
             {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Show live preview"}</button>}
           </div>
-          {canRunHtml && previewOpen && <div className="overflow-hidden rounded-xl border border-white/10 bg-white"><div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2"><span className="h-2.5 w-2.5 rounded-full bg-red-400"/><span className="h-2.5 w-2.5 rounded-full bg-amber-400"/><span className="h-2.5 w-2.5 rounded-full bg-emerald-400"/><span className="ml-2 text-xs font-medium text-slate-500">Live webpage preview</span></div><iframe title="HTML exercise preview" sandbox="" srcDoc={answer || starterCode} className="h-72 w-full bg-white"/></div>}
-          <p className="text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Open it in Playground to continue building and run supported code. HTML can also be previewed here.</p>
+          {canRunHtml && previewOpen && <div className="practice-workspace-preview overflow-hidden rounded-xl border border-white/10 bg-white"><div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2"><span className="h-2.5 w-2.5 rounded-full bg-red-400"/><span className="h-2.5 w-2.5 rounded-full bg-amber-400"/><span className="h-2.5 w-2.5 rounded-full bg-emerald-400"/><span className="ml-2 text-xs font-medium text-slate-500">Live webpage preview</span></div><iframe title="HTML exercise preview" sandbox="" srcDoc={answer || starterCode} className="h-72 w-full bg-white"/></div>}
+          <p className="practice-workspace-note text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Open it in Playground to continue building and run supported code. HTML can also be previewed here.</p>
         </>}
 
         {isChoice && <div className="grid gap-3">{(config.type === "true_false" ? ["True", "False"] : config.options || []).map((option, index) => <button type="button" key={option} onClick={() => updateAnswer(option)} className={`rounded-xl border p-4 text-left text-sm transition ${answer === option ? "border-[#8B70FF] bg-[#7559E8]/15 text-white" : "border-white/10 bg-[#0B1020] text-[#C4CBD8] hover:border-white/25"}`}><span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-xs text-[#A78BFA]">{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>}
@@ -247,7 +247,7 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
         {config.hint && <div><button type="button" onClick={() => setHintOpen(v => !v)} className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5C56D]"><Lightbulb size={16}/>{hintOpen ? "Hide hint" : "Need a hint?"}</button>{hintOpen && <p className="mt-3 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-4 text-sm leading-6 text-[#F5D58E]">{config.hint}</p>}</div>}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
-          <p className="max-w-md text-xs text-[#9299AE]">{submissionStatus}</p>
+          <p className="practice-workspace-status max-w-md text-xs text-[#9299AE]">{submissionStatus}</p>
           <div className="flex flex-wrap gap-2"><button type="button" onClick={() => void saveToServer("save")} disabled={!answer.trim() || saving || !token} className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-[#D7DDF3] hover:bg-white/5 disabled:opacity-40"><Save size={15}/> {saving ? "Saving…" : "Save draft"}</button><button type="button" onClick={() => void saveToServer("submit")} disabled={!answer.trim() || saving || !token || !courseSlug || submitted} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={16}/> Submit for review</button></div>
         </div>
         {submitted && <div className="flex items-center gap-2 rounded-xl border border-[#22C58B]/25 bg-[#22C58B]/10 p-4 text-sm text-[#75E0B8]"><CheckCircle2 size={18}/> Your work has been submitted to ibrant Academy. You can see instructor feedback here after it is reviewed.</div>}

@@ -929,3 +929,166 @@ html.light .practice-question-explanation {
   color: #34483B !important;
   line-height: 1.75 !important;
 }
+
+
+/* Practice workspace — Light theme readability.
+   Scoped to the actual student exercise workspace; dark theme is untouched. */
+html.light .practice-workspace {
+  background: #FBF8F1 !important;
+  border-color: #D8CDBB !important;
+  color: #29251F !important;
+  box-shadow: 0 12px 32px rgba(65, 48, 25, .09) !important;
+}
+html.light .practice-workspace-header {
+  background: linear-gradient(105deg, #EEE7FA 0%, #F6F0E6 100%) !important;
+  border-color: #DED5C8 !important;
+}
+html.light .practice-workspace-icon {
+  background: #E4D9F6 !important;
+  color: #5634A8 !important;
+}
+html.light .practice-workspace-eyebrow {
+  color: #5734A6 !important;
+  font-weight: 800 !important;
+}
+html.light .practice-workspace-title {
+  color: #27222F !important;
+}
+html.light .practice-workspace-type {
+  color: #75480B !important;
+  background: #F8EFD9 !important;
+  border-color: #E8D3A5 !important;
+}
+html.light .practice-workspace-body {
+  color: #302B25 !important;
+}
+html.light .practice-workspace-instructions {
+  color: #37312A !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+html.light .practice-workspace-instructions h3 {
+  color: #302342 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  margin-top: .35rem !important;
+}
+html.light .practice-workspace-instructions strong {
+  color: #211A2B !important;
+  font-weight: 800 !important;
+}
+html.light .practice-workspace-instructions li::marker {
+  color: #6540B5 !important;
+  font-weight: 800 !important;
+}
+html.light .practice-workspace-instructions code {
+  background: #EEE8F7 !important;
+  color: #542E9B !important;
+}
+html.light .practice-workspace-code-label {
+  color: #292333 !important;
+  font-weight: 800 !important;
+}
+html.light .practice-workspace-language {
+  background: #EEE8F7 !important;
+  color: #4C2B91 !important;
+  border: 1px solid #C9B9E5 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #4C2B91 !important;
+  font-weight: 800 !important;
+}
+html.light .practice-workspace-code-editor {
+  background: #F7F4EC !important;
+  border: 1px solid #CFC4B2 !important;
+  box-shadow: inset 0 1px 3px rgba(50, 38, 23, .07) !important;
+}
+html.light .practice-workspace-code-editor:focus-within {
+  border-color: #6943B8 !important;
+  box-shadow: 0 0 0 3px rgba(105, 67, 184, .14) !important;
+}
+html.light .practice-workspace-code-editor pre {
+  color: #28232D !important;
+  background: transparent !important;
+  font-size: 15.5px !important;
+  line-height: 1.75 !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+html.light .practice-workspace-code-editor textarea {
+  color: transparent !important;
+  caret-color: #30213F !important;
+  background: transparent !important;
+  font-size: 15.5px !important;
+  line-height: 1.75 !important;
+  -webkit-text-fill-color: transparent !important;
+}
+html.light .practice-workspace-code-editor textarea::selection {
+  background: rgba(105, 67, 184, .24) !important;
+}
+html.light .practice-workspace-code-editor .token.comment,
+html.light .practice-workspace-code-editor .token.prolog,
+html.light .practice-workspace-code-editor .token.doctype,
+html.light .practice-workspace-code-editor .token.cdata {
+  color: #71685C !important;
+  font-style: italic;
+}
+html.light .practice-workspace-code-editor .token.punctuation,
+html.light .practice-workspace-code-editor .token.operator {
+  color: #403747 !important;
+}
+html.light .practice-workspace-code-editor .token.tag,
+html.light .practice-workspace-code-editor .token.selector,
+html.light .practice-workspace-code-editor .token.keyword,
+html.light .practice-workspace-code-editor .token.atrule {
+  color: #6334A5 !important;
+  font-weight: 700 !important;
+}
+html.light .practice-workspace-code-editor .token.attr-name,
+html.light .practice-workspace-code-editor .token.property,
+html.light .practice-workspace-code-editor .token.function,
+html.light .practice-workspace-code-editor .token.class-name,
+html.light .practice-workspace-code-editor .token.builtin {
+  color: #075E91 !important;
+}
+html.light .practice-workspace-code-editor .token.attr-value,
+html.light .practice-workspace-code-editor .token.string,
+html.light .practice-workspace-code-editor .token.char,
+html.light .practice-workspace-code-editor .token.inserted {
+  color: #176B43 !important;
+}
+html.light .practice-workspace-code-editor .token.number,
+html.light .practice-workspace-code-editor .token.boolean,
+html.light .practice-workspace-code-editor .token.constant {
+  color: #9A4B12 !important;
+}
+html.light .practice-workspace-code-editor .token.important,
+html.light .practice-workspace-code-editor .token.regex,
+html.light .practice-workspace-code-editor .token.variable {
+  color: #9B315B !important;
+}
+html.light .practice-workspace-code-editor .token.deleted {
+  color: #A52D3C !important;
+}
+html.light .practice-workspace-note,
+html.light .practice-workspace-status {
+  color: #62594D !important;
+  line-height: 1.7 !important;
+}
+html.light .practice-workspace-body button {
+  font-weight: 700 !important;
+}
+html.light .practice-workspace-body button:not(:disabled) {
+  color: #5634A8 !important;
+}
+html.light .practice-workspace-body button:disabled {
+  opacity: .52 !important;
+}
+html.light .practice-workspace-body textarea:not(.practice-workspace-code-input) {
+  background: #FFFEFA !important;
+  color: #28232D !important;
+  border-color: #CFC4B2 !important;
+  caret-color: #5634A8 !important;
+  -webkit-text-fill-color: #28232D !important;
+}
+html.light .practice-workspace-preview {
+  border-color: #D6CCBD !important;
+}
