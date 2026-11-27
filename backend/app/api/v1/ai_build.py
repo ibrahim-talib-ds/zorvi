@@ -715,6 +715,10 @@ Hard rules:
 - Paths must be relative POSIX paths; no ../, absolute paths, .env files, private keys, credentials, or secrets.
 - Never add fake API keys, fake database credentials, hard-coded passwords or fabricated integrations.
 - If backend/database code is required, generate real source/schema/migration scaffolding appropriate to the agreed stack, plus safe example configuration. Clearly label external setup steps.
+- For every database-backed product, include a documented database setup path (safe .env.example with variable names only, ORM/models, initial migration, seed/demo data, and migration instructions) and a clear explanation of how to configure the database connection. Never invent credentials or commit .env files.
+- Include authenticated, role-protected admin CRUD screens for the product's relevant data (e.g. products, orders, users, content) so the owner can view and manage records without needing to log into the raw database. Build a database/table overview only when explicitly part of the product; never expose unrestricted SQL or raw database credentials in the browser.
+- Include a safe first-admin bootstrap/setup flow (environment-configured or one-time secure setup), not a hard-coded default username/password. Document how the owner signs in and creates the first admin account.
+- Use relational tables with appropriate primary/foreign keys, indexes, constraints, timestamps, and migrations where the chosen database supports them. Connect frontend CRUD to backend APIs and persistent storage; do not substitute browser-only mock state for a planned database-backed feature except in clearly labeled demo mode.
 - Do not claim that tests, migrations, package installs, servers, APIs or databases were run/connected. State which checks are only proposed.
 - Do not generate commands that delete files, change permissions, access the network, install system packages, or run arbitrary scripts automatically.
 - Prefer accessible, secure, maintainable code; validate user input; use environment variables for credentials; include error handling.
