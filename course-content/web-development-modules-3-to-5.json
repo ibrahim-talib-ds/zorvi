@@ -1,0 +1,622 @@
+{
+  "course": {
+    "title": "Web Development and Application Engineering",
+    "slug": "web-development-application-engineering",
+    "short_description": "Learn responsive CSS, practical JavaScript, and modern React frontend development through guided lessons and projects.",
+    "long_description": "This section of Web Development and Application Engineering takes learners from CSS fundamentals through JavaScript interactions and component-based React applications. Learners build responsive layouts, reason about data and browser events, and organize maintainable frontend interfaces. Each lesson includes teaching material, a worked example, a guided activity, an independent exercise, and answer-keyed knowledge checks.",
+    "difficulty": "beginner_to_intermediate",
+    "technologies": [
+      "HTML5",
+      "CSS3",
+      "JavaScript",
+      "React",
+      "ibrant Studio"
+    ],
+    "learning_path": "Web Development",
+    "estimated_hours": 30,
+    "duration_weeks": 4
+  },
+  "modules": [
+    {
+      "title": "CSS and Responsive Web Design",
+      "lessons": [
+        {
+          "title": "CSS Fundamentals and Selectors",
+          "description": "CSS rules, external stylesheets, type, class, ID and descendant selectors, pseudo-classes, cascade, specificity and inheritance.",
+          "content_markdown": "# CSS Fundamentals and Selectors\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nCSS rules, external stylesheets, type, class, ID and descendant selectors, pseudo-classes, cascade, specificity and inheritance.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```css\n.page { max-width: 60rem; margin: 0 auto; padding: 2rem; }\n.page__title { color: #17324d; }\nnav a:hover, nav a:focus-visible { text-decoration: underline; }\n```\n\n## Guided activity\nBuild a profile card using an external stylesheet, reusable classes, a descendant selector, and visible hover and keyboard-focus states.\n\nLink styles.css; style the heading with .profile__title; style paragraphs with p; style links inside nav; add hover and focus-visible rules.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": ".page { max-width: 60rem; margin: 0 auto; padding: 2rem; }\n.page__title { color: #17324d; }\nnav a:hover, nav a:focus-visible { text-decoration: underline; }",
+          "exercise": "--- QUESTION ---\n\nBuild a profile card using an external stylesheet, reusable classes, a descendant selector, and visible hover and keyboard-focus states.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse <link rel=\"stylesheet\" href=\"styles.css\">. Apply .profile__title { color: #17324d; }, p { line-height: 1.6; }, nav a { text-decoration: none; }, and nav a:hover, nav a:focus-visible { text-decoration: underline; }.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "css",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": ".page { max-width: 60rem; margin: 0 auto; padding: 2rem; }\n.page__title { color: #17324d; }\nnav a:hover, nav a:focus-visible { text-decoration: underline; }",
+              "language": "css",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Which selector targets every element with class profile-card?",
+              "options": [
+                "#profile-card",
+                ".profile-card",
+                "profile-card",
+                "*profile-card"
+              ],
+              "answer": ".profile-card",
+              "explanation": "A class selector begins with a dot and can be reused across multiple elements.",
+              "hint": "Remember the punctuation used before a class name in CSS.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Which selector has higher specificity: .card or #main-card?",
+              "options": [
+                ".card",
+                "#main-card",
+                "They are equal",
+                "Source order always wins"
+              ],
+              "answer": "#main-card",
+              "explanation": "An ID selector has higher specificity than a class selector.",
+              "hint": "Compare the selector types, not their position in the file.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Colors, Typography, Spacing, and Layout",
+          "description": "Design tokens, CSS custom properties, readable typography, accessible contrast, box sizing, margin, padding, borders and max-width.",
+          "content_markdown": "# Colors, Typography, Spacing, and Layout\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nDesign tokens, CSS custom properties, readable typography, accessible contrast, box sizing, margin, padding, borders and max-width.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```css\n* { box-sizing: border-box; }\n:root { --ink: #172b3a; --muted: #526574; --space: 1rem; }\nbody { color: var(--ink); font: 1rem/1.6 system-ui, sans-serif; }\n.card { max-width: 42rem; margin: 2rem auto; padding: 1.5rem; border: 1px solid #d7e0e7; }\n```\n\n## Guided activity\nDesign a course information card with reusable color and spacing tokens. Inspect the box model at 200% zoom.\n\nDefine four custom properties; set a readable font stack and line-height; build a card with padding, border, radius and max-width; inspect computed dimensions.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "* { box-sizing: border-box; }\n:root { --ink: #172b3a; --muted: #526574; --space: 1rem; }\nbody { color: var(--ink); font: 1rem/1.6 system-ui, sans-serif; }\n.card { max-width: 42rem; margin: 2rem auto; padding: 1.5rem; border: 1px solid #d7e0e7; }",
+          "exercise": "--- QUESTION ---\n\nDesign a course information card with reusable color and spacing tokens. Inspect the box model at 200% zoom.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nDefine tokens in :root. Use box-sizing: border-box globally, a system font stack, line-height: 1.6, and a card with max-width, margin, padding and border.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "css",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "* { box-sizing: border-box; }\n:root { --ink: #172b3a; --muted: #526574; --space: 1rem; }\nbody { color: var(--ink); font: 1rem/1.6 system-ui, sans-serif; }\n.card { max-width: 42rem; margin: 2rem auto; padding: 1.5rem; border: 1px solid #d7e0e7; }",
+              "language": "css",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Which box-model area creates space between content and its border?",
+              "options": [
+                "Margin",
+                "Padding",
+                "Outline",
+                "Gap"
+              ],
+              "answer": "Padding",
+              "explanation": "Padding is inside the border; margin is outside the border.",
+              "hint": "Think about which space is included inside the element's visible box.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Why is box-sizing: border-box commonly applied globally?",
+              "options": [
+                "It removes all margins",
+                "It includes padding and border in declared width",
+                "It disables inheritance",
+                "It makes every element a grid"
+              ],
+              "answer": "It includes padding and border in declared width",
+              "explanation": "This makes sizing calculations more predictable.",
+              "hint": "Consider how the rendered width relates to the CSS width property.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Flexbox and CSS Grid",
+          "description": "Flexbox main and cross axes, alignment, wrapping, gap, Grid rows and columns, repeat(), minmax() and responsive tracks.",
+          "content_markdown": "# Flexbox and CSS Grid\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nFlexbox main and cross axes, alignment, wrapping, gap, Grid rows and columns, repeat(), minmax() and responsive tracks.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```css\n.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }\n.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }\n```\n\n## Guided activity\nBuild a three-card course catalogue. Use Flexbox for the header and Grid for the cards. Test long labels and narrow widths.\n\nAlign brand and navigation with Flexbox; create cards with Grid and minmax(); use gap instead of child margins; test wide, medium and narrow widths.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": ".toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }\n.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }",
+          "exercise": "--- QUESTION ---\n\nBuild a three-card course catalogue. Use Flexbox for the header and Grid for the cards. Test long labels and narrow widths.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse display:flex with align-items, justify-content, gap and flex-wrap for the toolbar. Use repeat(auto-fit, minmax(14rem, 1fr)) and gap for the card grid.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "css",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": ".toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }\n.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }",
+              "language": "css",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Which layout system is designed to control rows and columns together?",
+              "options": [
+                "Flexbox",
+                "CSS Grid",
+                "Float",
+                "Position: absolute"
+              ],
+              "answer": "CSS Grid",
+              "explanation": "Grid is a two-dimensional layout system.",
+              "hint": "One system is one-dimensional; the other handles both axes.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "What does flex-wrap: wrap allow?",
+              "options": [
+                "Items to overlap",
+                "Items to move onto another line",
+                "The container to become fixed width",
+                "The main axis to disappear"
+              ],
+              "answer": "Items to move onto another line",
+              "explanation": "Wrapping allows flex items to flow onto additional lines when space is limited.",
+              "hint": "Think about what happens when the row runs out of room.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Responsive Design and Mobile-First Development",
+          "description": "Viewport configuration, fluid sizing, responsive images, mobile-first defaults, content-driven media queries and accessible focus states.",
+          "content_markdown": "# Responsive Design and Mobile-First Development\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nViewport configuration, fluid sizing, responsive images, mobile-first defaults, content-driven media queries and accessible focus states.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```css\n.page { width: min(100% - 2rem, 70rem); margin-inline: auto; }\n.hero { display: grid; gap: 1.5rem; }\n.hero img { max-width: 100%; height: auto; }\n@media (min-width: 48rem) {\n  .hero { grid-template-columns: 1.2fr 1fr; }\n}\n```\n\n## Guided activity\nCreate a responsive business landing page with a hero, services and contact action. Start with one column and add a wider layout when content needs it.\n\nAdd viewport meta; constrain page width fluidly; make images responsive; add a content-driven media query; test keyboard navigation and text zoom.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": ".page { width: min(100% - 2rem, 70rem); margin-inline: auto; }\n.hero { display: grid; gap: 1.5rem; }\n.hero img { max-width: 100%; height: auto; }\n@media (min-width: 48rem) {\n  .hero { grid-template-columns: 1.2fr 1fr; }\n}",
+          "exercise": "--- QUESTION ---\n\nCreate a responsive business landing page with a hero, services and contact action. Start with one column and add a wider layout when content needs it.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse the viewport meta tag, a fluid page width, images with max-width:100% and height:auto, and a min-width media query to change the hero to two columns.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "css",
+          "practical_examples": [
+            {
+              "title": "Mobile viewport configuration",
+              "explanation": "Place this viewport declaration inside the document head so the layout uses the device width.",
+              "code": "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+              "language": "html",
+              "expected_output": "On a mobile browser, the page uses the device viewport width instead of a scaled desktop layout."
+            },
+            {
+              "title": "Fluid mobile-first hero layout",
+              "explanation": "The hero starts in one column and gains two columns when the content has enough room.",
+              "code": ".page { width: min(100% - 2rem, 70rem); margin-inline: auto; }\n.hero { display: grid; gap: 1.5rem; }\n.hero img { max-width: 100%; height: auto; }\n@media (min-width: 48rem) {\n  .hero { grid-template-columns: 1.2fr 1fr; }\n}",
+              "language": "css",
+              "expected_output": "The hero is one column below 48rem and two columns at or above the breakpoint; the image never exceeds its container."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "In mobile-first CSS, which layout should be the default?",
+              "options": [
+                "The narrow-screen layout",
+                "The widest desktop layout",
+                "A fixed 1200px layout",
+                "A layout hidden from mobile"
+              ],
+              "answer": "The narrow-screen layout",
+              "explanation": "Mobile-first starts with a usable narrow layout and adds enhancements at wider breakpoints.",
+              "hint": "Start with the smallest available viewport.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Which rule prevents an image from exceeding its container width?",
+              "options": [
+                "width: 100vw",
+                "max-width: 100%; height: auto",
+                "position: fixed",
+                "overflow: visible"
+              ],
+              "answer": "max-width: 100%; height: auto",
+              "explanation": "The image can shrink to fit while retaining its aspect ratio.",
+              "hint": "Use a maximum width and preserve the intrinsic ratio.",
+              "points": 1
+            }
+          ]
+        }
+      ],
+      "description": "Learn to style semantic HTML with maintainable CSS, build flexible layouts with Flexbox and Grid, and deliver responsive mobile-first pages."
+    },
+    {
+      "title": "JavaScript and Interactive Applications",
+      "lessons": [
+        {
+          "title": "JavaScript Fundamentals and Variables",
+          "description": "Browser script loading, console debugging, primitive values, const, let, naming, expressions and template literals.",
+          "content_markdown": "# JavaScript Fundamentals and Variables\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nBrowser script loading, console debugging, primitive values, const, let, naming, expressions and template literals.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nconst courseTitle = \"Web Development\";\nlet completedLessons = 0;\nconst isEnrolled = true;\ncompletedLessons += 1;\nconsole.log(courseTitle, completedLessons, isEnrolled);\n```\n\n## Guided activity\nCreate a course-progress script storing learner name, course title, completed lesson count and enrolment status. Increment progress and print a readable message.\n\nDeclare stable values with const; use let for the changing count; increment once; log a readable message; inspect the browser console.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "const courseTitle = \"Web Development\";\nlet completedLessons = 0;\nconst isEnrolled = true;\ncompletedLessons += 1;\nconsole.log(courseTitle, completedLessons, isEnrolled);",
+          "exercise": "--- QUESTION ---\n\nCreate a course-progress script storing learner name, course title, completed lesson count and enrolment status. Increment progress and print a readable message.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse const for learnerName and courseTitle, let for completedLessons, increment with += 1, and print the values with console.log.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "const courseTitle = \"Web Development\";\nlet completedLessons = 0;\nconst isEnrolled = true;\ncompletedLessons += 1;\nconsole.log(courseTitle, completedLessons, isEnrolled);",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "When should const be preferred?",
+              "options": [
+                "Whenever a variable is never reassigned",
+                "Only for numbers",
+                "When a variable must be reassigned",
+                "Only inside loops"
+              ],
+              "answer": "Whenever a variable is never reassigned",
+              "explanation": "const prevents rebinding and communicates that the variable binding is stable.",
+              "hint": "Ask whether the variable name will be assigned a different value later.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "What does the defer attribute do for an external script?",
+              "options": [
+                "Runs it before HTML parsing",
+                "Waits until HTML parsing is complete before executing",
+                "Turns JavaScript into CSS",
+                "Prevents the browser from downloading it"
+              ],
+              "answer": "Waits until HTML parsing is complete before executing",
+              "explanation": "Deferred scripts execute after parsing and before DOMContentLoaded.",
+              "hint": "Think about the relationship between parsing HTML and running the script.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Data Types, Conditions, and Loops",
+          "description": "Primitive and reference types, strict equality, truthy and falsy values, if/else, for, while, for...of and input validation.",
+          "content_markdown": "# Data Types, Conditions, and Loops\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nPrimitive and reference types, strict equality, truthy and falsy values, if/else, for, while, for...of and input validation.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nconst scores = [72, 88, 49, 95];\nlet total = 0;\nlet passCount = 0;\nfor (const score of scores) {\n  total += score;\n  if (score >= 50) passCount += 1;\n}\nconst average = scores.length ? total / scores.length : null;\nconsole.log({ passCount, average });\n```\n\n## Guided activity\nWrite a score analyser that counts passing scores of 50 or higher and calculates an average. Define safe behaviour for an empty array.\n\nCreate five numeric scores; iterate with for...of; count passing scores; guard against division by zero; print count and average.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "const scores = [72, 88, 49, 95];\nlet total = 0;\nlet passCount = 0;\nfor (const score of scores) {\n  total += score;\n  if (score >= 50) passCount += 1;\n}\nconst average = scores.length ? total / scores.length : null;\nconsole.log({ passCount, average });",
+          "exercise": "--- QUESTION ---\n\nWrite a score analyser that counts passing scores of 50 or higher and calculates an average. Define safe behaviour for an empty array.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse a total and passCount variable. Loop through scores, add each score to total, increment passCount when score >= 50, and calculate average only when scores.length is non-zero.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "const scores = [72, 88, 49, 95];\nlet total = 0;\nlet passCount = 0;\nfor (const score of scores) {\n  total += score;\n  if (score >= 50) passCount += 1;\n}\nconst average = scores.length ? total / scores.length : null;\nconsole.log({ passCount, average });",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Which operator checks equality without type coercion?",
+              "options": [
+                "==",
+                "===",
+                "=",
+                "!="
+              ],
+              "answer": "===",
+              "explanation": "Strict equality compares without converting the operand types.",
+              "hint": "Choose the equality operator with three equals signs.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Which loop is especially readable for iterating over array values?",
+              "options": [
+                "for...of",
+                "switch",
+                "try...catch",
+                "if...else"
+              ],
+              "answer": "for...of",
+              "explanation": "for...of iterates over values from an iterable such as an array.",
+              "hint": "Choose the loop syntax designed to visit each value.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Functions, Arrays, and Objects",
+          "description": "Function declarations and arrow functions, parameters, return values, array map/filter/find/reduce, object properties, destructuring and immutable updates.",
+          "content_markdown": "# Functions, Arrays, and Objects\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nFunction declarations and arrow functions, parameters, return values, array map/filter/find/reduce, object properties, destructuring and immutable updates.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nconst tasks = [{ id: 1, title: \"Read CSS\", done: true }, { id: 2, title: \"Practise JS\", done: false }];\nconst openTasks = items => items.filter(task => !task.done);\nconst titles = openTasks(tasks).map(task => task.title);\nconsole.log(titles);\n```\n\n## Guided activity\nModel learning tasks as objects. Write functions to add a task, find a task by ID and return incomplete tasks. Explain which operations mutate the original array.\n\nCreate task objects; filter incomplete tasks; find a task by ID; return a new array with an added task using spread syntax.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "const tasks = [{ id: 1, title: \"Read CSS\", done: true }, { id: 2, title: \"Practise JS\", done: false }];\nconst openTasks = items => items.filter(task => !task.done);\nconst titles = openTasks(tasks).map(task => task.title);\nconsole.log(titles);",
+          "exercise": "--- QUESTION ---\n\nModel learning tasks as objects. Write functions to add a task, find a task by ID and return incomplete tasks. Explain which operations mutate the original array.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse items.filter(task => !task.done), items.find(task => task.id === id), and [...items, newTask]. These return new values without mutating the original array.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "const tasks = [{ id: 1, title: \"Read CSS\", done: true }, { id: 2, title: \"Practise JS\", done: false }];\nconst openTasks = items => items.filter(task => !task.done);\nconst titles = openTasks(tasks).map(task => task.title);\nconsole.log(titles);",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "What does Array.prototype.filter() return?",
+              "options": [
+                "The first matching item",
+                "A new array containing matching items",
+                "A number",
+                "The original array after sorting"
+              ],
+              "answer": "A new array containing matching items",
+              "explanation": "filter creates a new array containing items for which the callback returns true.",
+              "hint": "It selects zero or more elements into a result collection.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Why should a function return a value?",
+              "options": [
+                "So other code can use its result",
+                "To automatically style the page",
+                "To stop the browser",
+                "To create a CSS selector"
+              ],
+              "answer": "So other code can use its result",
+              "explanation": "Returning a value makes a function composable and easier to test.",
+              "hint": "Think about how a caller receives the result of a calculation.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "DOM Manipulation and Event Handling",
+          "description": "DOM selection, textContent, classList, createElement, event listeners, form submit, preventDefault, event delegation and safe user input.",
+          "content_markdown": "# DOM Manipulation and Event Handling\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nDOM selection, textContent, classList, createElement, event listeners, form submit, preventDefault, event delegation and safe user input.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nconst form = document.querySelector(\"#task-form\");\nconst input = document.querySelector(\"#task-title\");\nconst list = document.querySelector(\"#task-list\");\nform.addEventListener(\"submit\", event => {\n  event.preventDefault();\n  const title = input.value.trim();\n  if (!title) return;\n  const item = document.createElement(\"li\");\n  item.textContent = title;\n  list.append(item);\n  form.reset();\n});\n```\n\n## Guided activity\nBuild a task list where users can add non-empty tasks and mark them complete. Use textContent and classList; never insert user input with innerHTML.\n\nCreate a form and list; prevent default submission; trim and validate input; create list items with createElement; add a completion control that toggles a class.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "const form = document.querySelector(\"#task-form\");\nconst input = document.querySelector(\"#task-title\");\nconst list = document.querySelector(\"#task-list\");\nform.addEventListener(\"submit\", event => {\n  event.preventDefault();\n  const title = input.value.trim();\n  if (!title) return;\n  const item = document.createElement(\"li\");\n  item.textContent = title;\n  list.append(item);\n  form.reset();\n});",
+          "exercise": "--- QUESTION ---\n\nBuild a task list where users can add non-empty tasks and mark them complete. Use textContent and classList; never insert user input with innerHTML.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nHandle submit with preventDefault(), trim the input, return if empty, create an li, set li.textContent, append it and reset the form. Add a button listener that toggles a completed class.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "const form = document.querySelector(\"#task-form\");\nconst input = document.querySelector(\"#task-title\");\nconst list = document.querySelector(\"#task-list\");\nform.addEventListener(\"submit\", event => {\n  event.preventDefault();\n  const title = input.value.trim();\n  if (!title) return;\n  const item = document.createElement(\"li\");\n  item.textContent = title;\n  list.append(item);\n  form.reset();\n});",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Which property should be used to insert plain user-provided text safely?",
+              "options": [
+                "innerHTML",
+                "textContent",
+                "outerHTML",
+                "document.write"
+              ],
+              "answer": "textContent",
+              "explanation": "textContent treats the value as text rather than parsing it as HTML.",
+              "hint": "Choose the property that does not interpret the input as markup.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Why call preventDefault() in a JavaScript form submit handler?",
+              "options": [
+                "To prevent the browser's default form navigation or reload",
+                "To disable all buttons",
+                "To delete the form",
+                "To skip validation permanently"
+              ],
+              "answer": "To prevent the browser's default form navigation or reload",
+              "explanation": "It allows the application to handle submission in JavaScript.",
+              "hint": "Think about what the browser normally does when a form is submitted.",
+              "points": 1
+            }
+          ]
+        }
+      ],
+      "description": "Learn JavaScript fundamentals and use data structures, functions, DOM APIs, and browser events to build interactive applications."
+    },
+    {
+      "title": "Modern Frontend Application Development",
+      "lessons": [
+        {
+          "title": "Introduction to React and Component-Based Development",
+          "description": "React declarative UI, functional components, JSX syntax, component composition, project setup and browser/terminal debugging.",
+          "content_markdown": "# Introduction to React and Component-Based Development\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nReact declarative UI, functional components, JSX syntax, component composition, project setup and browser/terminal debugging.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nfunction CourseCard() {\n  return <article className=\"course-card\">\n    <h2>CSS and Responsive Design</h2>\n    <p>Build layouts that adapt to different screens.</p>\n  </article>;\n}\nfunction App() {\n  return <main><h1>My learning dashboard</h1><CourseCard /></main>;\n}\n```\n\n## Guided activity\nCreate a React dashboard composed of Header, CourseCard and Footer components. Give each component one responsibility.\n\nCreate a functional Header; create a CourseCard with title and summary; create a Footer; render all components from App; run the development server.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "function CourseCard() {\n  return <article className=\"course-card\">\n    <h2>CSS and Responsive Design</h2>\n    <p>Build layouts that adapt to different screens.</p>\n  </article>;\n}\nfunction App() {\n  return <main><h1>My learning dashboard</h1><CourseCard /></main>;\n}",
+          "exercise": "--- QUESTION ---\n\nCreate a React dashboard composed of Header, CourseCard and Footer components. Give each component one responsibility.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nCreate Header, CourseCard and Footer functions that return JSX. Render them inside App. Use className instead of class, close JSX tags and capitalize component names.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "function CourseCard() {\n  return <article className=\"course-card\">\n    <h2>CSS and Responsive Design</h2>\n    <p>Build layouts that adapt to different screens.</p>\n  </article>;\n}\nfunction App() {\n  return <main><h1>My learning dashboard</h1><CourseCard /></main>;\n}",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "What does a React functional component typically return?",
+              "options": [
+                "A SQL query",
+                "JSX describing UI",
+                "A CSS file",
+                "A browser window"
+              ],
+              "answer": "JSX describing UI",
+              "explanation": "A component returns React elements, commonly written with JSX.",
+              "hint": "Think about what a component describes to React.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Which JSX attribute is used instead of HTML class?",
+              "options": [
+                "className",
+                "cssClass",
+                "styleClass",
+                "class-id"
+              ],
+              "answer": "className",
+              "explanation": "JSX uses className for the DOM class attribute.",
+              "hint": "Remember that JSX is JavaScript syntax, not literal HTML.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Props, State, and User Interactions",
+          "description": "Read-only props, useState, state setters, functional updates, immutable array/object updates, controlled event handlers and state ownership.",
+          "content_markdown": "# Props, State, and User Interactions\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nRead-only props, useState, state setters, functional updates, immutable array/object updates, controlled event handlers and state ownership.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nimport { useState } from \"react\";\nfunction ProgressButton({ initialCount = 0 }) {\n  const [count, setCount] = useState(initialCount);\n  return <button onClick={() => setCount(current => current + 1)}>\n    Completed lessons: {count}\n  </button>;\n}\n```\n\n## Guided activity\nBuild a progress widget receiving learnerName as a prop and tracking completed lessons with state. Add increment and reset actions.\n\nAccept learnerName; initialize completed count with useState(0); increment with a functional update; add reset; display learner name.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "import { useState } from \"react\";\nfunction ProgressButton({ initialCount = 0 }) {\n  const [count, setCount] = useState(initialCount);\n  return <button onClick={() => setCount(current => current + 1)}>\n    Completed lessons: {count}\n  </button>;\n}",
+          "exercise": "--- QUESTION ---\n\nBuild a progress widget receiving learnerName as a prop and tracking completed lessons with state. Add increment and reset actions.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse useState(0), setCompleted(current => current + 1), and setCompleted(0). Pass learnerName as a prop and do not mutate state directly.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "import { useState } from \"react\";\nfunction ProgressButton({ initialCount = 0 }) {\n  const [count, setCount] = useState(initialCount);\n  return <button onClick={() => setCount(current => current + 1)}>\n    Completed lessons: {count}\n  </button>;\n}",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "What are props in React?",
+              "options": [
+                "Read-only inputs passed to a component",
+                "A replacement for CSS",
+                "A browser storage API",
+                "A database table"
+              ],
+              "answer": "Read-only inputs passed to a component",
+              "explanation": "Props allow parent components to configure child components.",
+              "hint": "Think about how a parent supplies data to a child.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Which Hook is commonly used for local component state?",
+              "options": [
+                "useEffect",
+                "useState",
+                "useMemo",
+                "useRef"
+              ],
+              "answer": "useState",
+              "explanation": "useState provides a state value and a setter function.",
+              "hint": "Choose the Hook whose name refers directly to state.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Forms, Validation, and Application Navigation",
+          "description": "Controlled inputs, form submission, validation feedback, semantic labels, backend validation, links, routes and not-found handling.",
+          "content_markdown": "# Forms, Validation, and Application Navigation\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nControlled inputs, form submission, validation feedback, semantic labels, backend validation, links, routes and not-found handling.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nimport { useState } from \"react\";\n\nfunction EnrolmentForm() {\n  const [name, setName] = useState(\"\");\n  const [email, setEmail] = useState(\"\");\n  const [error, setError] = useState(\"\");\n  const [success, setSuccess] = useState(false);\n\n  function handleSubmit(event) {\n    event.preventDefault();\n    setSuccess(false);\n    if (!name.trim()) {\n      setError(\"Enter your name.\");\n      return;\n    }\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n      setError(\"Enter a valid email address.\");\n      return;\n    }\n    setError(\"\");\n    setSuccess(true);\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <label>Name <input value={name} onChange={event => setName(event.target.value)} /></label>\n      <label>Email <input value={email} onChange={event => setEmail(event.target.value)} /></label>\n      {error && <p role=\"alert\">{error}</p>}\n      {success && <p role=\"status\">Enrolment request received.</p>}\n      <button type=\"submit\">Submit</button>\n    </form>\n  );\n}\n```\n\n## Guided activity\nCreate a student enrolment form with name and email fields. Validate required values, show accessible errors, and add semantic Dashboard and Courses navigation links.\n\nUse controlled state for name and email; validate on submit; render messages with role=alert; connect labels and inputs; use links for navigation.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "import { useState } from \"react\";\n\nfunction EnrolmentForm() {\n  const [name, setName] = useState(\"\");\n  const [email, setEmail] = useState(\"\");\n  const [error, setError] = useState(\"\");\n  const [success, setSuccess] = useState(false);\n\n  function handleSubmit(event) {\n    event.preventDefault();\n    setSuccess(false);\n    if (!name.trim()) {\n      setError(\"Enter your name.\");\n      return;\n    }\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n      setError(\"Enter a valid email address.\");\n      return;\n    }\n    setError(\"\");\n    setSuccess(true);\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <label>Name <input value={name} onChange={event => setName(event.target.value)} /></label>\n      <label>Email <input value={email} onChange={event => setEmail(event.target.value)} /></label>\n      {error && <p role=\"alert\">{error}</p>}\n      {success && <p role=\"status\">Enrolment request received.</p>}\n      <button type=\"submit\">Submit</button>\n    </form>\n  );\n}",
+          "exercise": "--- QUESTION ---\n\nCreate a student enrolment form with name and email fields. Validate required values, show accessible errors, and add semantic Dashboard and Courses navigation links.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nIn the submit handler, check name.trim() and a basic email pattern, store validation errors in state, and show success only when no errors remain. Associate labels with input IDs. Server validation is still required.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Controlled enrolment form",
+              "explanation": "Both fields are controlled by React state. Submission validates the values and displays an accessible error or success message.",
+              "code": "import { useState } from \"react\";\n\nfunction EnrolmentForm() {\n  const [name, setName] = useState(\"\");\n  const [email, setEmail] = useState(\"\");\n  const [error, setError] = useState(\"\");\n  const [success, setSuccess] = useState(false);\n\n  function handleSubmit(event) {\n    event.preventDefault();\n    setSuccess(false);\n    if (!name.trim()) {\n      setError(\"Enter your name.\");\n      return;\n    }\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n      setError(\"Enter a valid email address.\");\n      return;\n    }\n    setError(\"\");\n    setSuccess(true);\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <label>Name <input value={name} onChange={event => setName(event.target.value)} /></label>\n      <label>Email <input value={email} onChange={event => setEmail(event.target.value)} /></label>\n      {error && <p role=\"alert\">{error}</p>}\n      {success && <p role=\"status\">Enrolment request received.</p>}\n      <button type=\"submit\">Submit</button>\n    </form>\n  );\n}",
+              "language": "javascript",
+              "expected_output": "An empty name or invalid email displays an error. Valid values display the enrolment success message."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "What makes a React input controlled?",
+              "options": [
+                "Its value is driven by state and updated by an event handler",
+                "It has no label",
+                "It uses only a placeholder",
+                "It cannot be edited"
+              ],
+              "answer": "Its value is driven by state and updated by an event handler",
+              "explanation": "A controlled input uses value and onChange to synchronize UI and state.",
+              "hint": "Look for the value prop and onChange handler working together.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "Why must important input validation also happen on the server?",
+              "options": [
+                "Client-side validation can be bypassed",
+                "Browsers cannot display errors",
+                "React blocks all invalid data",
+                "Server validation makes forms prettier"
+              ],
+              "answer": "Client-side validation can be bypassed",
+              "explanation": "The backend must treat incoming data as untrusted and enforce its own rules.",
+              "hint": "Consider whether a user can send a request without using the page UI.",
+              "points": 1
+            }
+          ]
+        },
+        {
+          "title": "Reusable Components and Frontend Architecture",
+          "description": "Component boundaries, composition, feature-based organization, data/service separation, loading/error/empty states and stable React keys.",
+          "content_markdown": "# Reusable Components and Frontend Architecture\n\n## Learning objectives\nLearners will explain and apply the concepts in this lesson, build a working example, test it, and diagnose a common mistake.\n\n## Lesson explanation\nComponent boundaries, composition, feature-based organization, data/service separation, loading/error/empty states and stable React keys.\n\nRead the worked example. Identify the input, the rule or logic being applied, and the visible result. Change one value at a time and predict the result before running the code. This develops debugging skills and prevents copy-and-paste learning.\n\n## Worked example\n```javascript\nconst courses = [{ id: \"css\", title: \"CSS Foundations\", progress: 80 }];\nfunction CourseList({ items }) {\n  return <ul>{items.map(course => <li key={course.id}>\n    <strong>{course.title}</strong>\n    <progress value={course.progress} max=\"100\" />\n  </li>)}</ul>;\n}\n```\n\n## Guided activity\nRefactor a single-file student dashboard into Header, DashboardPage, CourseList, CourseCard and Footer. Keep data separate and pass it through props.\n\nCreate a course data module with stable IDs; extract CourseCard and CourseList; use IDs as keys; separate page components from shared layout; document the folder structure.\n\nUse browser developer tools or development-server output to check for errors. Record what you changed and why.\n\n## Practical engineering notes\n- Prefer clear names and small, focused rules or functions.\n- Test the expected path and at least one edge case.\n- Keep accessibility, readable structure and maintainability in mind.\n- Never treat user-provided input as trusted HTML or trusted server data.\n\n## Knowledge check\n1. Define the central concept in this lesson and explain why it is useful.\n2. Identify the part of the example that controls the behaviour or presentation.\n3. Describe one likely beginner error and how you would diagnose it.\n4. Name one edge case or accessibility concern that should be tested.\n5. Explain how you would improve the example if the application became larger.\n\n## Completion criteria\n- The worked example is understood and successfully run.\n- The guided activity is completed and tested.\n- The independent exercise is submitted.\n- The learner can explain key implementation decisions without relying only on copied code.\n",
+          "code_example": "const courses = [{ id: \"css\", title: \"CSS Foundations\", progress: 80 }];\nfunction CourseList({ items }) {\n  return <ul>{items.map(course => <li key={course.id}>\n    <strong>{course.title}</strong>\n    <progress value={course.progress} max=\"100\" />\n  </li>)}</ul>;\n}",
+          "exercise": "--- QUESTION ---\n\nRefactor a single-file student dashboard into Header, DashboardPage, CourseList, CourseCard and Footer. Keep data separate and pass it through props.\n\n1. Complete the implementation described above.\n2. Test the normal user flow and one edge case.\n3. Submit the source code and a short explanation of your decisions.\n4. Identify one improvement you would make before production use.\n\n--- SOLUTION ---\n\nUse src/components for shared UI, src/pages for route-level views, src/data for static data and src/services for API functions. Render lists with key={course.id}; keep loading, error and empty states explicit.\n\nEquivalent implementations are acceptable when they meet the requirements and handle the stated edge case.\n",
+          "duration_minutes": 50,
+          "code_language": "javascript",
+          "practical_examples": [
+            {
+              "title": "Guided worked example",
+              "explanation": "Run this example, change one value or rule, and explain the effect before moving on.",
+              "code": "const courses = [{ id: \"css\", title: \"CSS Foundations\", progress: 80 }];\nfunction CourseList({ items }) {\n  return <ul>{items.map(course => <li key={course.id}>\n    <strong>{course.title}</strong>\n    <progress value={course.progress} max=\"100\" />\n  </li>)}</ul>;\n}",
+              "language": "javascript",
+              "expected_output": "The example should run without errors and demonstrate the concept described in this lesson."
+            }
+          ],
+          "practice_questions": [
+            {
+              "type": "multiple_choice",
+              "prompt": "Why should a list item use a stable key such as a database ID?",
+              "options": [
+                "To help React identify items across updates",
+                "To change the text colour",
+                "To encrypt the item",
+                "To create a URL automatically"
+              ],
+              "answer": "To help React identify items across updates",
+              "explanation": "Stable keys help React track items when collections change.",
+              "hint": "Think about what happens when items are inserted or reordered.",
+              "points": 1
+            },
+            {
+              "type": "multiple_choice",
+              "prompt": "What belongs in a service layer as an application grows?",
+              "options": [
+                "Reusable API and data-access functions",
+                "Only button colours",
+                "Every JSX element",
+                "CSS media queries"
+              ],
+              "answer": "Reusable API and data-access functions",
+              "explanation": "A service layer separates data access from presentation components.",
+              "hint": "Look for logic that communicates with an external API or data source.",
+              "points": 1
+            }
+          ]
+        }
+      ],
+      "description": "Learn React component composition, props, state, forms, validation, navigation, and maintainable frontend architecture."
+    }
+  ]
+}

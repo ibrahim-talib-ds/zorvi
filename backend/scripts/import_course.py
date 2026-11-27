@@ -31,7 +31,10 @@ LESSON_FIELDS = (
     "description",
     "content_markdown",
     "code_example",
+    "code_language",
     "exercise",
+    "practical_examples",
+    "practice_questions",
     "duration_minutes",
 )
 REQUIRED_LESSON_FIELDS = ("description", "content_markdown", "exercise")
@@ -104,6 +107,11 @@ def load_manifest(path: Path) -> dict[str, Any]:
             if "code_example" in lesson and lesson["code_example"] is not None:
                 if not isinstance(lesson["code_example"], str):
                     fail(f"Lesson {lesson['title']!r}: code_example must be text or null.")
+            if "code_language" in lesson and not isinstance(lesson["code_language"], str):
+                fail(f"Lesson {lesson['title']!r}: code_language must be text.")
+            for field in ("practical_examples", "practice_questions"):
+                if field in lesson and not isinstance(lesson[field], list):
+                    fail(f"Lesson {lesson['title']!r}: {field} must be an array.")
             if "duration_minutes" in lesson:
                 duration = lesson["duration_minutes"]
                 if not isinstance(duration, int) or isinstance(duration, bool) or duration < 0:
