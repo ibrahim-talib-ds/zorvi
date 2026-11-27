@@ -1,6 +1,6 @@
 "use client";
 
-// app/academy|courses/page.tsx - IBRANT Academy (v13)
+// app/academy|courses/page.tsx - ibrant Academy (v13)
 //
 // ONE-FILE redesign: replaces only the academy/courses listing page. Site
 // header, layout, everything else untouched. No new npm dependencies.

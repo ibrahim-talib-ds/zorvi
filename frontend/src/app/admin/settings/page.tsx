@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
 
   const [form, setForm] = useState({
     // Branding
-    site_name: "IBRANT",
+    site_name: "ibrant",
     site_tagline: "Learn. Create. Launch.",
     site_description: "Premium full-stack academy and marketplace.",
     logo_url: "",

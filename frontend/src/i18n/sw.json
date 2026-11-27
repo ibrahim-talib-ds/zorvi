@@ -79,7 +79,7 @@
   "exp": {
     "eyebrow": "Zaidi ya Kujifunza Tu",
     "title": "Kila kitu unachohitaji kutekeleza wazo lako kubwa lijalo.",
-    "c1_eyebrow": "Akademia ya IBRANT",
+    "c1_eyebrow": "Akademia ya ibrant",
     "c1_title": "Jifunze kwa kujenga. Siyo kuangalia tu.",
     "c1_desc": "Safari kamili na zenye mpangilio wa miradi. Angalia jinsi frontend, backend, hifadhidata, na uwekaji kazini vinavyofanya kazi pamoja.",
     "c1_cta": "Tembelea Akademia",
@@ -188,7 +188,7 @@
   },
   "cta": {
     "title": "Wazo lako kubwa lijalo linaweza kuanza hapa.",
-    "subtitle": "Jifunze usanidi, jenga programu yako ya kwanza, au chunguza bidhaa kamili za programu — IBRANT inakupa mahali pa kuanza.",
+    "subtitle": "Jifunze usanidi, jenga programu yako ya kwanza, au chunguza bidhaa kamili za programu — ibrant inakupa mahali pa kuanza.",
     "start": "Anza Kujifunza",
     "tagline": "Jifunza. Tengeneza. Zindua. Safari yako inaanza kwa wazo moja."
   },

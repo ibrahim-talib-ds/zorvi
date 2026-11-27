@@ -5,8 +5,8 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "About — IBRANT",
-  description: "Learn. Create. Launch. The story behind IBRANT — a project-based academy and marketplace.",
+  title: "About — ibrant",
+  description: "Learn. Create. Launch. The story behind ibrant — a project-based academy and marketplace.",
 };
 
 const VALUES = [
@@ -72,7 +72,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-lg text-[#B7BDD0] max-w-3xl mx-auto leading-relaxed">
-            IBRANT was built on one idea: people don&apos;t need more tutorials —
+            ibrant was built on one idea: people don&apos;t need more tutorials —
             they need to build things that work. Every course ends with a
             complete, deployable application. Every project you build is
             something you can be proud of.
@@ -159,7 +159,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* What IBRANT offers */}
+        {/* What ibrant offers */}
         <section className="mx-auto max-w-6xl px-6 py-20">
           <div className="text-center mb-12">
             <p className="text-xs font-mono uppercase tracking-wider text-[#A78BFA] mb-3">
@@ -179,7 +179,7 @@ export default function AboutPage() {
                 <BookOpen size={26} className="text-[#A78BFA]" />
               </div>
               <h3 className="font-display text-2xl font-bold text-white mb-3">
-                IBRANT Academy
+                ibrant Academy
               </h3>
               <p className="text-[#B7BDD0] mb-5 leading-relaxed">
                 Free, project-based courses that teach you to build real
@@ -230,7 +230,7 @@ export default function AboutPage() {
               Software engineer · Full-stack developer · Educator
             </p>
             <p className="text-[#B7BDD0] max-w-2xl mx-auto leading-relaxed">
-              IBRANT is a platform I wish I had when I started learning to code.
+              ibrant is a platform I wish I had when I started learning to code.
               I built this to give the next generation of developers the path
               I had to figure out alone — with real projects, real code, and
               real outcomes.

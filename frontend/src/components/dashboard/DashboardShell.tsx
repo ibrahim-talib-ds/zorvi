@@ -266,7 +266,7 @@ export function DashboardShell({
         className="h-8 w-8 object-contain"
       />
       <span className="hidden min-w-0 whitespace-nowrap font-display text-lg font-extrabold tracking-tight text-text-primary lg:inline">
-        IBRANT
+        ibrant
         {admin && <span className="text-[#7559E8]"> Admin</span>}
       </span>
     </Link>

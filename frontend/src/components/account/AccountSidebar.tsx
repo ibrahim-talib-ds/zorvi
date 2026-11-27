@@ -5,7 +5,7 @@
 // onMobileClose) so account/layout.tsx keeps working untouched.
 // NEW: drag-to-resize desktop edge (mouse + touch), persisted width,
 // double-click edge or chevron to collapse, live "Saved" count badge
-// (reads IBRANT_SAVED_V1 - the same key the marketplace hearts write).
+// (reads ibrant_SAVED_V1 - the same key the marketplace hearts write).
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,8 +17,8 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/design-system/cn";
 
-const W_KEY = "IBRANT_ACCOUNT_SIDEBAR_W";
-const SAVED_KEY = "IBRANT_SAVED_V1";
+const W_KEY = "ibrant_ACCOUNT_SIDEBAR_W";
+const SAVED_KEY = "ibrant_SAVED_V1";
 const MIN_W = 64;
 const MAX_W = 360;
 
@@ -118,7 +118,7 @@ export function AccountSidebar({
             <span className="font-display text-xl font-extrabold tracking-tight text-[#7559E8]">Z</span>
           ) : (
             <span className="whitespace-nowrap font-display text-xl font-extrabold tracking-tight text-white">
-              IBRANT <span className="text-[#7559E8]">· Learn · Build · Grow</span>
+              ibrant <span className="text-[#7559E8]">· Learn · Build · Grow</span>
             </span>
           )}
         </Link>

@@ -9,23 +9,23 @@ import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 export const metadata: Metadata = {
   metadataBase: new URL("https://ibrant.vercel.app"),
   title: {
-    default: "IBRANT — Learn. Create. Launch.",
-    template: "%s | IBRANT",
+    default: "ibrant — Learn. Create. Launch.",
+    template: "%s | ibrant",
   },
   description:
-    "Learn practical software development, build real projects, and explore digital products in the IBRANT academy and marketplace.",
-  applicationName: "IBRANT",
+    "Learn practical software development, build real projects, and explore digital products in the ibrant academy and marketplace.",
+  applicationName: "ibrant",
   openGraph: {
     type: "website",
-    siteName: "IBRANT",
-    title: "IBRANT — Learn. Create. Launch.",
+    siteName: "ibrant",
+    title: "ibrant — Learn. Create. Launch.",
     description:
       "A practical software academy and digital marketplace for people who build.",
     url: "https://ibrant.vercel.app",
   },
   twitter: {
     card: "summary_large_image",
-    title: "IBRANT — Learn. Create. Launch.",
+    title: "ibrant — Learn. Create. Launch.",
     description:
       "Learn practical software development, build real projects, and explore digital products.",
   },

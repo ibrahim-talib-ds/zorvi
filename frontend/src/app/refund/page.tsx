@@ -1,6 +1,6 @@
 import { PublicInfoPage } from "@/components/layout/PublicInfoPage";
 
-export const metadata = { title: "Refund Policy", description: "Review how refund requests for IBRANT digital products and services are handled." };
+export const metadata = { title: "Refund Policy", description: "Review how refund requests for ibrant digital products and services are handled." };
 
 export default function RefundPage() {
   return (

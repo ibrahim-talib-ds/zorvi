@@ -13,7 +13,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // IBRANT uses a single, permanent dark theme — the original brand theme.
+  // ibrant uses a single, permanent dark theme — the original brand theme.
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", "dark");
   }, []);

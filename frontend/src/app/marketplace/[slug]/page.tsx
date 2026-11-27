@@ -64,8 +64,8 @@ async function fetchMoreFromSeller(creatorId: string, currentSlug: string): Prom
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
-  if (!product) return { title: "Product not found — IBRANT" };
-  return { title: `${product.title} — IBRANT`, description: product.short_description };
+  if (!product) return { title: "Product not found — ibrant" };
+  return { title: `${product.title} — ibrant`, description: product.short_description };
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {

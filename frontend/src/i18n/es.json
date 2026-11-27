@@ -79,7 +79,7 @@
   "exp": {
     "eyebrow": "Más que solo aprender",
     "title": "Todo lo que necesitas para construir tu próxima gran idea.",
-    "c1_eyebrow": "Academia IBRANT",
+    "c1_eyebrow": "Academia ibrant",
     "c1_title": "Aprende construyendo. No solo mirando.",
     "c1_desc": "Rutas de proyectos completas y estructuradas. Entiende cómo funcionan juntos el frontend, backend, las bases de datos y el despliegue.",
     "c1_cta": "Explorar la Academia",
@@ -188,7 +188,7 @@
   },
   "cta": {
     "title": "Tu próxima gran idea podría empezar aquí.",
-    "subtitle": "Aprende desarrollo, crea tu primera aplicación o explora productos de software completos — IBRANT te da un lugar para empezar.",
+    "subtitle": "Aprende desarrollo, crea tu primera aplicación o explora productos de software completos — ibrant te da un lugar para empezar.",
     "start": "Empezar a aprender",
     "tagline": "Aprende. Crea. Lanza. Tu viaje empieza con una idea."
   },

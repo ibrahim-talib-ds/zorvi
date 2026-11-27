@@ -1,9 +1,9 @@
 "use client";
 
-// app/account/saved/page.tsx - IBRANT Saved Projects (v15, NEW PAGE)
+// app/account/saved/page.tsx - ibrant Saved Projects (v15, NEW PAGE)
 //
 // Shows the projects you hearted in the marketplace. Data lives in
-// localStorage (key IBRANT_SAVED_V1) - the same key the marketplace page
+// localStorage (key ibrant_SAVED_V1) - the same key the marketplace page
 // writes when you tap a heart. No backend wishlist endpoint exists yet;
 // this is a local wishlist, synced across tabs via the storage event.
 // The account layout (sidebar + auth guard) renders automatically around it.
@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Heart, Search, Trash2 } from "lucide-react";
 
-const SAVED_KEY = "IBRANT_SAVED_V1";
+const SAVED_KEY = "ibrant_SAVED_V1";
 const MARKET_BASE = "/marketplace";
 
 interface SavedSnap {

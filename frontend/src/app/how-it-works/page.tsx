@@ -8,11 +8,11 @@ const steps = [
   { number: "03", icon: Rocket, title: "Launch with confidence", text: "Study real project structures, explore marketplace products, and use what you learn in your own work.", href: "/marketplace", action: "Explore the marketplace" },
 ];
 
-export const metadata = { title: "How IBRANT Works", description: "Discover how IBRANT connects practical software education, hands-on coding, and digital projects." };
+export const metadata = { title: "How ibrant Works", description: "Discover how ibrant connects practical software education, hands-on coding, and digital projects." };
 
 export default function HowItWorksPage() {
   return (
-    <PublicInfoPage eyebrow="The IBRANT experience" title="Learn. Create. Launch." description="One platform that connects practical software education, hands-on coding, and a marketplace for real-world digital projects.">
+    <PublicInfoPage eyebrow="The ibrant experience" title="Learn. Create. Launch." description="One platform that connects practical software education, hands-on coding, and a marketplace for real-world digital projects.">
       <div className="grid gap-4 md:grid-cols-3">
         {steps.map(({ number, icon: Icon, title, text, href, action }) => (
           <article key={number} className="rounded-2xl border border-bg-border bg-bg-elevated/55 p-5">

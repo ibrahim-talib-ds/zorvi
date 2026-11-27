@@ -183,7 +183,7 @@ export default function AdminBuildTasksPage() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-display text-lg font-bold text-white">{task.name}</h2><span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${statusStyle(task.status)}`}>{task.status}</span></div>
-                    <p className="mt-1 text-xs text-[#929CBD]">{task.user_name || "IBRANT user"} · {task.user_email || task.user_id} · {task.project_name}</p>
+                    <p className="mt-1 text-xs text-[#929CBD]">{task.user_name || "ibrant user"} · {task.user_email || task.user_id} · {task.project_name}</p>
                     <p className="mt-2 line-clamp-2 max-w-4xl text-xs leading-5 text-[#B7BDD0]">{task.prompt}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -206,7 +206,7 @@ export default function AdminBuildTasksPage() {
           );
         })}
       </div>
-      <p className="mt-6 text-[10px] leading-5 text-[#6F7892]">Task information is stored in the IBRANT database. Failure and user-input alerts are written to in-app notifications. Validation notes come from the AI and are not proof of executed tests. Task workers are currently process-local; a stopped backend process interrupts active work until it is restarted and the task is resumed.</p>
+      <p className="mt-6 text-[10px] leading-5 text-[#6F7892]">Task information is stored in the ibrant database. Failure and user-input alerts are written to in-app notifications. Validation notes come from the AI and are not proof of executed tests. Task workers are currently process-local; a stopped backend process interrupts active work until it is restarted and the task is resumed.</p>
     </div>
   );
 }

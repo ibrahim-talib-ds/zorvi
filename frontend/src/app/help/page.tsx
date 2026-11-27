@@ -8,11 +8,11 @@ const questions = [
   { icon: BookOpen, title: "Where can I find technical learning material?", answer: "Visit the Guides and Documentation pages for curated references, or browse the Academy for structured courses." },
 ];
 
-export const metadata = { title: "Help Center", description: "Answers to common questions about IBRANT courses, marketplace purchases, and account access." };
+export const metadata = { title: "Help Center", description: "Answers to common questions about ibrant courses, marketplace purchases, and account access." };
 
 export default function HelpPage() {
   return (
-    <PublicInfoPage eyebrow="Support" title="Help center" description="Quick answers to common questions about learning, buying, and using the IBRANT platform.">
+    <PublicInfoPage eyebrow="Support" title="Help center" description="Quick answers to common questions about learning, buying, and using the ibrant platform.">
       <div className="space-y-3">
         {questions.map(({ icon: Icon, title, answer }) => (
           <details key={title} className="group rounded-2xl border border-bg-border bg-bg-elevated/45 p-5 open:border-[#7559E8]/40 open:bg-bg-elevated/75">

@@ -1,5 +1,5 @@
 /**
- * IBRANT — Marketplace types
+ * ibrant — Marketplace types
  * Match the FastAPI response shapes from /api/v1/marketplace/*.
  */
 

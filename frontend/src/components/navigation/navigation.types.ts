@@ -1,5 +1,5 @@
 // src/components/navigation/navigation.types.ts
-// IBRANT navigation system v16 - shared types (single source of truth)
+// ibrant navigation system v16 - shared types (single source of truth)
 
 import type { LucideIcon } from "lucide-react";
 

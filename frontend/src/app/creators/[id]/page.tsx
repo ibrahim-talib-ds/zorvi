@@ -49,9 +49,9 @@ async function fetchCreator(id: string): Promise<CreatorProfile | null> {
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const data = await fetchCreator(id);
-  if (!data) return { title: "Seller not found — IBRANT" };
+  if (!data) return { title: "Seller not found — ibrant" };
   return {
-    title: data.creator.full_name + " — IBRANT Marketplace",
+    title: data.creator.full_name + " — ibrant Marketplace",
     description: "Explore " + data.products.length + " published marketplace projects by " + data.creator.full_name + ".",
   };
 }
@@ -73,7 +73,7 @@ export default async function CreatorPage({ params }: PageProps) {
   const products = data.products;
   const joined = new Date(creator.joined_at);
   const joinedLabel = Number.isNaN(joined.getTime())
-    ? "IBRANT member"
+    ? "ibrant member"
     : "Member since " + joined.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const featuredCount = products.filter((product) => product.is_featured).length;
   const difficulties = Array.from(new Set(products.map((product) => product.difficulty).filter(Boolean)));

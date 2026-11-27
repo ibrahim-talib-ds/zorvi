@@ -2,7 +2,7 @@
 
 // src/components/navigation/SidebarProvider.tsx
 // One shared state provider for the desktop rail AND the mobile drawer.
-// - Expanded/collapsed preference persists in localStorage (IBRANT_NAV_SIDEBAR)
+// - Expanded/collapsed preference persists in localStorage (ibrant_NAV_SIDEBAR)
 // - Hydration-safe: initial render is identical on server and client; the
 //   stored preference is applied in an effect after mount.
 // - Reads the saved-projects count ONCE per 1.5s tick (no repeated reads per item).

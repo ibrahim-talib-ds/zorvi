@@ -79,7 +79,7 @@
   "exp": {
     "eyebrow": "Plus qu'un simple apprentissage",
     "title": "Tout ce qu'il faut pour donner vie à votre prochaine grande idée.",
-    "c1_eyebrow": "Académie IBRANT",
+    "c1_eyebrow": "Académie ibrant",
     "c1_title": "Apprenez en construisant. Pas seulement en regardant.",
     "c1_desc": "Des parcours de projets complets et structurés. Comprenez comment frontend, backend, bases de données et déploiement fonctionnent ensemble.",
     "c1_cta": "Explorer l'Académie",
@@ -188,7 +188,7 @@
   },
   "cta": {
     "title": "Votre prochaine grande idée pourrait commencer ici.",
-    "subtitle": "Apprenez le développement, créez votre première application ou explorez des produits logiciels complets — IBRANT vous donne un point de départ.",
+    "subtitle": "Apprenez le développement, créez votre première application ou explorez des produits logiciels complets — ibrant vous donne un point de départ.",
     "start": "Commencer à apprendre",
     "tagline": "Apprendre. Créer. Lancer. Votre voyage commence par une idée."
   },

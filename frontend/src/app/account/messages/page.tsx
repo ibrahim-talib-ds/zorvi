@@ -70,7 +70,7 @@ export default function AccountMessagesPage() {
 
   return <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
     <div className="mb-7 flex items-center justify-between gap-3">
-      <div><p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#A78BFA]"><MessageSquare size={14}/> Marketplace communication</p><h1 className="font-display text-3xl font-extrabold text-white">My Messages</h1><p className="mt-1 text-sm text-[#9299AE]">Messages with sellers and the IBRANT team.</p></div>
+      <div><p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#A78BFA]"><MessageSquare size={14}/> Marketplace communication</p><h1 className="font-display text-3xl font-extrabold text-white">My Messages</h1><p className="mt-1 text-sm text-[#9299AE]">Messages with sellers and the ibrant team.</p></div>
       <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-[#B7BDD0] hover:bg-white/5"><RefreshCw size={15}/> Refresh</button>
     </div>
     {error && <div role="alert" className="mb-5 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/10 p-3 text-sm text-[#F58B98]">{error}</div>}

@@ -1,6 +1,6 @@
 "use client";
 
-// app/account/page.tsx - IBRANT User Dashboard (v11)
+// app/account/page.tsx - ibrant User Dashboard (v11)
 //
 // ONE-FILE redesign: replaces only this page. The account shell
 // (AccountSidebar, mobile drawer, auth guard) comes from

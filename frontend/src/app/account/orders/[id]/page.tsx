@@ -98,7 +98,7 @@ export default function OrderDetailPage() {
       const data = await res.json();
       setDownloads(data);
       if (!Array.isArray(data) || data.length === 0) {
-        setDownloadError("No downloadable files are attached to this package yet. Contact the seller or IBRANT support.");
+        setDownloadError("No downloadable files are attached to this package yet. Contact the seller or ibrant support.");
       }
     } catch (e) {
       setDownloadError(e instanceof Error ? e.message : "Failed to issue downloads");

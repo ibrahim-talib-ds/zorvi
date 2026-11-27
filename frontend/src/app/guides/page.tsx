@@ -11,7 +11,7 @@ export const metadata = { title: "Developer Guides", description: "Curated offic
 
 export default function GuidesPage() {
   return (
-    <PublicInfoPage eyebrow="Learn by building" title="Developer learning guides" description="A curated starting point for the technologies used in modern full-stack applications. Follow the official references, then practise what you learn in the IBRANT Academy and Playground.">
+    <PublicInfoPage eyebrow="Learn by building" title="Developer learning guides" description="A curated starting point for the technologies used in modern full-stack applications. Follow the official references, then practise what you learn in the ibrant Academy and Playground.">
       <div className="grid gap-4 md:grid-cols-3">
         {guides.map(({ id, icon: Icon, title, description, href, label }) => (
           <article id={id} key={id} className="flex flex-col rounded-2xl border border-bg-border bg-bg-elevated/55 p-5">

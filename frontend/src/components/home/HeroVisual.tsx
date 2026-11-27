@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 export function HeroVisual() {
   return (
     <div className="relative w-full max-w-[550px] mx-auto flex items-center justify-center">
-      
+
       {/* Central Glow */}
       <div className="absolute inset-0 bg-[#7559E8]/20 blur-[80px] rounded-full" />
 
@@ -23,12 +23,12 @@ export function HeroVisual() {
           <div className="w-2 h-2 rounded-full bg-[#22C58B]" />
         </div>
         <div className="relative w-full aspect-[16/10] bg-[#171B33]">
-          <Image 
-            src="/images/hero/dashboard.png" 
-            alt="IBRANT Dashboard" 
-            fill 
-            className="object-cover" 
-            priority 
+          <Image
+            src="/images/hero/dashboard.png"
+            alt="ibrant Dashboard"
+            fill
+            className="object-cover"
+            priority
           />
         </div>
       </motion.div>

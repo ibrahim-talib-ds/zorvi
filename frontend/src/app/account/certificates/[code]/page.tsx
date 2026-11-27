@@ -154,16 +154,16 @@ export default function CertificateViewPage() {
                 <div className="w-48 h-16 border-b border-gray-400 relative mb-2 flex items-end justify-center pb-2">
                   {/* Fake Signature using a cursive font */}
                   <span style={{ fontFamily: 'Brush Script MT, cursive' }} className="text-4xl text-gray-800 -rotate-3 absolute bottom-1">
-                    IBRANT Academy
+                    ibrant Academy
                   </span>
                 </div>
-                <p className="text-sm font-bold text-gray-900">IBRANT Academy</p>
+                <p className="text-sm font-bold text-gray-900">ibrant Academy</p>
                 <p className="text-xs text-gray-500">Director of Education</p>
               </div>
 
               {/* Date/Info */}
               <div className="text-right text-sm text-gray-700">
-                <p className="font-bold">IBRANT Learning Institute</p>
+                <p className="font-bold">ibrant Learning Institute</p>
                 <p>Center for Professional Education</p>
                 <p>& Skills Development</p>
                 <p className="mt-2 text-xs text-gray-500">Verify: ibrant.com/c/{cert.code}</p>

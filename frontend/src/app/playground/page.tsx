@@ -1,6 +1,6 @@
 "use client";
 
-// app/playground/page.tsx - IBRANT Code Playground (v15, NEW PAGE)
+// app/playground/page.tsx - ibrant Code Playground (v15, NEW PAGE)
 //
 // A real, self-contained coding workspace: editor + live preview + terminal.
 //   - Editor: HTML / CSS / JS tabs, line numbers, Tab indents, Ctrl+Enter runs
@@ -22,9 +22,9 @@ import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
-const PG_KEY = "IBRANT_PLAYGROUND_V1";
-const PG_LANG_KEY = "IBRANT_PLAYGROUND_LANGUAGES_V1";
-const PG_TABS_KEY = "IBRANT_PLAYGROUND_TABS_V2";
+const PG_KEY = "ibrant_PLAYGROUND_V1";
+const PG_LANG_KEY = "ibrant_PLAYGROUND_LANGUAGES_V1";
+const PG_TABS_KEY = "ibrant_PLAYGROUND_TABS_V2";
 
 const EXTRA_LANGUAGES = [
   { id: "python", label: "Python" },
@@ -64,12 +64,12 @@ const EXTRA_LANGUAGES = [
 ];
 
 const LANGUAGE_STARTERS: Record<string, string> = {
-  python: 'def main():\n    print("Hello from IBRANT!")\n\nif __name__ == "__main__":\n    main()\n',
-  typescript: 'const greeting: string = "Hello from IBRANT!";\nconsole.log(greeting);\n',
-  java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from IBRANT!");\n    }\n}\n',
-  cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Hello from IBRANT!" << std::endl;\n    return 0;\n}\n',
-  c: '#include <stdio.h>\n\nint main(void) {\n    printf("Hello from IBRANT!\\n");\n    return 0;\n}\n',
-  sql: 'SELECT "Hello from IBRANT!" AS greeting;\n',
+  python: 'def main():\n    print("Hello from ibrant!")\n\nif __name__ == "__main__":\n    main()\n',
+  typescript: 'const greeting: string = "Hello from ibrant!";\nconsole.log(greeting);\n',
+  java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from ibrant!");\n    }\n}\n',
+  cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Hello from ibrant!" << std::endl;\n    return 0;\n}\n',
+  c: '#include <stdio.h>\n\nint main(void) {\n    printf("Hello from ibrant!\\n");\n    return 0;\n}\n',
+  sql: 'SELECT "Hello from ibrant!" AS greeting;\n',
 };
 
 interface Code {
@@ -293,7 +293,7 @@ function languageFromFileName(name: string): string {
 // ----------------------------------------------------------------------------
 const DEFAULT_CODE: Code = {
   html: `<div class="card">
-  <span class="tag">IBRANT Playground</span>
+  <span class="tag">ibrant Playground</span>
   <h1>Hello 👋</h1>
   <p>Edit the code, press <b>Run</b>, watch the terminal.</p>
   <button id="go">Clicked 0 times</button>
@@ -787,12 +787,12 @@ export default function PlaygroundPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("handoff") !== "lesson") return;
-    const raw = localStorage.getItem("IBRANT_PLAYGROUND_HANDOFF_V1");
+    const raw = localStorage.getItem("ibrant_PLAYGROUND_HANDOFF_V1");
     if (!raw) return;
     try {
       const handoff = JSON.parse(raw) as { code?: string; language?: string; title?: string };
       if (typeof handoff.code !== "string") throw new Error("Lesson example is missing code.");
-      localStorage.removeItem("IBRANT_PLAYGROUND_HANDOFF_V1");
+      localStorage.removeItem("ibrant_PLAYGROUND_HANDOFF_V1");
       const language = languageFromFileName(`example.${(handoff.language || "python").toLowerCase()}`);
       const title = (handoff.title || "Lesson example").slice(0, 60);
       if (["html", "css", "javascript"].includes(language)) {
@@ -1221,7 +1221,7 @@ export default function PlaygroundPage() {
       command = "npm install --no-audit --no-fund && npm run dev -- --hostname 0.0.0.0 --port " + port;
     } else if (deps.vite) {
       framework = "Vite";
-      command = "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port " + port + " --base __IBRANT_PREVIEW_BASE__";
+      command = "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port " + port + " --base __ibrant_PREVIEW_BASE__";
     } else if (packageJson.scripts?.dev) {
       framework = "Node.js web app";
       command = "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port " + port;
@@ -1487,7 +1487,7 @@ export default function PlaygroundPage() {
   // Restore and persist workspace preferences independently from source buffers.
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("IBRANT_PLAYGROUND_LAYOUT_V1") || "null");
+      const saved = JSON.parse(localStorage.getItem("ibrant_PLAYGROUND_LAYOUT_V1") || "null");
       if (saved && typeof saved === "object") {
         if (Number.isFinite(saved.editorShare)) setEditorShare(Math.max(28, Math.min(72, saved.editorShare)));
         if (Number.isFinite(saved.terminalHeight)) setTerminalHeight(Math.max(260, Math.min(560, saved.terminalHeight)));
@@ -1498,7 +1498,7 @@ export default function PlaygroundPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try { localStorage.setItem("IBRANT_PLAYGROUND_LAYOUT_V1", JSON.stringify({ editorShare, terminalHeight, autoRun })); }
+      try { localStorage.setItem("ibrant_PLAYGROUND_LAYOUT_V1", JSON.stringify({ editorShare, terminalHeight, autoRun })); }
       catch { /* Ignore storage quota or privacy-mode errors. */ }
     }, 300);
     return () => window.clearTimeout(timer);
@@ -1528,18 +1528,18 @@ export default function PlaygroundPage() {
   }, [code]);
 
   useEffect(() => {
-    try { setLocalAgentToken(localStorage.getItem("IBRANT_LOCAL_AGENT_TOKEN_V1") || ""); } catch { /* storage may be unavailable */ }
+    try { setLocalAgentToken(localStorage.getItem("ibrant_LOCAL_AGENT_TOKEN_V1") || ""); } catch { /* storage may be unavailable */ }
   }, []);
 
   const connectLocalRuntime = async () => {
-    const entered = window.prompt("Paste the one-time token printed by your IBRANT local runtime agent:", localAgentToken);
+    const entered = window.prompt("Paste the one-time token printed by your ibrant local runtime agent:", localAgentToken);
     if (!entered?.trim()) return;
     try {
       const response = await fetch("http://127.0.0.1:4317/health", { headers: { Authorization: `Bearer ${entered.trim()}` } });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "The local runtime did not authenticate.");
       if (result.runtime_version !== 2) throw new Error("Update your local runtime: stop the old agent with Ctrl+C, restart it from the updated project, then connect using its new token.");
-      localStorage.setItem("IBRANT_LOCAL_AGENT_TOKEN_V1", entered.trim());
+      localStorage.setItem("ibrant_LOCAL_AGENT_TOKEN_V1", entered.trim());
       setLocalAgentToken(entered.trim());
       setLocalAgentWorkspace(String(result.workspace || "Local workspace"));
       pushLog("out", `Connected to local runtime: ${result.workspace}. Shell commands execute on this computer.`);
@@ -1747,7 +1747,7 @@ export default function PlaygroundPage() {
           headers: { Authorization: `Bearer ${localAgentToken}` },
         });
         if (!health.ok) {
-          localStorage.removeItem("IBRANT_LOCAL_AGENT_TOKEN_V1");
+          localStorage.removeItem("ibrant_LOCAL_AGENT_TOKEN_V1");
           setLocalAgentToken("");
           setLocalAgentWorkspace("");
           throw new Error("Local runtime authentication failed. Reconnect using the current token printed by the agent.");
@@ -1915,7 +1915,7 @@ export default function PlaygroundPage() {
           </span>
           <div>
             <h1 className="font-display text-xl font-extrabold text-white">{cloudProject ? cloudProject.name : "Code Playground"}</h1>
-            <p className="text-xs text-[#7A8199]">{cloudProject ? "Saved to your IBRANT account · auto-save enabled" : "Monaco editor · HTML/CSS/JS preview · Python WebAssembly runner"}</p>
+            <p className="text-xs text-[#7A8199]">{cloudProject ? "Saved to your ibrant account · auto-save enabled" : "Monaco editor · HTML/CSS/JS preview · Python WebAssembly runner"}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -2185,7 +2185,7 @@ export default function PlaygroundPage() {
                   </div>
                   <h3 className="mt-4 text-lg font-bold text-white">Run this app on an Android device</h3>
                   <p className="mt-2 text-xs leading-5 text-[#AAB3CC]">
-                    Connect your local runtime and press Run Preview. IBRANT will sync this project, run Flutter Web, and connect the browser preview. This requires Flutter Web support in your local Flutter SDK.
+                    Connect your local runtime and press Run Preview. ibrant will sync this project, run Flutter Web, and connect the browser preview. This requires Flutter Web support in your local Flutter SDK.
                   </p>
                   <ol className="mt-5 space-y-3 text-xs leading-5 text-[#D7DDF3]">
                     <li><strong>1. Export the project.</strong> Select <strong>Export ZIP</strong> above and extract the archive.</li>
@@ -2293,7 +2293,7 @@ flutter run</code></pre>
       </div>
 
       <p className="mx-auto mt-3 max-w-[1600px] text-center text-[11px] text-[#7A8199]">
-        {cloudProject ? "Your project saves automatically to your IBRANT account. Export ZIP to keep a local copy or continue it in a desktop editor." : projectRootName ? "Files opened from a local folder are saved back to that folder with Save File or Ctrl+S. They are not uploaded to your IBRANT account. HTML, CSS and JavaScript preview in the browser; Python runs through WebAssembly." : "Scratch code saves on this device. Create a saved project in Build to sync files to your IBRANT account. HTML, CSS and JavaScript run in a sandboxed browser preview; Python runs through WebAssembly. Other languages require their respective engines or validators."}
+        {cloudProject ? "Your project saves automatically to your ibrant account. Export ZIP to keep a local copy or continue it in a desktop editor." : projectRootName ? "Files opened from a local folder are saved back to that folder with Save File or Ctrl+S. They are not uploaded to your ibrant account. HTML, CSS and JavaScript preview in the browser; Python runs through WebAssembly." : "Scratch code saves on this device. Create a saved project in Build to sync files to your ibrant account. HTML, CSS and JavaScript run in a sandboxed browser preview; Python runs through WebAssembly. Other languages require their respective engines or validators."}
       </p>
     </div>
   );

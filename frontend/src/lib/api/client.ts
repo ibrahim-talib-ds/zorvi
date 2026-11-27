@@ -1,5 +1,5 @@
 /**
- * IBRANT API client. Production API addresses are supplied by deployment
+ * ibrant API client. Production API addresses are supplied by deployment
  * configuration; no private hosting hostname is embedded in the source.
  */
 

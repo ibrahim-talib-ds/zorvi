@@ -88,7 +88,7 @@ html.light .bg-grid {
 .goog-te-banner-frame { display: none !important; }
 body { top: 0 !important; }
 
-/* ===== IBRANT THEME TOKENS (v4) =====
+/* ===== ibrant THEME TOKENS (v4) =====
    Dark is the default. Light overrides via html.light. The no-flash blocker
    script in layout.tsx sets .light/.dark on <html> before paint. */
 :root,
@@ -112,12 +112,12 @@ html.light {
   --text-muted: #6B7280;
   color-scheme: light;
 }
-/* ===== END IBRANT THEME TOKENS ===== */
+/* ===== END ibrant THEME TOKENS ===== */
 
 
 
 
-/* ===== IBRANT LIGHT THEME COMPATIBILITY (v6) - generated 2026-11-20 ===== */
+/* ===== ibrant LIGHT THEME COMPATIBILITY (v6) - generated 2026-11-20 ===== */
 /* Remaps hardcoded dark-palette classes to theme tokens under html.light.
    v8: status text darkened same-hue (pills stay colored), vivid bgs and
    borders kept, text contrast fixed, gradients flip. */
@@ -286,4 +286,4 @@ html.light .to-\[\#8B70FF\].text-white { color: #FFFFFF !important; }
 html.light .to-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-white { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
-/* ===== END IBRANT LIGHT THEME COMPATIBILITY ===== */
+/* ===== END ibrant LIGHT THEME COMPATIBILITY ===== */

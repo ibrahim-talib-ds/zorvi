@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/design-system/cn";
 import { Avatar } from "@/components/ui/Avatar";
 
-const W_KEY = "IBRANT_ADMIN_SIDEBAR_W";
+const W_KEY = "ibrant_ADMIN_SIDEBAR_W";
 const MIN_W = 64;
 const MAX_W = 360;
 
@@ -102,7 +102,7 @@ export function AdminSidebar({
             <span className="font-display text-xl font-extrabold tracking-tight text-[#7559E8]">Z</span>
           ) : (
             <span className="whitespace-nowrap font-display text-xl font-extrabold tracking-tight text-white">
-              IBRANT <span className="text-[#7559E8]">Admin</span>
+              ibrant <span className="text-[#7559E8]">Admin</span>
             </span>
           )}
         </Link>

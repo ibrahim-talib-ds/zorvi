@@ -1,6 +1,6 @@
 "use client";
 
-// app/admin/page.tsx - IBRANT Admin Dashboard (v10.1)
+// app/admin/page.tsx - ibrant Admin Dashboard (v10.1)
 //
 // ONE-FILE redesign: replaces only this page in your project. The admin shell
 // (top bar with search/Ctrl+K, sidebar, theme, profile) comes from

@@ -8,11 +8,11 @@ const stack = [
   { icon: Smartphone, name: "Flutter", role: "Mobile development", detail: "Cross-platform application development from a shared codebase.", href: "https://docs.flutter.dev/" },
 ];
 
-export const metadata = { title: "Technologies", description: "Explore the modern web, backend, database, and mobile technologies featured across IBRANT." };
+export const metadata = { title: "Technologies", description: "Explore the modern web, backend, database, and mobile technologies featured across ibrant." };
 
 export default function TechnologiesPage() {
   return (
-    <PublicInfoPage eyebrow="Technology" title="Built around modern tools" description="IBRANT focuses on technologies that are widely used to design, build, and operate modern software products.">
+    <PublicInfoPage eyebrow="Technology" title="Built around modern tools" description="ibrant focuses on technologies that are widely used to design, build, and operate modern software products.">
       <div className="grid gap-4 sm:grid-cols-2">
         {stack.map(({ icon: Icon, name, role, detail, href }) => (
           <article key={name} className="rounded-2xl border border-bg-border bg-bg-elevated/55 p-5">

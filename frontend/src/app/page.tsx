@@ -1,6 +1,6 @@
 "use client";
 
-// app/page.tsx - IBRANT Home (v14)
+// app/page.tsx - ibrant Home (v14)
 //
 // ONE-FILE modern landing page. Replaces only app/page.tsx (backed up).
 // Your global header/footer (layout-level) are untouched. No new
@@ -362,16 +362,16 @@ function Hero({ projectsReady, coursesReady }: { projectsReady: boolean; courses
           <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#10162B] p-2 shadow-2xl shadow-black/40 sm:p-3">
             <div className="flex items-center justify-between px-2 pb-3 pt-1">
               <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F05D70]" /><span className="h-2.5 w-2.5 rounded-full bg-[#F5A623]" /><span className="h-2.5 w-2.5 rounded-full bg-[#22C58B]" /></div>
-              <span className="text-[10px] font-semibold tracking-[.18em] text-[#929CBD]">THE IBRANT EXPERIENCE</span>
+              <span className="text-[10px] font-semibold tracking-[.18em] text-[#929CBD]">THE ibrant EXPERIENCE</span>
               <span className="h-2 w-2 rounded-full bg-[#22C58B] shadow-[0_0_12px_#22C58B]" />
             </div>
             <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0B1020]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/hero/dashboard-web.png" alt="Preview of the IBRANT learning dashboard" className="block aspect-[1.6/1] w-full object-cover object-top" />
+              <img src="/images/hero/dashboard-web.png" alt="Preview of the ibrant learning dashboard" className="block aspect-[1.6/1] w-full object-cover object-top" />
               <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#080D1B]/90 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 sm:bottom-4 sm:left-4 sm:right-4">
                 <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#C5B8FF]">One connected platform</p><p className="mt-1 text-sm font-bold text-white sm:text-base">Learn. Create. Launch.</p></div>
-                <span className="rounded-lg border border-white/15 bg-black/35 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur">Explore IBRANT</span>
+                <span className="rounded-lg border border-white/15 bg-black/35 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur">Explore ibrant</span>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 px-1 pb-1 pt-3 text-center">
@@ -447,7 +447,7 @@ const WHY_CARDS = [
   },
   {
     title: "Trusted platform",
-    body: "Secure checkout, clear licensing and support from the IBRANT team.",
+    body: "Secure checkout, clear licensing and support from the ibrant team.",
     icon: <ShieldCheck size={20} />,
   },
 ];
@@ -601,7 +601,7 @@ export default function HomePage() {
       {/* How it works */}
       <SectionShell
         icon={<Sparkles size={18} />}
-        title="How IBRANT Works"
+        title="How ibrant Works"
         subtitle="A practical journey from learning the fundamentals to publishing work you can stand behind."
       >
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
@@ -620,10 +620,10 @@ export default function HomePage() {
         </div>
       </SectionShell>
 
-      {/* Why IBRANT */}
+      {/* Why ibrant */}
       <SectionShell
         icon={<ShieldCheck size={18} />}
-        title="Why IBRANT"
+        title="Why ibrant"
         subtitle="Everything you need to learn faster and build things that matter."
       >
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

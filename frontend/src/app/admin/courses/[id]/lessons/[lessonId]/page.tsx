@@ -463,7 +463,7 @@ export default function LessonEditorPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={20}
-            placeholder={`# Welcome to this lesson\n\nWrite your lesson content here. Use markdown for formatting:\n\n## Learning objectives\n- Understand X\n- Practice Y\n\n## Steps\n1. First step\n2. Second step\n\nYou can also add code:\n\n\`\`\`python\nprint("Hello, IBRANT!")\n\`\`\``}
+            placeholder={`# Welcome to this lesson\n\nWrite your lesson content here. Use markdown for formatting:\n\n## Learning objectives\n- Understand X\n- Practice Y\n\n## Steps\n1. First step\n2. Second step\n\nYou can also add code:\n\n\`\`\`python\nprint("Hello, ibrant!")\n\`\`\``}
             className="w-full bg-[#0B0F1D] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#7559E8] font-mono text-sm leading-relaxed resize-y"
           />
 
@@ -491,7 +491,7 @@ export default function LessonEditorPage() {
             value={codeExample}
             onChange={(e) => setCodeExample(e.target.value)}
             rows={8}
-            placeholder={`# hello.py\nprint("Hello, IBRANT!")`}
+            placeholder={`# hello.py\nprint("Hello, ibrant!")`}
             className="w-full bg-[#0B0F1D] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#7559E8] font-mono text-sm resize-y"
           />
         </div>

@@ -1,13 +1,13 @@
 "use client";
 
-// app/marketplace/page.tsx - IBRANT Marketplace (v15)
+// app/marketplace/page.tsx - ibrant Marketplace (v15)
 //
 // Marketplace catalog content. The surrounding navigation is shared with product detail pages.
 //
 // v15 changes:
 //  - Catalog cards use a readable 2 / 3 / 4-column responsive grid, with
 //    taller covers on larger screens to preserve image clarity.
-//  - Hearts now PERSIST: localStorage key IBRANT_SAVED_V1 (snapshot map),
+//  - Hearts now PERSIST: localStorage key ibrant_SAVED_V1 (snapshot map),
 //    synced across tabs. The /account/saved page reads the same key.
 //
 // Data: your real public endpoint - GET /marketplace/products. Anything the
@@ -42,7 +42,7 @@ import { API_BASE } from "@/lib/api/client";
 const DETAIL_BASE = "/marketplace";
 
 // wishlist contract: same key as app/account/saved/page.tsx
-const SAVED_KEY = "IBRANT_SAVED_V1";
+const SAVED_KEY = "ibrant_SAVED_V1";
 interface SavedSnap {
   id: string;
   title: string;

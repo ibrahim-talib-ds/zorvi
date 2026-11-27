@@ -15,7 +15,7 @@ export function PublicInfoPage({ eyebrow, title, description, updatedAt, childre
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[440px] bg-[radial-gradient(ellipse_at_top,rgba(117,89,232,0.16),transparent_68%)]" />
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-bg-border bg-bg-surface/70 px-3.5 py-2 text-sm font-medium text-text-secondary transition hover:border-[#7559E8]/50 hover:text-text-primary">
-          <ArrowLeft size={15} /> Back to IBRANT
+          <ArrowLeft size={15} /> Back to ibrant
         </Link>
         <header className="mt-10 max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#A78BFA]">{eyebrow}</p>
@@ -27,7 +27,7 @@ export function PublicInfoPage({ eyebrow, title, description, updatedAt, childre
           {children}
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-bg-border pt-6 text-sm text-text-muted">
-          <span>Need more help? Contact the IBRANT team.</span>
+          <span>Need more help? Contact the ibrant team.</span>
           <Link href="/contact" className="inline-flex items-center gap-1.5 font-semibold text-text-primary transition hover:text-[#A78BFA]">Contact support <ArrowUpRight size={15} /></Link>
         </div>
       </div>

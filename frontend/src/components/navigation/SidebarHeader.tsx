@@ -22,19 +22,19 @@ export function SidebarHeader({
     <div className="flex items-center gap-2.5 border-b border-white/5 px-3 py-3" style={{ minHeight: 64 }}>
       <Link
         href="/"
-        aria-label="IBRANT home"
+        aria-label="ibrant home"
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#7559E8] to-[#8B70FF] shadow-lg shadow-[#7559E8]/25"
       >
-        <span className="font-display text-lg font-extrabold text-white" aria-hidden="true">I</span>
+        <span className="font-display text-xl font-semibold lowercase leading-none text-white" aria-hidden="true">i</span>
       </Link>
 
       {expanded && (
         <Link href="/" className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate font-display text-base font-extrabold tracking-wide text-white">
-            IBRANT
+          <span className="block truncate font-display text-[15px] font-semibold tracking-[-0.045em] text-white">
+            ibrant
           </span>
           <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-[#7A8199]">
-            Learning Platform
+            Studio
           </span>
         </Link>
       )}

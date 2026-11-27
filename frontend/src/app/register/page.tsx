@@ -66,7 +66,7 @@ export default function RegisterPage() {
         <div className="rounded-2xl border border-white/10 bg-[#11152A] p-8 shadow-2xl">
           <div className="mb-8 text-center">
             <h1 className="font-display text-3xl font-extrabold text-white mb-2">Create an account</h1>
-            <p className="text-sm text-[#B7BDD0]">Join IBRANT to learn and build.</p>
+            <p className="text-sm text-[#B7BDD0]">Join ibrant to learn and build.</p>
           </div>
 
           {error && (

@@ -1,5 +1,5 @@
 // src/components/navigation/navigation.config.ts
-// IBRANT navigation system v16 - THE single source of truth for navigation.
+// ibrant navigation system v16 - THE single source of truth for navigation.
 // Every student/admin item below is verified against the live project routes.
 // Nothing is listed that does not exist. See the route audit in the v16 report.
 
@@ -17,11 +17,11 @@ import type { NavigationGroup, NavigationItem, SidebarVariant } from "./navigati
 export const SIDEBAR_W = { expanded: 256, collapsed: 72 } as const;
 export const SIDEBAR_MIN_W = 220;
 export const SIDEBAR_MAX_W = 420;
-export const SIDEBAR_WIDTH_STORAGE_KEY = "IBRANT_NAV_SIDEBAR_WIDTH";
+export const SIDEBAR_WIDTH_STORAGE_KEY = "ibrant_NAV_SIDEBAR_WIDTH";
 
 // ---------------------------------------------------------------- persistence
-export const NAV_STORAGE_KEY = "IBRANT_NAV_SIDEBAR"; // "expanded" | "collapsed"
-export const SAVED_KEY = "IBRANT_SAVED_V1";          // written by marketplace hearts
+export const NAV_STORAGE_KEY = "ibrant_NAV_SIDEBAR"; // "expanded" | "collapsed"
+export const SAVED_KEY = "ibrant_SAVED_V1";          // written by marketplace hearts
 
 // ---------------------------------------------------------------- VERIFY ⚠
 // Auth page URLs could not be inspected from here - adjust to your real ones.

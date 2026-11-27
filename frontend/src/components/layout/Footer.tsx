@@ -12,8 +12,8 @@ export function Footer() {
                 {/* Brand */}
         <div className="mb-10">
           <Link href="/" className="flex items-center gap-3 mb-4">
-            <img src="/images/logo/ibrant-mark.png" alt="IBRANT" className="h-8 w-auto object-contain" />
-            <span className="font-display text-xl font-extrabold tracking-tight text-[#8B70FF]">IBRANT</span>
+            <img src="/images/logo/ibrant-mark.png" alt="ibrant" className="h-8 w-auto object-contain" />
+            <span className="font-display text-xl font-extrabold tracking-tight text-[#8B70FF]">ibrant</span>
           </Link>
           <p className="text-sm text-text-muted mb-6 max-w-xs">
             <Tr k="footer.learn_create_launch" /> <br />
@@ -70,7 +70,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted text-center md:text-left">
-            &copy; {currentYear} IBRANT. <Tr k="footer.rights" />
+            &copy; {currentYear} ibrant. <Tr k="footer.rights" />
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-text-muted">
             <span>Learn</span>

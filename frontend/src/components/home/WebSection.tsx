@@ -33,7 +33,7 @@ export function WebSection() {
             <span className="ml-4 text-xs font-mono text-text-muted">ibrant-academy-dashboard</span>
           </div>
           <div className="relative w-full aspect-[16/9] bg-bg-deep">
-            <Image src="/images/hero/dashboard.png" alt="IBRANT Web Dashboard" fill sizes="(max-width: 768px) 100vw, 1152px" className="object-cover" priority />
+            <Image src="/images/hero/dashboard.png" alt="ibrant Web Dashboard" fill sizes="(max-width: 768px) 100vw, 1152px" className="object-cover" priority />
           </div>
         </div>
 

@@ -14,7 +14,7 @@ export function PracticeInPlaygroundButton({ code, language, lessonTitle }: Prop
 
   const openPlayground = () => {
     try {
-      localStorage.setItem("IBRANT_PLAYGROUND_HANDOFF_V1", JSON.stringify({
+      localStorage.setItem("ibrant_PLAYGROUND_HANDOFF_V1", JSON.stringify({
         code,
         language: language || "python",
         title: lessonTitle,
