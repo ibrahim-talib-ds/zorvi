@@ -363,22 +363,24 @@ def _response_shape_metadata(payload: object) -> tuple[object, object, list[str]
 
 
 def _parse_json_content(content: str) -> dict:
-    candidate = content.strip()
-    candidate = re.sub(r"^\s*```(?:json)?\s*", "", candidate, flags=re.IGNORECASE)
-    candidate = re.sub(r"\s*```\s*$", "", candidate)
-    try:
-        value = json.loads(candidate)
-    except json.JSONDecodeError:
-        start, end = candidate.find("{"), candidate.rfind("}")
-        if start < 0 or end <= start:
-            raise HTTPException(status_code=502, detail="The AI provider returned a response that was not valid JSON. Try again.")
+    """Parse a JSON object even when a compatible model adds surrounding prose."""
+    candidate = content.strip().lstrip("\ufeff")
+    candidate = re.sub(r"^\s*\x60\x60\x60(?:json)?\s*", "", candidate, flags=re.IGNORECASE)
+    candidate = re.sub(r"\s*\x60\x60\x60\s*$", "", candidate)
+    decoder = json.JSONDecoder()
+    # raw_decode handles braces inside quoted source-code strings and ignores
+    # trailing explanations without merging multiple JSON objects.
+    starts = [0] + [match.start() for match in re.finditer(r"\{", candidate)]
+    for start in dict.fromkeys(starts):
         try:
-            value = json.loads(candidate[start : end + 1])
-        except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=502, detail="The AI provider returned malformed project data. Try again.") from exc
-    if not isinstance(value, dict):
-        raise HTTPException(status_code=502, detail="The AI provider returned an unexpected response format.")
-    return value
+            parsed, _ = decoder.raw_decode(candidate[start:].lstrip())
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            continue
+    if not candidate or "{" not in candidate:
+        raise HTTPException(status_code=502, detail="The AI provider returned a response that was not valid JSON. Try again.")
+    raise HTTPException(status_code=502, detail="The AI provider returned malformed project data. Try again.")
 
 
 async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9000, response_model=None) -> dict:
@@ -600,7 +602,21 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
             choices_count, finish_reason, message_keys, completion_tokens, reasoning_tokens,
         )
         raise HTTPException(status_code=502, detail="The AI provider returned an empty or unsupported response. Retry the step; your saved project files are safe.")
-    return _parse_json_content(content)
+    choices = payload.get("choices") if isinstance(payload, dict) else None
+    finish_reason = choices[0].get("finish_reason") if isinstance(choices, list) and choices and isinstance(choices[0], dict) else None
+    try:
+        return _parse_json_content(content)
+    except HTTPException as parse_exc:
+        if finish_reason in {"length", "max_tokens", "token_limit"}:
+            logger.warning(
+                "AI provider truncated structured output at its token limit (provider=%s, model=%s, finish_reason=%s, content_chars=%s)",
+                provider, model, finish_reason, len(content),
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider stopped before finishing the project files because the output limit was reached.",
+            ) from parse_exc
+        raise
 
 
 def _provider_retry_delay(response: httpx.Response, attempt: int) -> float | None:
@@ -757,15 +773,22 @@ Hard rules:
             "The AI provider returned malformed project data. Try again.",
             "The AI provider returned a response that was not valid JSON. Try again.",
             "The AI provider returned an unexpected response format.",
+            "The AI provider stopped before finishing the project files because the output limit was reached.",
         }
         if parse_exc.status_code != 502 or parse_exc.detail not in recoverable_details:
             raise
         logger.warning("AI provider returned unparseable source files for step %s; requesting a clean retry", step_index + 1)
+        was_truncated = "output limit was reached" in parse_exc.detail
+        recovery_instruction = (
+            "\n\nRECOVERY REQUIREMENT: The previous output was cut off. Return a smaller, complete batch of no more than 4 essential files. Keep each file concise, preserve the current step's core functionality, and return valid JSON only."
+            if was_truncated else
+            "\n\nRECOVERY REQUIREMENT: Your previous response was malformed. Return exactly one complete, syntactically valid JSON object matching the required response schema. Include at least one complete source file in files. No markdown, comments, or prose."
+        )
         try:
             data = await _ask_model(
-                system_prompt + "\\n\\nRECOVERY REQUIREMENT: Your previous response was malformed. Return exactly one complete, syntactically valid JSON object matching the required response schema. Include at least one complete source file in files. No markdown, comments, or prose.",
+                system_prompt + recovery_instruction,
                 step_payload,
-                max_tokens=10000,
+                max_tokens=6000 if was_truncated else 10000,
                 response_model=BuildStepResult,
             )
         except HTTPException as retry_exc:

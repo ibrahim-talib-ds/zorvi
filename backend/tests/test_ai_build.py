@@ -36,6 +36,14 @@ def test_parse_json_from_markdown_fence():
     assert _parse_json_content('```json\n{"ok": true}\n```') == {"ok": True}
 
 
+def test_parse_json_recovers_object_surrounded_by_model_prose():
+    content = 'Reasoning omitted.\n{"summary":"CSS uses {display: grid}","files":[]}\nDone.'
+    assert _parse_json_content(content) == {
+        "summary": "CSS uses {display: grid}",
+        "files": [],
+    }
+
+
 def test_parse_json_rejects_non_json_content():
     with pytest.raises(HTTPException) as error:
         _parse_json_content("I cannot return JSON")
@@ -518,3 +526,36 @@ async def test_generate_step_patch_recovers_malformed_provider_json(monkeypatch)
     assert patch.files[0].path == "index.html"
     assert len(calls) == 2
     assert calls[1][2] is BuildStepResult
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_retries_truncated_output_with_smaller_batch(monkeypatch):
+    calls = []
+    valid_response = {
+        "summary": "Builds the responsive application shell.",
+        "files": [{"path": "src/App.tsx", "content": "export default function App(){return <main>App</main>}"}],
+        "validation_notes": [],
+        "user_question": None,
+        "is_final_step": False,
+    }
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
+        calls.append((system_prompt, user_payload, max_tokens, response_model))
+        if len(calls) == 1:
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider stopped before finishing the project files because the output limit was reached.",
+            )
+        return valid_response
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={"id": "project-1", "name": "Example", "description": "Example app", "template": "web", "files": []},
+        prompt="Build a responsive example application",
+        plan={"steps": [{"id": "step-1", "title": "Build shell", "objective": "Create the responsive shell."}]},
+        step_index=0,
+    )
+    assert patch.files[0].path == "src/App.tsx"
+    assert len(calls) == 2
+    assert calls[1][2] == 6000
+    assert "no more than 4 essential files" in calls[1][0]
