@@ -44,6 +44,24 @@ def test_parse_json_recovers_object_surrounded_by_model_prose():
     }
 
 
+def test_extract_chat_content_supports_required_tool_call_arguments():
+    payload = {
+        "choices": [{
+            "message": {
+                "content": None,
+                "tool_calls": [{
+                    "type": "function",
+                    "function": {
+                        "name": "submit_build_step",
+                        "arguments": '{"summary":"Built shell","files":[]}',
+                    },
+                }],
+            },
+        }],
+    }
+    assert ai_build._extract_chat_content(payload) == '{"summary":"Built shell","files":[]}'
+
+
 def test_parse_json_rejects_non_json_content():
     with pytest.raises(HTTPException) as error:
         _parse_json_content("I cannot return JSON")
@@ -416,7 +434,7 @@ async def test_openrouter_nemotron_free_omits_unsupported_response_format(monkey
             return FakeResponse()
 
     monkeypatch.setattr(ai_build.httpx, "AsyncClient", FakeAsyncClient)
-    result = await ai_build._ask_model("Return one JSON object", {"task": "code"})
+    result = await ai_build._ask_model("Return one JSON object", {"task": "code"}, response_model=BuildPlan)
 
     body = FakeAsyncClient.request_body
     assert result == {"ok": True}
@@ -425,6 +443,14 @@ async def test_openrouter_nemotron_free_omits_unsupported_response_format(monkey
     assert "max_completion_tokens" not in body
     assert body["reasoning"] == {"effort": "none"}
     assert body["temperature"] == 0.1
+    assert body["tool_choice"] == {
+        "type": "function",
+        "function": {"name": "submit_build_plan"},
+    }
+    tool = body["tools"][0]["function"]
+    assert tool["name"] == "submit_build_plan"
+    assert tool["parameters"]["type"] == "object"
+    assert tool["parameters"]["additionalProperties"] is False
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -550,8 +576,8 @@ async def test_create_build_plan_repairs_schema_invalid_model_response(monkeypat
     }
     calls = []
 
-    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
-        calls.append((system_prompt, user_payload, response_model))
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, response_model, model_override))
         return invalid_plan if len(calls) == 1 else valid_plan
 
     monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
@@ -603,8 +629,8 @@ async def test_generate_step_patch_repairs_invalid_file_response(monkeypatch):
     }
     calls = []
 
-    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
-        calls.append((system_prompt, user_payload, response_model))
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, response_model, model_override))
         return invalid_response if len(calls) == 1 else valid_response
 
     monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
@@ -632,7 +658,7 @@ async def test_generate_step_patch_repairs_invalid_file_response(monkeypatch):
     assert patch.files[0].path == "index.html"
     assert len(calls) == 2
     assert calls[1][2] is BuildStepResult
-    assert calls[1][1]["invalid_previous_response"] == invalid_response
+    assert calls[1][1]["invalid_previous_response_summary"]["files"] == []
     assert calls[1][1]["validation_errors"]
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -646,8 +672,8 @@ async def test_generate_step_patch_recovers_malformed_provider_json(monkeypatch)
         "is_final_step": False,
     }
 
-    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
-        calls.append((system_prompt, user_payload, response_model))
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, response_model, model_override))
         if len(calls) == 1:
             raise HTTPException(status_code=502, detail="The AI provider returned malformed project data. Try again.")
         return valid_response
@@ -675,8 +701,8 @@ async def test_generate_step_patch_retries_truncated_output_with_smaller_batch(m
         "is_final_step": False,
     }
 
-    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
-        calls.append((system_prompt, user_payload, max_tokens, response_model))
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, max_tokens, response_model, model_override))
         if len(calls) == 1:
             raise HTTPException(
                 status_code=502,
@@ -695,3 +721,121 @@ async def test_generate_step_patch_retries_truncated_output_with_smaller_batch(m
     assert len(calls) == 2
     assert calls[1][2] == 6000
     assert "no more than 4 essential files" in calls[1][0]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_progressively_repairs_invalid_schema(monkeypatch):
+    settings = SimpleNamespace(
+        AI_PROVIDER="openai-compatible",
+        AI_API_KEY="test-key",
+        AI_BASE_URL="https://openrouter.ai/api/v1",
+        AI_MODEL="nvidia/nemotron-3-ultra-550b-a55b:free",
+        AI_REQUEST_TIMEOUT_SECONDS=10,
+    )
+    monkeypatch.setattr(ai_build, "get_settings", lambda: settings)
+    invalid_response = {
+        "summary": "Started the responsive shell.",
+        "files": [],
+        "validation_notes": [],
+        "user_question": None,
+        "is_final_step": False,
+    }
+    valid_response = {
+        "summary": "Builds the responsive application shell.",
+        "files": [{"path": "src/App.tsx", "content": "export default function App(){return <main>Shell</main>}"}],
+        "validation_notes": [],
+        "user_question": None,
+        "is_final_step": False,
+    }
+    calls = []
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, max_tokens, response_model, model_override))
+        if len(calls) < 4:
+            return invalid_response
+        return valid_response
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={"id": "project-1", "name": "Example", "description": "Example app", "template": "web", "files": []},
+        prompt="Build a responsive example application",
+        plan={"steps": [{"id": "step-1", "title": "Build shell", "objective": "Create the responsive shell."}]},
+        step_index=0,
+    )
+
+    assert patch.files[0].path == "src/App.tsx"
+    assert len(calls) == 4
+    assert [call[2] for call in calls[1:]] == [6000, 4000, 2500]
+    assert ["at most 4", "at most 2", "exactly 1"] == [
+        "at most 4" if "at most 4" in calls[1][0] else "",
+        "at most 2" if "at most 2" in calls[2][0] else "",
+        "exactly 1" if "exactly 1" in calls[3][0] else "",
+    ]
+    configured_url, _, configured_model, _ = ai_build._provider_config()
+    if "openrouter.ai" in configured_url:
+        expected_models = [*ai_build._openrouter_fallback_models(configured_url, configured_model), None]
+        assert [call[4] for call in calls[1:]] == expected_models[:3]
+    assert "invalid_previous_response_summary" in calls[1][1]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_enforces_maximum_four_files_per_batch(monkeypatch):
+    oversized = {
+        "summary": "Creates the shell.",
+        "files": [
+            {"path": f"src/Component{index}.tsx", "content": f"export default function Component{index}(){{return null}}"}
+            for index in range(5)
+        ],
+    }
+    valid = {
+        "summary": "Creates the shell foundation.",
+        "files": [{"path": "src/App.tsx", "content": "export default function App(){return <main/>}"}],
+    }
+    calls = []
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, max_tokens, response_model, model_override))
+        return oversized if len(calls) == 1 else valid
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={"id": "project-1", "name": "Example", "description": "Example app", "template": "web", "files": []},
+        prompt="Build a responsive example application",
+        plan={"steps": [{"id": "step-1", "title": "Build shell", "objective": "Create the responsive shell."}]},
+        step_index=0,
+    )
+    assert len(patch.files) == 1
+    assert len(calls) == 2
+    assert calls[1][2] == 6000
+    assert calls[1][1]["validation_errors"][0]["type"] == "ValueError"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_repairs_duplicate_file_paths(monkeypatch):
+    duplicate_response = {
+        "summary": "Creates the shell.",
+        "files": [
+            {"path": "src/App.tsx", "content": "export default function App(){return <main/>}"},
+            {"path": "src/app.tsx", "content": "export default function App(){return <main/>}"},
+        ],
+    }
+    corrected_response = {
+        "summary": "Creates the shell.",
+        "files": [{"path": "src/App.tsx", "content": "export default function App(){return <main/>}"}],
+    }
+    calls = []
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None, model_override=None):
+        calls.append((system_prompt, user_payload, max_tokens, response_model, model_override))
+        return duplicate_response if len(calls) == 1 else corrected_response
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={"id": "project-1", "name": "Example", "description": "Example app", "template": "web", "files": []},
+        prompt="Build a responsive example application",
+        plan={"steps": [{"id": "step-1", "title": "Build shell", "objective": "Create the responsive shell."}]},
+        step_index=0,
+    )
+    assert [file.path for file in patch.files] == ["src/App.tsx"]
+    assert len(calls) == 2
+    assert "Duplicate file path" in calls[1][1]["validation_errors"][0]["msg"]

@@ -331,6 +331,19 @@ def _extract_chat_content(payload: object) -> str | None:
     message = choices[0].get("message")
     if not isinstance(message, dict):
         return None
+    tool_calls = message.get("tool_calls")
+    if isinstance(tool_calls, list):
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+            function = tool_call.get("function")
+            if not isinstance(function, dict):
+                continue
+            arguments = function.get("arguments")
+            if isinstance(arguments, str) and arguments.strip():
+                return arguments
+            if isinstance(arguments, dict):
+                return json.dumps(arguments, ensure_ascii=False)
     content = message.get("content")
     if isinstance(content, str):
         return content if content.strip() else None
@@ -386,10 +399,24 @@ def _parse_json_content(content: str) -> dict:
     raise HTTPException(status_code=502, detail="The AI provider returned malformed project data. Try again.")
 
 
-async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9000, response_model=None) -> dict:
+async def _ask_model(
+    system_prompt: str,
+    user_payload: dict,
+    max_tokens: int = 9000,
+    response_model=None,
+    model_override: str | None = None,
+) -> dict:
     base_url, api_key, model, use_bearer = _provider_config()
     settings = get_settings()
     provider = (settings.AI_PROVIDER or "gemini").strip().lower()
+    if model_override:
+        if (
+            urlparse(base_url).hostname != "openrouter.ai"
+            or model_override not in OPENROUTER_FREE_BUILD_FALLBACKS
+            or not model_override.endswith(":free")
+        ):
+            raise HTTPException(status_code=400, detail="The requested AI recovery model is not an approved free fallback.")
+        model = model_override
     response_format = {"type": "json_object"}
     if provider == "groq" and model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"} and response_model is not None:
         response_format = {
@@ -401,10 +428,13 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
             },
         }
     hostname = (urlparse(base_url).hostname or "").lower()
-    is_openrouter_nemotron_free = (
+    openrouter_tool_models = {
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        *OPENROUTER_FREE_BUILD_FALLBACKS,
+    }
+    is_openrouter_tool_model = (
         hostname == "openrouter.ai"
-        and model.lower().split(":")[0] == "nvidia/nemotron-3-ultra-550b-a55b"
-        and model.lower().endswith(":free")
+        and model.lower() in openrouter_tool_models
     )
     is_nvidia_nemotron = (
         provider == "openai-compatible"
@@ -426,12 +456,28 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
     # max_completion_tokens alias). Nemotron coding agents also need thinking
     # disabled so reasoning does not consume the visible source-file budget,
     # and force_nonempty_content so the final answer is emitted in message.content.
-    if is_openrouter_nemotron_free:
-        # OpenRouter explicitly marks the free Nemotron route as not supporting
-        # response_format. Keep JSON-only instructions in the system prompt and
-        # enforce the complete schema locally with Pydantic after parsing.
+    if is_openrouter_tool_model:
+        # These configured free models support tool calling. Nemotron Ultra
+        # does not support response_format; use the same typed function contract
+        # for its known free fallbacks so validation semantics stay consistent.
+        # A required function call gives the model a typed output contract;
+        # the backend still parses and validates its arguments before saving.
         request_body.pop("response_format", None)
         request_body["temperature"] = 0.1
+        if response_model is not None:
+            tool_name = "submit_build_step" if response_model is BuildStepResult else "submit_build_plan"
+            request_body["tools"] = [{
+                "type": "function",
+                "function": {
+                    "name": tool_name,
+                    "description": "Return the complete structured IBRANT build response matching this schema.",
+                    "parameters": _groq_strict_schema(response_model),
+                },
+            }]
+            request_body["tool_choice"] = {
+                "type": "function",
+                "function": {"name": tool_name},
+            }
     if is_nvidia_nemotron:
         request_body["max_tokens"] = max_tokens
         request_body["temperature"] = 0.1
@@ -443,8 +489,8 @@ async def _ask_model(system_prompt: str, user_payload: dict, max_tokens: int = 9
         request_body["max_tokens"] = max_tokens
     else:
         request_body["max_completion_tokens"] = max_tokens
-    if is_openrouter_nemotron_free:
-        logger.info("Using prompt-constrained JSON for OpenRouter Nemotron free; response_format is not supported by this model route")
+    if is_openrouter_tool_model:
+        logger.info("Using required structured tool output for OpenRouter free coding model %s", model)
     if hostname == "openrouter.ai":
         # OpenRouter tries the primary model, then these free-only alternatives
         # when its providers are overloaded, rate-limited, or unavailable.
@@ -760,7 +806,7 @@ Use this exact response shape and include every key:
 The files array MUST contain at least one real project file. Each file MUST contain a non-empty relative POSIX path and the COMPLETE file content as a string. Never return an empty files array, an explanation instead of files, or a diff.
 Hard rules:
 - Return complete contents for every file you create or modify; never return diffs.
-- Return only files needed for the current step (maximum 8). Do not rewrite unrelated files.
+- Return only files needed for the current step (maximum 4). Do not rewrite unrelated files.
 - Paths must be relative POSIX paths; no ../, absolute paths, .env files, private keys, credentials, or secrets.
 - Never add fake API keys, fake database credentials, hard-coded passwords or fabricated integrations.
 - If backend/database code is required, generate real source/schema/migration scaffolding appropriate to the agreed stack, plus safe example configuration. Clearly label external setup steps.
@@ -800,7 +846,7 @@ Hard rules:
         "file_size_remaining_bytes": max(0, MAX_PROJECT_BYTES - existing_bytes),
     }
     try:
-        data = await _ask_model(system_prompt, step_payload, max_tokens=10000, response_model=BuildStepResult)
+        data = await _ask_model(system_prompt, step_payload, max_tokens=7000, response_model=BuildStepResult)
     except HTTPException as parse_exc:
         # Recover malformed JSON before attempting Pydantic validation.
         recoverable_details = {
@@ -831,56 +877,160 @@ Hard rules:
                 status_code=502,
                 detail="The AI provider had trouble formatting this step's files. Your saved project and previous steps are safe; retry this step shortly.",
             ) from retry_exc
-    try:
-        patch = BuildStepResult.model_validate(_normalize_build_step_data(data))
-    except Exception as first_exc:
-        def validation_details(error: Exception) -> list[dict]:
-            if not hasattr(error, "errors"):
-                return [{"type": type(error).__name__, "msg": str(error)[:300]}]
-            return [
-                {
-                    "loc": list(item.get("loc", ())),
-                    "type": item.get("type"),
-                    "msg": item.get("msg"),
-                }
-                for item in error.errors()
-            ]
-
-        first_errors = validation_details(first_exc)
-        logger.info(
-            "AI step response failed BuildStepResult validation; requesting one repair: %s",
-            first_errors,
-        )
-        repair_prompt = system_prompt + """
-
-RECOVERY REQUIREMENT:
-The previous response did not satisfy the required project-file schema. Return a corrected response now.
-You MUST return at least one complete source file in files. Each item must use exactly "path" and "content".
-The validation errors below identify what needs correcting. Preserve the agreed stack, project requirements,
-current implementation step, security rules, and existing project files. Do not return an explanation or an empty file list."""
-        repaired_data = await _ask_model(
-            repair_prompt,
+    def validation_details(error: Exception) -> list[dict]:
+        if not hasattr(error, "errors"):
+            return [{"type": type(error).__name__, "msg": str(error)[:300]}]
+        return [
             {
-                "original_project_request": step_payload,
-                "invalid_previous_response": data,
-                "validation_errors": first_errors,
-            },
-            max_tokens=10000,
-            response_model=BuildStepResult,
-        )
+                "loc": list(item.get("loc", ())),
+                "type": item.get("type"),
+                "msg": item.get("msg"),
+            }
+            for item in error.errors()
+        ]
+
+    patch = None
+    candidate_data = data
+    provider_base_url, _, primary_model, _ = _provider_config()
+    recovery_models = []
+    if urlparse(provider_base_url).hostname == "openrouter.ai":
+        recovery_models.extend(_openrouter_fallback_models(provider_base_url, primary_model))
+    recovery_models.append(None)
+    repair_attempts = (
+        (6000, 4, "Correct the response schema. Return at most 4 complete files."),
+        (4000, 2, "Return a smaller batch of at most 2 complete files. Prioritize the essential files for this step."),
+        (2500, 1, "Return exactly 1 complete, essential file for this step. Keep it concise and valid."),
+    )
+    previous_errors: list[dict] = []
+    candidate_file_limit = 4
+    for repair_index, (repair_tokens, file_limit, repair_scope) in enumerate(repair_attempts, start=1):
         try:
-            patch = BuildStepResult.model_validate(_normalize_build_step_data(repaired_data))
-        except Exception as repair_exc:
-            repair_errors = validation_details(repair_exc)
-            logger.warning(
-                "AI step validation failed after one repair attempt (initial=%s, corrected=%s)",
-                first_errors,
-                repair_errors,
+            patch = BuildStepResult.model_validate(_normalize_build_step_data(candidate_data))
+            if len(patch.files) > candidate_file_limit:
+                raise ValueError(
+                    f"Too many files in this response: expected at most {candidate_file_limit}, got {len(patch.files)}."
+                )
+            seen_paths: set[str] = set()
+            for file in patch.files:
+                normalized_path = file.path.casefold()
+                if normalized_path in seen_paths:
+                    raise ValueError(f"Duplicate file path in generated batch: {file.path}. Each path must appear once.")
+                seen_paths.add(normalized_path)
+                if not file.content.strip():
+                    raise ValueError(f"Generated file is empty: {file.path}. Every file must contain complete source code.")
+            break
+        except Exception as validation_exc:
+            previous_errors = validation_details(validation_exc)
+            logger.info(
+                "AI step response failed BuildStepResult validation; repair attempt %s/%s (errors=%s)",
+                repair_index,
+                len(repair_attempts),
+                previous_errors,
             )
+            repair_prompt = system_prompt + f"""
+
+RECOVERY REQUIREMENT ({repair_index}/{len(repair_attempts)}):
+The previous response failed validation against the required BuildStepResult schema.
+{repair_scope}
+The files array must contain at least one item. Every item must contain a safe relative POSIX path
+and complete non-empty source content. Preserve the approved architecture and implement only the
+current step. Do not include unrelated files, markdown, explanations, or extra keys.
+"""
+            compact_previous = {
+                "summary": str(candidate_data.get("summary", candidate_data.get("description", "")))[:500]
+                if isinstance(candidate_data, dict) else "",
+                "files": [],
+            }
+            raw_files = candidate_data.get("files") if isinstance(candidate_data, dict) else None
+            if isinstance(raw_files, dict):
+                raw_files = list(raw_files.items())
+                compact_previous["files"] = [
+                    {"path": str(path)[:180], "content_chars": len(content) if isinstance(content, str) else None}
+                    for path, content in raw_files[:8]
+                ]
+            elif isinstance(raw_files, list):
+                compact_previous["files"] = [
+                    {
+                        "path": str(item.get("path", item.get("filename", item.get("name", ""))))[:180],
+                        "content_chars": len(item.get("content", item.get("code", "")))
+                        if isinstance(item, dict) and isinstance(item.get("content", item.get("code", "")), str)
+                        else None,
+                    }
+                    if isinstance(item, dict) else {"type": type(item).__name__}
+                    for item in raw_files[:8]
+                ]
+            repair_payload = {
+                "original_project_request": step_payload,
+                "invalid_previous_response_summary": compact_previous,
+                "validation_errors": previous_errors,
+                "required_file_limit": file_limit,
+                "repair_attempt": repair_index,
+            }
+            recovery_model = (
+                recovery_models[repair_index - 1]
+                if repair_index - 1 < len(recovery_models)
+                else None
+            )
+            logger.info(
+                "Attempting schema repair for build step %s using %s",
+                step_index + 1,
+                recovery_model or "configured primary model",
+            )
+            try:
+                candidate_data = await _ask_model(
+                    repair_prompt,
+                    repair_payload,
+                    max_tokens=repair_tokens,
+                    response_model=BuildStepResult,
+                    model_override=recovery_model,
+                )
+                candidate_file_limit = file_limit
+            except HTTPException as repair_exc:
+                logger.warning(
+                    "AI step repair call %s/%s failed for step %s: status=%s",
+                    repair_index, len(repair_attempts), step_index + 1, repair_exc.status_code,
+                )
+                if repair_index == len(repair_attempts):
+                    raise HTTPException(
+                        status_code=502,
+                        detail="The AI provider could not recover this step after three smaller, schema-checked attempts. Your saved files are safe; retry when the provider is available.",
+                    ) from repair_exc
+                # Keep trying only for recoverable output/format errors. Quota,
+                # authentication and configuration errors must surface promptly.
+                if not _is_retryable_build_step_error(repair_exc):
+                    raise
+                continue
+
+    if patch is None:
+        try:
+            patch = BuildStepResult.model_validate(_normalize_build_step_data(candidate_data))
+            if len(patch.files) > candidate_file_limit:
+                raise ValueError(
+                    f"Too many files in final response: expected at most {candidate_file_limit}, got {len(patch.files)}."
+                )
+            seen_paths: set[str] = set()
+            for file in patch.files:
+                normalized_path = file.path.casefold()
+                if normalized_path in seen_paths:
+                    raise ValueError(f"Duplicate file path in final response: {file.path}. Each path must appear once.")
+                seen_paths.add(normalized_path)
+                if not file.content.strip():
+                    raise ValueError(f"Generated file is empty: {file.path}. Every file must contain complete source code.")
+        except Exception as final_validation_exc:
+            final_errors = validation_details(final_validation_exc)
+            logger.warning(
+                "AI step failed all schema repairs (step=%s, final_errors=%s)",
+                step_index + 1,
+                final_errors,
+            )
+            safe_error_summary = "; ".join(
+                f"{'.'.join(map(str, item.get('loc', [])))}: {item.get('msg', 'invalid')}"
+                for item in final_errors[:4]
+            )[:500]
             raise HTTPException(
                 status_code=502,
-                detail="The AI provider could not return valid project files after one automatic correction. Retry this step.",
-            ) from repair_exc
+                detail=f"The AI provider returned files that did not pass validation after three recovery attempts. {safe_error_summary}",
+            ) from final_validation_exc
 
     projected_files = {
         str(item.get("path")): str(item.get("content", ""))
