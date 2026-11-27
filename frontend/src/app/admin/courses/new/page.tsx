@@ -8,8 +8,10 @@ import {
 } from "lucide-react";
 import { useAuth, fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
+import { COURSE_LEVEL_OPTIONS } from "@/lib/courses/course-level";
 
-const DIFFICULTIES = ["beginner", "intermediate", "advanced", "expert"];
+interface CategoryOption { id: string; name: string }
+interface CourseOption { id: string; title: string }
 
 /** Pull a human-readable message out of a FastAPI error response. */
 async function parseError(res: Response): Promise<string> {
@@ -49,6 +51,13 @@ export default function NewCoursePage() {
   const [shortDesc, setShortDesc] = useState("");
   const [longDesc, setLongDesc] = useState("");
   const [difficulty, setDifficulty] = useState("beginner");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryLoadError, setCategoryLoadError] = useState("");
+  const [learningPath, setLearningPath] = useState("");
+  const [durationWeeks, setDurationWeeks] = useState("12");
+  const [availableCourses, setAvailableCourses] = useState<CourseOption[]>([]);
+  const [prerequisites, setPrerequisites] = useState<string[]>([]);
   const [technologies, setTechnologies] = useState<string[]>([]);
   const [techInput, setTechInput] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("10");
@@ -67,10 +76,35 @@ export default function NewCoursePage() {
   // Auto-generate the slug from the title until the admin edits it by hand
   useEffect(() => {
     if (title && !slugTouched) setSlug(slugFromTitle(title));
-  }, [title, slugTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [title, slugTouched]);
+
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void fetchWithAuth(`${API_BASE}/admin/categories`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await parseError(res));
+        return res.json() as Promise<CategoryOption[]>;
+      })
+      .then((data) => {
+        if (!alive) return;
+        const available = Array.isArray(data) ? data : [];
+        setCategories(available);
+        const webDevelopment = available.find((category) => category.name.toLowerCase() === "web development");
+        if (webDevelopment) setCategoryId((current) => current || webDevelopment.id);
+      })
+      .catch((err: unknown) => {
+        if (alive) setCategoryLoadError(err instanceof Error ? err.message : "Categories could not be loaded.");
+      });
+    void fetchWithAuth(`${API_BASE}/admin/courses`)
+      .then((res) => res.ok ? res.json() as Promise<CourseOption[]> : [])
+      .then((data) => { if (alive) setAvailableCourses(Array.isArray(data) ? data : []); })
+      .catch(() => { if (alive) setAvailableCourses([]); });
+    return () => { alive = false; };
+  }, [token]);
 
   // Warn before leaving with a filled-in form
-  const snapshot = JSON.stringify({ title, shortDesc, longDesc, difficulty, technologies, estimatedHours, isFeatured, coverImage });
+  const snapshot = JSON.stringify({ title, shortDesc, longDesc, difficulty, categoryId, learningPath, durationWeeks, prerequisites, technologies, estimatedHours, isFeatured, coverImage });
   const initialSnapshot = useRef<string | null>(null);
   if (initialSnapshot.current === null) initialSnapshot.current = snapshot;
   const isDirty = snapshot !== initialSnapshot.current;
@@ -117,8 +151,11 @@ export default function NewCoursePage() {
         short_description: shortDesc.trim(),
         long_description: longDesc.trim() || "",
         difficulty,
+        category_id: categoryId || null,
+        learning_path: learningPath.trim() || null,
+        duration_weeks: Math.max(0, Math.min(260, parseInt(durationWeeks, 10) || 0)),
         technologies,
-        prerequisites: [],
+        prerequisites,
         estimated_hours: Math.max(0, Math.min(1000, parseInt(estimatedHours, 10) || 0)),
         is_featured: isFeatured,
         cover_image_url: coverImage.trim() || null,
@@ -287,7 +324,7 @@ export default function NewCoursePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="nc-diff" className="block text-sm font-medium text-[#B7BDD0] mb-2">
-                Difficulty <span className="text-[#F05D70]">*</span>
+                Course level <span className="text-[#F05D70]">*</span>
               </label>
               <select
                 id="nc-diff"
@@ -295,17 +332,23 @@ export default function NewCoursePage() {
                 onChange={(e) => setDifficulty(e.target.value)}
                 className={inputCls}
               >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d.charAt(0).toUpperCase() + d.slice(1)}
-                  </option>
+                {COURSE_LEVEL_OPTIONS.map((level) => (
+                  <option key={level.value} value={level.value}>{level.label}</option>
                 ))}
               </select>
             </div>
 
             <div>
+              <label htmlFor="nc-weeks" className="block text-sm font-medium text-[#B7BDD0] mb-2">
+                Course duration (weeks)
+              </label>
+              <input id="nc-weeks" type="number" min="0" max="260" value={durationWeeks}
+                onChange={(e) => setDurationWeeks(e.target.value)} className={inputCls} />
+            </div>
+
+            <div>
               <label htmlFor="nc-hours" className="block text-sm font-medium text-[#B7BDD0] mb-2">
-                Estimated hours
+                Estimated learning hours
               </label>
               <input
                 id="nc-hours"
@@ -317,6 +360,33 @@ export default function NewCoursePage() {
                 className={inputCls}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="nc-category" className="block text-sm font-medium text-[#B7BDD0] mb-2">Category</label>
+              <select id="nc-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputCls}>
+                <option value="">Select a category</option>
+                {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+              {categoryLoadError && <p className="mt-1 text-xs text-[#F5A623]">Categories could not be loaded: {categoryLoadError}</p>}
+              {!categoryLoadError && categories.length === 0 && <p className="mt-1 text-xs text-[#7A8199]">No categories are available yet. <Link href="/admin/categories" className="text-[#A78BFA] hover:underline">Create a category</Link>.</p>}
+            </div>
+            <div>
+              <label htmlFor="nc-learning-path" className="block text-sm font-medium text-[#B7BDD0] mb-2">Learning path</label>
+              <input id="nc-learning-path" type="text" maxLength={100} value={learningPath}
+                onChange={(e) => setLearningPath(e.target.value)} placeholder="e.g. Web Development" className={inputCls} />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="nc-prerequisites" className="block text-sm font-medium text-[#B7BDD0] mb-2">Prerequisite courses</label>
+            <select id="nc-prerequisites" multiple size={Math.min(5, Math.max(3, availableCourses.length))}
+              value={prerequisites} onChange={(e) => setPrerequisites(Array.from(e.target.selectedOptions, (option) => option.value))}
+              className={`${inputCls} min-h-24`} disabled={availableCourses.length === 0}>
+              {availableCourses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
+            </select>
+            <p className="mt-1 text-xs text-[#7A8199]">Optional. Select one or more existing courses; leave empty when no prior course is required.</p>
           </div>
 
           <div>

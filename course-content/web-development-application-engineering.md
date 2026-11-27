@@ -7,7 +7,9 @@
 | Title | Web Development and Application Engineering |
 | Slug | `web-development-application-engineering` |
 | Short description | Learn to design, develop, test and publish professional web applications using modern web technologies and ibrant Studio. Build practical projects from your first webpage to a complete application. |
-| Difficulty | **Beginner** |
+| Course level | **Beginner to Intermediate** |
+| Category | Web Development (`web-development`, created by the Academy database migration) |
+| Course duration | **12 weeks** |
 | Estimated hours | **120** |
 | Technologies | HTML5, CSS3, JavaScript, React, REST APIs, JSON, PostgreSQL, Git, GitHub, ibrant Studio |
 | Prerequisites | None; no prior programming experience required |
@@ -18,15 +20,11 @@
 | Lessons | 32 |
 | Student projects | 6 |
 
-### Why the difficulty is Beginner
+### Course-level and admin metadata notes
 
-The admin form and backend accept only four difficulty values: `beginner`, `intermediate`, `advanced`, and `expert`. “Beginner to Intermediate” is not a supported value. Beginner is the accurate classification because the course assumes no prior programming experience. Later modules progressively introduce intermediate application-engineering concepts; that progression belongs in the course description and outcomes, not in the difficulty field.
+The admin form now supports the exact **Beginner to Intermediate** level. This is appropriate for a course that assumes no prior programming experience but progresses into intermediate application-engineering work. The level is stored as a dedicated backend enum value and rendered as a human-readable label in the Academy catalogue and course detail page.
 
-### Admin-form compatibility notes
-
-- Use the exact difficulty option **Beginner**.
-- The current create/edit form exposes title, slug (create form), short and long descriptions, difficulty, estimated hours, technologies, cover image, featured status, and publishing status.
-- The backend schema additionally supports category ID, prerequisites, learning path, and resources. The current create form does not expose all of these fields. Do not claim that a category was selected unless it is actually assigned in the admin system.
+The create and edit forms expose course category, learning path, duration in weeks, estimated learning hours, and prerequisite-course selection. Learning resources are managed in the course editor. Select the existing **Web Development** category if it is present; otherwise create it in the category manager before assigning it. Keep the initial publication status as **Draft**.
 - The editor's publish checklist currently requires a title, short description, at least one module, and at least one lesson. A professional course should meet a higher standard: complete all lesson content, exercises, quizzes, project briefs, assessment rubrics, resources, and final-project instructions before publishing.
 - Keep the course in **Draft** until the full curriculum is populated and reviewed.
 

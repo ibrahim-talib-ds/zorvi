@@ -1,7 +1,7 @@
 """Automatically resume builds stopped by the previous transient-provider message."""
 from alembic import op
 
-revision = "20261127_resume_legacy_transient_builds"
+revision = "20261127_resume_legacy"
 down_revision = "20261127_durable_build_retries"
 branch_labels = None
 depends_on = None

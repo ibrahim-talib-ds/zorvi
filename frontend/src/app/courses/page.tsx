@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
+import { getCourseLevelLabel } from "@/lib/courses/course-level";
 
 // ============================================================================
 // CONFIG (apply script auto-detects these from your old page)
@@ -89,8 +90,7 @@ function instructorOf(c: Course): string {
   return firstStr(c, ["instructor_name", "instructor", "author_name", "author", "teacher_name", "teacher", "user"]);
 }
 function difficultyOf(c: Course): string {
-  const d = firstStr(c, ["difficulty", "level", "difficulty_level"]);
-  return d ? d.charAt(0).toUpperCase() + d.slice(1).toLowerCase() : "";
+  return getCourseLevelLabel(firstStr(c, ["difficulty", "level", "difficulty_level"]));
 }
 function categoryOf(c: Course): string {
   return firstStr(c, ["category", "category_name", "category_title"]) || "";
@@ -107,6 +107,8 @@ function lessonsOf(c: Course): number | null {
   return firstNum(c, ["lessons_count", "total_lessons", "lessons", "modules_count"]);
 }
 function durationOf(c: Course): string {
+  const weeks = firstNum(c, ["duration_weeks", "weeks"]);
+  if (weeks !== null && weeks > 0) return `${weeks} weeks`;
   return firstStr(c, ["duration", "duration_label"]);
 }
 function createdAtOf(c: Course): string {

@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text, text,
+    Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, Text, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,6 +26,7 @@ class CourseStatus(str, enum.Enum):
 
 class CourseDifficulty(str, enum.Enum):
     beginner = "beginner"
+    beginner_to_intermediate = "beginner_to_intermediate"
     intermediate = "intermediate"
     advanced = "advanced"
     expert = "expert"
@@ -44,6 +45,7 @@ class Course(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
         Index("ix_courses_category_id", "category_id"),
         Index("ix_courses_status", "status"),
         Index("ix_courses_created_at", "created_at"),
+        CheckConstraint("duration_weeks >= 0", name="ck_courses_duration_weeks_nonnegative"),
     )
 
     title: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -92,6 +94,9 @@ class Course(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     learning_path: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     estimated_hours: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    duration_weeks: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default=text("0")
     )
     is_featured: Mapped[bool] = mapped_column(

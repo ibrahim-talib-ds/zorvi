@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, PlayCircle, GraduationCap, FileDown, File, ExternalLink, Link2 } from "lucide-react";
 import { EnrollButton } from "./EnrollButton";
 import { cookies } from "next/headers";
+import { getCourseLevelLabel } from "@/lib/courses/course-level";
 
 import { API_BASE } from "@/lib/api/client";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ interface CourseDetail {
   technologies: string[];
   learning_path: string | null;
   estimated_hours: number;
+  duration_weeks: number;
   is_featured: boolean;
   resources: CourseResource[];
   modules: Module[];
@@ -103,6 +105,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "border-[#22C58B]/30 bg-[#22C58B]/10 text-[#22C58B]",
+  beginner_to_intermediate: "border-[#22C58B]/30 bg-[#22C58B]/10 text-[#22C58B]",
   intermediate: "border-[#5B9EFF]/30 bg-[#5B9EFF]/10 text-[#5B9EFF]",
   advanced: "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#F5A623]",
   expert: "border-[#F05D70]/30 bg-[#F05D70]/10 text-[#F05D70]",
@@ -167,11 +170,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <span
                 className={`inline-block rounded-full border px-3 py-1 text-xs font-medium ${DIFFICULTY_COLORS[course.difficulty] ?? DIFFICULTY_COLORS.beginner}`}
               >
-                {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
+                {getCourseLevelLabel(course.difficulty)}
               </span>
               <span className="inline-flex items-center gap-1.5 text-sm text-[#7A8199]">
                 <Clock size={14} /> {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m of content
               </span>
+              {course.duration_weeks > 0 && <span className="inline-flex items-center gap-1.5 text-sm text-[#7A8199]">{course.duration_weeks} weeks</span>}
               <span className="inline-flex items-center gap-1.5 text-sm text-[#7A8199]">
                 <GraduationCap size={14} /> {totalLessons} lessons
               </span>

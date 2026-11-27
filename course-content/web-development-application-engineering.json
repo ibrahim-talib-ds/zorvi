@@ -3,7 +3,7 @@
   "slug": "web-development-application-engineering",
   "short_description": "Learn to design, develop, test and publish professional web applications using modern web technologies and ibrant Studio. Build practical projects from your first webpage to a complete application.",
   "long_description": "This practical course introduces learners to modern web development and application engineering. Starting with no prior programming experience, students learn how the web works, how to structure and style responsive interfaces, and how to build interactive applications with JavaScript. Students use ibrant Studio as a guided development environment while learning the underlying concepts rather than treating generated output as a black box. They practise breaking down requirements, writing clear build instructions, inspecting generated code, debugging errors, testing user flows, and improving application quality. The course then introduces component-based frontend development, HTTP and REST APIs, JSON, backend concepts, relational database fundamentals, and basic authentication and security principles. Learners complete progressively more substantial projects and finish with a deployed capstone application that addresses a defined real-world problem. By the end of the course, each learner will have a portfolio of practical work, a published application, and project documentation explaining its purpose, features, implementation, and limitations.",
-  "difficulty": "beginner",
+  "difficulty": "beginner_to_intermediate",
   "estimated_hours": 120,
   "technologies": [
     "ibrant Studio",
@@ -26,5 +26,7 @@
     "module_count": 8,
     "lesson_count": 32,
     "project_count": 6
-  }
+  },
+  "duration_weeks": 12,
+  "category_slug": "web-development"
 }

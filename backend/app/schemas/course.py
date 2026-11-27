@@ -62,6 +62,7 @@ class CourseListItem(BaseModel):
     technologies: list[str] = []
     learning_path: str | None
     estimated_hours: int
+    duration_weeks: int = 0
     is_featured: bool
     published_at: datetime | None
     created_at: datetime

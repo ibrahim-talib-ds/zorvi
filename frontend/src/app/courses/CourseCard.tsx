@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
+import { getCourseLevelLabel } from "@/lib/courses/course-level";
 
 export interface CourseListItem {
   id: string;
@@ -12,6 +13,7 @@ export interface CourseListItem {
   technologies: string[];
   learning_path: string | null;
   estimated_hours: number;
+  duration_weeks?: number;
   is_featured: boolean;
   published_at: string | null;
   created_at: string;
@@ -19,6 +21,7 @@ export interface CourseListItem {
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "border-[#22C58B]/30 bg-[#22C58B]/10 text-[#22C58B]",
+  beginner_to_intermediate: "border-[#22C58B]/30 bg-[#22C58B]/10 text-[#22C58B]",
   intermediate: "border-[#5B9EFF]/30 bg-[#5B9EFF]/10 text-[#5B9EFF]",
   advanced: "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#F5A623]",
   expert: "border-[#F05D70]/30 bg-[#F05D70]/10 text-[#F05D70]",
@@ -58,11 +61,12 @@ export function CourseCard({ course }: { course: CourseListItem }) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-2">
           <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${DIFFICULTY_COLORS[course.difficulty] || DIFFICULTY_COLORS.beginner}`}>
-            {course.difficulty}
+            {getCourseLevelLabel(course.difficulty)}
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] text-[#7A8199]">
             <Clock size={10} /> ~{course.estimated_hours}h
           </span>
+          {typeof course.duration_weeks === "number" && course.duration_weeks > 0 && <span className="text-[10px] text-[#7A8199]">{course.duration_weeks} weeks</span>}
         </div>
 
         <h3 className="font-display text-base font-bold text-white leading-tight mb-1 line-clamp-2 group-hover:text-[#A78BFA] transition">

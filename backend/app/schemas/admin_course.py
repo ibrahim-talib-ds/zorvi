@@ -38,6 +38,7 @@ class CourseCreate(BaseModel):
     prerequisites: list[str] = []
     learning_path: str | None = None
     estimated_hours: int = Field(default=0, ge=0)
+    duration_weeks: int = Field(default=0, ge=0, le=260)
     is_featured: bool = False
     resources: list[CourseResource] = Field(default_factory=list)
 
@@ -54,6 +55,7 @@ class CourseUpdate(BaseModel):
     prerequisites: list[str] | None = None
     learning_path: str | None = None
     estimated_hours: int | None = Field(default=None, ge=0)
+    duration_weeks: int | None = Field(default=None, ge=0, le=260)
     is_featured: bool | None = None
     resources: list[CourseResource] | None = None
     status: CourseStatus | None = None
@@ -153,6 +155,7 @@ class AdminCourseRead(BaseModel):
     prerequisites: list[str]
     learning_path: str | None
     estimated_hours: int
+    duration_weeks: int = 0
     is_featured: bool
     resources: list[CourseResource] = Field(default_factory=list)
     published_at: datetime | None

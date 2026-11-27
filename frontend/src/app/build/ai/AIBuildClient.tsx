@@ -90,8 +90,12 @@ function responseError(status: number, raw: string) {
     const parsed = JSON.parse(raw);
     if (typeof parsed.detail === "string") detail = parsed.detail;
   } catch { /* The API may return text rather than JSON. */ }
-  if (status === 404) {
-    return "The API currently running on port 8001 is older than this Build Studio source. It has not loaded the /projects and /ai/build routes yet. Restart the ibrant backend, then refresh this page.";
+
+  if (status === 404 && /project not found/i.test(detail)) {
+    return "This saved project could not be found in your account. It may have been deleted or may belong to another account. Return to Build Studio and open an existing project or start a new one.";
+  }
+  if (status === 404 && /^(not found|not found\.)$/i.test(detail.trim())) {
+    return "The requested Build Studio API endpoint was not found. Check that the frontend is connected to the current ibrant backend deployment, then reload.";
   }
   return detail || `Request failed (HTTP ${status}).`;
 }
@@ -231,7 +235,7 @@ export default function AIBuildPage() {
         setAutoBuild(saved.autoBuild ?? Boolean(saved.taskId));
       } else {
         setProjectId(requestedProjectId);
-        setError("This project has no saved AI plan in this browser session. Its files are still in your account; open the Playground or start another AI build.");
+        setError("This project has no saved AI plan in this browser session. Check your projects in Build Studio or the Playground; if the project is no longer available, start a new AI build.");
       }
     } catch {
       setProjectId(requestedProjectId);

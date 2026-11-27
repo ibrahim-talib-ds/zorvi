@@ -83,6 +83,7 @@ async def create_course(
         prerequisites=payload.prerequisites,
         learning_path=payload.learning_path,
         estimated_hours=payload.estimated_hours,
+        duration_weeks=payload.duration_weeks,
         is_featured=payload.is_featured,
         resources=[resource.model_dump() for resource in payload.resources],
         status=CourseStatus.draft,

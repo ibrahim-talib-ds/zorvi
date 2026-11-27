@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
+import { COURSE_LEVEL_OPTIONS } from "@/lib/courses/course-level";
 
 interface Lesson {
   id: string;
@@ -48,8 +49,12 @@ interface Course {
   cover_image_url: string | null;
   status: "draft" | "published" | "archived";
   difficulty: string;
+  category_id: string | null;
+  learning_path: string | null;
+  prerequisites: string[];
   technologies: string[];
   estimated_hours: number;
+  duration_weeks: number;
   is_featured: boolean;
   resources: CourseResource[];
   modules: Module[];
@@ -71,6 +76,12 @@ export default function AdminCourseEditPage() {
   const [shortDesc, setShortDesc] = useState("");
   const [longDesc, setLongDesc] = useState("");
   const [difficulty, setDifficulty] = useState("beginner");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<{ id: string; title: string }[]>([]);
+  const [learningPath, setLearningPath] = useState("");
+  const [prerequisites, setPrerequisites] = useState<string[]>([]);
+  const [durationWeeks, setDurationWeeks] = useState("0");
   const [estimatedHours, setEstimatedHours] = useState("0");
   const [savingCourse, setSavingCourse] = useState(false);
   const [savedCourse, setSavedCourse] = useState(false);
@@ -117,6 +128,10 @@ export default function AdminCourseEditPage() {
       setCoverImage(data.cover_image_url || "");
       setResources(data.resources || []);
       setDifficulty(data.difficulty);
+      setCategoryId(data.category_id || "");
+      setLearningPath(data.learning_path || "");
+      setPrerequisites(data.prerequisites || []);
+      setDurationWeeks(String(data.duration_weeks || 0));
       setEstimatedHours(String(data.estimated_hours));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load course");
@@ -135,6 +150,22 @@ export default function AdminCourseEditPage() {
     if (token && courseId) loadCourse();
   }, [token, courseId]);
 
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void fetchWithAuth(`${API_BASE}/admin/categories`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => { if (alive) setCategories(Array.isArray(data) ? data : []); })
+      .catch(() => { if (alive) setCategories([]); });
+    void fetchWithAuth(`${API_BASE}/admin/courses`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => {
+        if (alive) setAvailableCourses(Array.isArray(data) ? data.filter((item: { id?: string }) => item.id !== courseId) : []);
+      })
+      .catch(() => { if (alive) setAvailableCourses([]); });
+    return () => { alive = false; };
+  }, [token, courseId]);
+
   const saveCourse = async () => {
     if (!token || !course) return;
     setSavingCourse(true);
@@ -151,6 +182,10 @@ export default function AdminCourseEditPage() {
           short_description: shortDesc.trim(),
           long_description: longDesc.trim(),
           difficulty,
+          category_id: categoryId || null,
+          learning_path: learningPath.trim() || null,
+          prerequisites,
+          duration_weeks: Math.max(0, Math.min(260, parseInt(durationWeeks, 10) || 0)),
           estimated_hours: parseInt(estimatedHours) || 0,
         }),
       });
@@ -224,6 +259,10 @@ export default function AdminCourseEditPage() {
           long_description: longDesc.trim(),
           cover_image_url: coverImage.trim() || null,
           difficulty,
+          category_id: categoryId || null,
+          learning_path: learningPath.trim() || null,
+          prerequisites,
+          duration_weeks: Math.max(0, Math.min(260, parseInt(durationWeeks, 10) || 0)),
           estimated_hours: parseInt(estimatedHours) || 0,
           resources,
         }),
@@ -626,18 +665,46 @@ export default function AdminCourseEditPage() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={labelClass}>Difficulty</label>
+                  <label className={labelClass}>Course level</label>
                   <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className={inputClass}>
-                    {["beginner", "intermediate", "advanced", "expert"].map((d) => (
-                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
-                    ))}
+                    {COURSE_LEVEL_OPTIONS.map((level) => <option key={level.value} value={level.value}>{level.label}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className={labelClass}>Estimated hours</label>
+                  <label className={labelClass}>Duration (weeks)</label>
+                  <input type="number" min="0" max="260" value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} className={inputClass} />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Estimated learning hours</label>
                   <input type="number" min="0" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} className={inputClass} />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Category</label>
+                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
+                    <option value="">No category assigned</option>
+                    {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                  </select>
+                  {categories.length === 0 && <p className="mt-1 text-xs text-[#7A8199]">Create categories in the <Link href="/admin/categories" className="text-[#A78BFA] hover:underline">category manager</Link>.</p>}
+                </div>
+                <div>
+                  <label className={labelClass}>Learning path</label>
+                  <input value={learningPath} onChange={(e) => setLearningPath(e.target.value)} maxLength={100} className={inputClass} placeholder="e.g. Web Development" />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Prerequisite courses</label>
+                <select multiple size={Math.min(5, Math.max(3, availableCourses.length))} value={prerequisites}
+                  onChange={(e) => setPrerequisites(Array.from(e.target.selectedOptions, (option) => option.value))}
+                  className={`${inputClass} min-h-24`} disabled={availableCourses.length === 0}>
+                  {availableCourses.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                </select>
+                <p className="mt-1 text-xs text-[#7A8199]">Optional. Select existing courses required before this course.</p>
               </div>
 
               <div className="rounded-xl border border-[#7559E8]/20 bg-[#7559E8]/[0.06] p-4">
