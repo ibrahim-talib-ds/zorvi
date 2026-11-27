@@ -674,3 +674,130 @@ html.light .light-playground-button:hover {
   background: #4729AA !important;
   border-color: #3E219C !important;
 }
+
+
+/* ===== Course curriculum sidebar: explicit light-theme palette =====
+   Scoped to the lesson curriculum so global legacy color remaps cannot
+   wash out module labels, lesson titles, or the lesson-state circles. */
+html.light .course-curriculum-sidebar {
+  background: #F0EBE1 !important;
+  background-image: none !important;
+  border-right: 1px solid #D4CABB !important;
+  color: #29241F !important;
+}
+html.light .course-curriculum-header {
+  background: #F7F3EB !important;
+  border-bottom: 1px solid #D4CABB !important;
+}
+html.light .course-curriculum-sidebar a[href] {
+  color: #494238 !important;
+}
+html.light .course-curriculum-sidebar .course-module-number {
+  color: #6540B5 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.095em !important;
+}
+html.light .course-curriculum-sidebar .course-module-title {
+  color: #29241F !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.5 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-link {
+  color: #494238 !important;
+  background: transparent !important;
+  border-left-color: transparent !important;
+  font-size: 12px !important;
+  font-weight: 550 !important;
+  line-height: 1.5 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-link:hover {
+  color: #34215F !important;
+  background: #E7E0F2 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-link:focus-visible {
+  outline: 2px solid #6540B5 !important;
+  outline-offset: -2px !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-link:has(.course-lesson-icon-current) {
+  color: #3F237F !important;
+  background: #E4DAF5 !important;
+  border-left-color: #6540B5 !important;
+  font-weight: 750 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-icon {
+  flex: 0 0 auto;
+  opacity: 1 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-icon-incomplete {
+  color: #776B5A !important;
+  stroke: #776B5A !important;
+  stroke-width: 2.25px !important;
+  opacity: 1 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-icon-current {
+  color: #5B32B0 !important;
+  stroke: #5B32B0 !important;
+  fill: rgba(91, 50, 176, 0.10) !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-icon-complete {
+  color: #187448 !important;
+  stroke: #187448 !important;
+}
+html.light .course-curriculum-sidebar .course-lesson-title {
+  color: inherit !important;
+}
+html.light .course-curriculum-sidebar .text-\[\#7A8199\] {
+  color: #62594D !important;
+}
+html.light .course-curriculum-sidebar .text-\[\#B7BDD0\] {
+  color: #29241F !important;
+}
+
+/* Mobile course curriculum uses the same high-contrast labels and icons. */
+html.light .course-mobile-curriculum {
+  background: #F7F3EB !important;
+  border-color: #D4CABB !important;
+}
+html.light .course-mobile-summary {
+  color: #29241F !important;
+  background: #F7F3EB !important;
+}
+html.light .course-mobile-list {
+  background: #F0EBE1 !important;
+  border-color: #D4CABB !important;
+}
+html.light .course-mobile-list p {
+  color: #6540B5 !important;
+  font-weight: 800 !important;
+}
+html.light .course-mobile-lesson {
+  color: #494238 !important;
+  background: transparent !important;
+}
+html.light .course-mobile-lesson:hover {
+  color: #34215F !important;
+  background: #E7E0F2 !important;
+}
+html.light .course-mobile-lesson[aria-current="page"] {
+  color: #3F237F !important;
+  background: #E4DAF5 !important;
+  font-weight: 750 !important;
+}
+html.light .course-mobile-lesson .course-lesson-icon-incomplete {
+  color: #776B5A !important;
+  stroke: #776B5A !important;
+  stroke-width: 2.25px !important;
+}
+html.light .course-mobile-lesson .course-lesson-icon-current {
+  color: #5B32B0 !important;
+  stroke: #5B32B0 !important;
+}
+html.light .course-mobile-lesson .course-lesson-icon-complete {
+  color: #187448 !important;
+  stroke: #187448 !important;
+}
+html.light .course-mobile-lesson .text-\[\#7A8199\] {
+  color: #62594D !important;
+}

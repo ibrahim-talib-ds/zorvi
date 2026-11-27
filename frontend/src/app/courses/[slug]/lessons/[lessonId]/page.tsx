@@ -177,8 +177,8 @@ export default async function LessonPage({ params }: PageProps) {
     <div className="relative min-h-screen bg-[#0B0F1D] flex">
       
       {/* LEFT SIDEBAR - Course Curriculum (W3Schools Style) */}
-      <aside className="w-72 border-r border-white/5 bg-[#0B0F1D] h-screen sticky top-0 overflow-y-auto hidden lg:block shrink-0 z-40">
-        <div className="p-4 border-b border-white/5">
+      <aside className="course-curriculum-sidebar w-72 border-r border-white/5 bg-[#0B0F1D] h-screen sticky top-0 overflow-y-auto hidden lg:block shrink-0 z-40">
+        <div className="course-curriculum-header p-4 border-b border-white/5">
           <Link href={`/courses/${slug}`} className="inline-flex items-center gap-1.5 text-xs text-[#7A8199] hover:text-[#A78BFA] mb-3 transition">
             <ArrowLeft size={14} /> Back to Overview
           </Link>
@@ -202,10 +202,10 @@ export default async function LessonPage({ params }: PageProps) {
           {course.modules.map((module, mIdx) => (
             <div key={module.id} className="mb-2">
               <div className="px-4 py-2">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-[#7A8199]">
+                <p className="course-module-number text-[10px] font-mono uppercase tracking-wider text-[#7A8199]">
                   Module {mIdx + 1}
                 </p>
-                <p className="text-xs font-semibold text-[#B7BDD0] truncate">
+                <p className="course-module-title text-xs font-semibold text-[#B7BDD0] truncate">
                   {module.title}
                 </p>
               </div>
@@ -216,20 +216,20 @@ export default async function LessonPage({ params }: PageProps) {
                     <Link
                       key={l.id}
                       href={`/courses/${slug}/lessons/${l.id}`}
-                      className={`flex items-start gap-2.5 px-4 py-2 text-xs transition border-l-2 ${
+                      className={`course-lesson-link flex items-start gap-2.5 px-4 py-2 text-xs transition border-l-2 ${
                         isCurrent
                           ? "bg-[#7559E8]/10 border-[#7559E8] text-white font-medium"
                           : "hover:bg-white/[0.03] border-transparent text-[#7A8199] hover:text-[#B7BDD0]"
                       }`}
                     >
                       {isCurrent ? (
-                        <PlayCircle size={14} className="flex-shrink-0 mt-0.5 text-[#A78BFA]" />
+                        <PlayCircle size={14} className="course-lesson-icon course-lesson-icon-current flex-shrink-0 mt-0.5 text-[#A78BFA]" />
                       ) : progress?.completed_lesson_ids?.includes(l.id) ? (
-                        <CheckCircle2 size={14} className="flex-shrink-0 mt-0.5 text-[#22C58B]" />
+                        <CheckCircle2 size={14} className="course-lesson-icon course-lesson-icon-complete flex-shrink-0 mt-0.5 text-[#22C58B]" />
                       ) : (
-                        <Circle size={14} className="flex-shrink-0 mt-0.5 text-white/25" />
+                        <Circle size={14} strokeWidth={2.2} className="course-lesson-icon course-lesson-icon-incomplete flex-shrink-0 mt-0.5 text-white/25" />
                       )}
-                      <span className="flex-1 line-clamp-2">{l.title}</span>
+                      <span className="course-lesson-title flex-1 line-clamp-2">{l.title}</span>
                     </Link>
                   );
                 })}
@@ -256,8 +256,8 @@ export default async function LessonPage({ params }: PageProps) {
               </div>
             )}
           </div>
-          <details className="group lg:hidden border-t border-white/5">
-            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-[#B7BDD0] marker:hidden">
+          <details className="course-mobile-curriculum group lg:hidden border-t border-white/5">
+            <summary className="course-mobile-summary cursor-pointer list-none px-4 py-3 text-sm font-medium text-[#B7BDD0] marker:hidden">
               <span className="flex items-center justify-between gap-3">
                 Course contents
                 <span className="inline-flex items-center gap-2 text-xs text-[#7A8199]">
@@ -266,7 +266,7 @@ export default async function LessonPage({ params }: PageProps) {
                 </span>
               </span>
             </summary>
-            <div className="max-h-72 overflow-y-auto border-t border-white/5 bg-[#0B0F1D] px-2 py-2">
+            <div className="course-mobile-list max-h-72 overflow-y-auto border-t border-white/5 bg-[#0B0F1D] px-2 py-2">
               {course.modules.map((module, moduleIndex) => (
                 <div key={module.id} className="py-2">
                   <p className="px-3 pb-1 text-[10px] font-mono uppercase tracking-wider text-[#7A8199]">
@@ -279,9 +279,9 @@ export default async function LessonPage({ params }: PageProps) {
                         key={item.id}
                         href={`/courses/${slug}/lessons/${item.id}`}
                         aria-current={isCurrent ? "page" : undefined}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition ${isCurrent ? "bg-[#7559E8]/15 text-white" : "text-[#9299AE] hover:bg-white/[0.04] hover:text-white"}`}
+                        className={`course-mobile-lesson flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition ${isCurrent ? "bg-[#7559E8]/15 text-white" : "text-[#9299AE] hover:bg-white/[0.04] hover:text-white"}`}
                       >
-                        {isCurrent ? <PlayCircle size={13} className="shrink-0 text-[#A78BFA]" /> : progress?.completed_lesson_ids?.includes(item.id) ? <CheckCircle2 size={13} className="shrink-0 text-[#22C58B]" /> : <Circle size={13} className="shrink-0 text-white/25" />}
+                        {isCurrent ? <PlayCircle size={13} className="course-lesson-icon course-lesson-icon-current shrink-0 text-[#A78BFA]" /> : progress?.completed_lesson_ids?.includes(item.id) ? <CheckCircle2 size={13} className="course-lesson-icon course-lesson-icon-complete shrink-0 text-[#22C58B]" /> : <Circle size={13} strokeWidth={2.2} className="course-lesson-icon course-lesson-icon-incomplete shrink-0 text-white/25" />}
                         <span className="min-w-0 flex-1">{item.title}</span>
                         <span className="shrink-0 text-[10px] text-[#7A8199]">{item.duration_minutes}m</span>
                       </Link>
