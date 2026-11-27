@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     "Learn practical software development, build real projects, and explore digital products in the ibrant academy and marketplace.",
   applicationName: "ibrant",
   icons: {
-    icon: [{ url: "/images/logo/ibrant-mark.svg", type: "image/svg+xml" }],
-    shortcut: ["/images/logo/ibrant-mark.svg"],
+    icon: [{ url: "/images/logo/ibrant_logo.png", type: "image/png" }],
+    shortcut: ["/images/logo/ibrant_logo.png"],
   },
   openGraph: {
     type: "website",

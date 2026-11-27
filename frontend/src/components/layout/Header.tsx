@@ -177,7 +177,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
         <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8 gap-3">
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group" aria-label="ibrant home">
             <img
-              src="/images/logo/ibrant-mark.svg"
+              src="/images/logo/ibrant_logo.png"
               alt="ibrant"
               className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.04]"
             />

@@ -261,7 +261,7 @@ export function DashboardShell({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/logo/ibrant-mark.svg"
+        src="/images/logo/ibrant_logo.png"
         alt=""
         className="h-8 w-8 object-contain"
       />
@@ -419,7 +419,7 @@ export function DashboardShell({
       )}>
         <div className="flex items-center justify-between w-full mb-2">
           {!isCollapsed && <Brand />}
-          {isCollapsed && <div className="w-full flex justify-center"><img src="/images/logo/ibrant-mark.svg" className="h-8 w-8 object-contain" alt="" /></div>}
+          {isCollapsed && <div className="w-full flex justify-center"><img src="/images/logo/ibrant_logo.png" className="h-8 w-8 object-contain" alt="" /></div>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:flex items-center justify-center w-full py-2 mb-4 rounded-lg bg-bg-elevated text-text-muted hover:text-text-primary transition-all"

@@ -98,7 +98,7 @@ export function AdminSidebar({
     <>
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4">
         <Link href="/admin" className="flex items-center gap-2 overflow-hidden">
-          <img src="/images/logo/ibrant-mark.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />
+          <img src="/images/logo/ibrant_logo.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
           {!narrow && (
             <span className="whitespace-nowrap font-display text-xl font-extrabold tracking-tight">
               <span className="text-[#A78BFA]">ibr</span><span className="text-[#F2A900]">ant</span> <span className="text-[#7559E8]">Admin</span>
