@@ -32,14 +32,14 @@
 }
 
 html.light {
-  --bg-deep: #F5F6FA;
-  --bg-base: #FFFFFF;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #F7F8FC;
-  --bg-border: #E4E7F0;
-  --text-primary: #0B0F1D;
-  --text-secondary: #4B5568;
-  --text-muted: #8A94A6;
+  --bg-deep: #F4F0E7;
+  --bg-base: #FFFEFA;
+  --bg-surface: #FFFEFA;
+  --bg-elevated: #F8F4EB;
+  --bg-border: #E5DDCF;
+  --text-primary: #292720;
+  --text-secondary: #5F5A50;
+  --text-muted: #817A6E;
   --brand: #6047D8;
   --brand-bright: #7559E8;
   --brand-subtle: #8B72EE;
@@ -72,8 +72,10 @@ body {
 }
 html.light .bg-grid {
   background-image:
-    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(116,101,76,0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(116,101,76,0.055) 1px, transparent 1px);
+  background-size: 38px 38px;
+  background-attachment: fixed;
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -103,13 +105,14 @@ html.dark {
   color-scheme: dark;
 }
 html.light {
-  --bg-deep: #F7F8FB;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #F0F2F8;
-  --bg-border: #E2E5EF;
-  --text-primary: #0B0F1D;
-  --text-secondary: #4A5168;
-  --text-muted: #6B7280;
+  /* Warm paper-like canvas and soft layered surfaces. */
+  --bg-deep: #F4F0E7;
+  --bg-surface: #FFFEFA;
+  --bg-elevated: #F8F4EB;
+  --bg-border: #E5DDCF;
+  --text-primary: #292720;
+  --text-secondary: #5F5A50;
+  --text-muted: #817A6E;
   color-scheme: light;
 }
 /* ===== END ibrant THEME TOKENS ===== */
@@ -287,3 +290,136 @@ html.light .to-\[\#8B70FF\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-white { color: #FFFFFF !important; }
 html.light .to-\[\#A78BFA\].text-\[\#F8F8FC\] { color: #FFFFFF !important; }
 /* ===== END ibrant LIGHT THEME COMPATIBILITY ===== */
+
+
+/* ===== Soft paper light theme refinement ===== */
+html.light body {
+  background-color: var(--bg-deep) !important;
+  background-image:
+    linear-gradient(to right, rgba(116, 101, 76, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(116, 101, 76, 0.055) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, rgba(211, 190, 150, 0.12), transparent 58%);
+  background-size: 38px 38px, 38px 38px, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* Main page canvases keep the quiet grid visible behind their content. */
+html.light [class~="bg-bg-deep"],
+html.light [class~="bg-[#0B0F1D]"],
+html.light [class~="bg-[#0B1020]"],
+html.light [class~="bg-[#0A0E24]"],
+html.light [class~="bg-[#080D19]"] {
+  background-image:
+    linear-gradient(to right, rgba(116, 101, 76, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(116, 101, 76, 0.055) 1px, transparent 1px) !important;
+  background-size: 38px 38px !important;
+  background-attachment: fixed !important;
+}
+
+/* Bring remaining dark custom surfaces into the same warm surface system. */
+html.light [class~="bg-[#111827]"],
+html.light [class~="bg-[#12172B]"],
+html.light [class~="bg-[#101629]"],
+html.light [class~="bg-[#101525]"],
+html.light [class~="bg-[#11152A]"] {
+  background-color: var(--bg-surface) !important;
+}
+html.light [class~="bg-[#171D36]"],
+html.light [class~="bg-[#1D2340]"] {
+  background-color: var(--bg-elevated) !important;
+}
+html.light .bg-bg-surface {
+  background-color: var(--bg-surface) !important;
+}
+html.light .bg-bg-elevated {
+  background-color: var(--bg-elevated) !important;
+}
+html.light .border-bg-border {
+  border-color: var(--bg-border) !important;
+}
+
+/* White-on-dark borders become subtle warm outlines in light mode. */
+html.light [class*="border-white"],
+html.light [class*="divide-white"] {
+  border-color: var(--bg-border) !important;
+}
+html.light .text-slate-300,
+html.light .text-gray-700,
+html.light .text-gray-800,
+html.light .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+html.light .text-slate-500,
+html.light .text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
+/* A calm translucent header rather than a stark white strip. */
+html.light header {
+  background-color: rgba(255, 254, 250, 0.9) !important;
+  border-color: var(--bg-border) !important;
+  box-shadow: 0 5px 20px rgba(77, 64, 43, 0.045);
+}
+html.light .bg-bg-surface.rounded-xl,
+html.light .bg-bg-surface.rounded-2xl,
+html.light .bg-bg-surface.rounded-lg {
+  border-color: var(--bg-border);
+  box-shadow: 0 8px 24px rgba(77, 64, 43, 0.045);
+}
+
+
+/* Light mode: turn the remaining navy content panels into readable paper cards. */
+html.light [class~="bg-[#0D1226]"],
+html.light [class~="bg-[#10162B]"],
+html.light [class~="bg-[#0B1020]"],
+html.light [class~="bg-[#111827]"],
+html.light [class~="bg-[#12172B]"],
+html.light [class~="bg-[#12172b]"],
+html.light [class~="bg-[#101629]"],
+html.light [class~="bg-[#101525]"],
+html.light [class~="bg-[#0D1423]"],
+html.light [class~="bg-[#141B31]"],
+html.light [class~="bg-[#141A35]"],
+html.light [class~="bg-[#12172E]"],
+html.light [class~="bg-[#161B36]"] {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--bg-border) !important;
+}
+
+/* Dark navy feature, dashboard and course-card gradients become soft surfaces. */
+html.light [class*="from-[#151B30]"],
+html.light [class*="from-[#171B33]"],
+html.light [class*="from-[#171B33]/"],
+html.light [class*="from-[#1B2347]"],
+html.light [class*="from-[#1B2347]/"],
+html.light [class*="from-[#201A52]"],
+html.light [class*="from-[#241B5E]"],
+html.light [class*="from-[#202951]"] {
+  background-image: none !important;
+  background-color: var(--bg-surface) !important;
+  border-color: var(--bg-border) !important;
+  box-shadow: 0 10px 28px rgba(77, 64, 43, 0.055);
+}
+
+/* Lighten secondary copy and pastel text designed for dark surfaces. */
+html.light .text-\[\#929CBD\],
+html.light .text-\[\#7A8199\] {
+  color: var(--text-muted) !important;
+}
+html.light .text-\[\#D8D9E8\],
+html.light .text-\[\#B7BDD0\] {
+  color: var(--text-secondary) !important;
+}
+html.light .text-\[\#D5C9FF\],
+html.light .text-\[\#C9B8FF\],
+html.light .text-\[\#B9A7FF\],
+html.light .text-\[\#A78BFA\] {
+  color: #6846C8 !important;
+}
+
+
+/* Preserve white text when it sits directly over dark media overlays. */
+html.light [class~="bg-black/35"].text-white {
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
