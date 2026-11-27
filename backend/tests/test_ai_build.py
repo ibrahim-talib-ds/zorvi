@@ -490,3 +490,31 @@ async def test_generate_step_patch_repairs_invalid_file_response(monkeypatch):
     assert calls[1][2] is BuildStepResult
     assert calls[1][1]["invalid_previous_response"] == invalid_response
     assert calls[1][1]["validation_errors"]
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generate_step_patch_recovers_malformed_provider_json(monkeypatch):
+    calls = []
+    valid_response = {
+        "summary": "Creates the initial application page.",
+        "files": [{"path": "index.html", "content": "<!doctype html><html><body>App</body></html>"}],
+        "validation_notes": ["Not executed in this environment."],
+        "user_question": None,
+        "is_final_step": False,
+    }
+
+    async def fake_ask_model(system_prompt, user_payload, max_tokens=9000, response_model=None):
+        calls.append((system_prompt, user_payload, response_model))
+        if len(calls) == 1:
+            raise HTTPException(status_code=502, detail="The AI provider returned malformed project data. Try again.")
+        return valid_response
+
+    monkeypatch.setattr(ai_build, "_ask_model", fake_ask_model)
+    patch = await ai_build._generate_step_patch(
+        project_data={"id": "project-1", "name": "Example", "description": "Example app", "template": "web", "files": []},
+        prompt="Build a simple example application",
+        plan={"steps": [{"id": "step-1", "title": "Create shell", "objective": "Create initial page."}]},
+        step_index=0,
+    )
+    assert patch.files[0].path == "index.html"
+    assert len(calls) == 2
+    assert calls[1][2] is BuildStepResult

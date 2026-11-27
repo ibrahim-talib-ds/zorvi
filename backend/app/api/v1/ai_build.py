@@ -749,7 +749,31 @@ Hard rules:
         "existing_project_files_context_truncated": context_truncated,
         "file_size_remaining_bytes": max(0, MAX_PROJECT_BYTES - existing_bytes),
     }
-    data = await _ask_model(system_prompt, step_payload, max_tokens=10000, response_model=BuildStepResult)
+    try:
+        data = await _ask_model(system_prompt, step_payload, max_tokens=10000, response_model=BuildStepResult)
+    except HTTPException as parse_exc:
+        # Recover malformed JSON before attempting Pydantic validation.
+        recoverable_details = {
+            "The AI provider returned malformed project data. Try again.",
+            "The AI provider returned a response that was not valid JSON. Try again.",
+            "The AI provider returned an unexpected response format.",
+        }
+        if parse_exc.status_code != 502 or parse_exc.detail not in recoverable_details:
+            raise
+        logger.warning("AI provider returned unparseable source files for step %s; requesting a clean retry", step_index + 1)
+        try:
+            data = await _ask_model(
+                system_prompt + "\\n\\nRECOVERY REQUIREMENT: Your previous response was malformed. Return exactly one complete, syntactically valid JSON object matching the required response schema. Include at least one complete source file in files. No markdown, comments, or prose.",
+                step_payload,
+                max_tokens=10000,
+                response_model=BuildStepResult,
+            )
+        except HTTPException as retry_exc:
+            logger.warning("AI source-file JSON recovery failed for step %s: status=%s", step_index + 1, retry_exc.status_code)
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider had trouble formatting this step's files. Your saved project and previous steps are safe; retry this step shortly.",
+            ) from retry_exc
     try:
         patch = BuildStepResult.model_validate(_normalize_build_step_data(data))
     except Exception as first_exc:
