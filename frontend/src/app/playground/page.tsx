@@ -16,7 +16,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowDownToLine, CheckCircle2, ChevronDown, ChevronRight, File, FileCode2, FilePlus2, Folder, FolderOpen, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, File, FileCode2, FilePlus2, Folder, FolderOpen, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
@@ -2172,6 +2172,7 @@ export default function PlaygroundPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-[#F5C26B]" />
               <span className="h-2.5 w-2.5 rounded-full bg-[#22C58B]" />
               <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-[#7A8199]">Preview</span>
+              {runtimePreviewUrl && <a href={runtimePreviewUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[10px] font-semibold text-[#C4B5FD] transition hover:border-[#8B70FF]/50 hover:bg-[#7559E8]/10"><ExternalLink size={12} /> Open in new tab</a>}
             </div>
             {runtimePreviewUrl ? (
               <iframe key={runtimePreviewUrl} title="Running project preview" src={runtimePreviewUrl}
