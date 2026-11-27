@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, PlayCircle, GraduationCap, FileDown, File, ExternalLink, Link2 } from "lucide-react";
 import { EnrollButton } from "./EnrollButton";
+import CourseAbout from "@/components/courses/CourseAbout";
 import { cookies } from "next/headers";
 import { getCourseLevelLabel } from "@/lib/courses/course-level";
 
@@ -208,14 +209,18 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
             {/* About */}
             {course.long_description && (
-              <div className="mb-12">
-                <h2 className="font-display text-2xl font-bold text-white mb-4">
-                  About this course
-                </h2>
-                <div className="text-[#B7BDD0] leading-relaxed whitespace-pre-line">
-                  {course.long_description}
+              <section className="mb-12">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-200">
+                    <GraduationCap size={20} />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-2xl font-bold text-white">About this course</h2>
+                    <p className="mt-1 text-xs text-[#8992AA]">The skills, projects and outcomes you can expect</p>
+                  </div>
                 </div>
-              </div>
+                <CourseAbout content={course.long_description} />
+              </section>
             )}
 
             {/* Learning resources */}

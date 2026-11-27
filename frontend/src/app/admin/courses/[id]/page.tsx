@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
 import { COURSE_LEVEL_OPTIONS } from "@/lib/courses/course-level";
+import CourseAbout from "@/components/courses/CourseAbout";
 
 interface Lesson {
   id: string;
@@ -659,8 +660,17 @@ export default function AdminCourseEditPage() {
               </div>
 
               <div>
-                <label className={labelClass}>Full course description</label>
-                <textarea rows={6} value={longDesc} onChange={(e) => setLongDesc(e.target.value)} className={`${inputClass} resize-y leading-6`} placeholder="Describe what students will learn..." />
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <label className={labelClass.replace("mb-2 block", "mb-0 block")}>Full course description</label>
+                  <span className="rounded-full border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-semibold text-violet-200">Live preview</span>
+                </div>
+                <textarea rows={7} value={longDesc} onChange={(e) => setLongDesc(e.target.value)} className={`${inputClass} resize-y leading-6`} placeholder="Use Markdown headings (##), short paragraphs and bullet lists to keep the course overview easy to scan." />
+                <p className="mt-2 text-xs leading-5 text-[#7A8199]">Tip: keep the introduction concise. Use headings and short bullet points; the preview below shows how students will see it.</p>
+                {longDesc.trim() ? (
+                  <div className="mt-4"><CourseAbout content={longDesc} compact /></div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center text-xs text-[#7A8199]">Your formatted course overview will appear here as you write.</div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
