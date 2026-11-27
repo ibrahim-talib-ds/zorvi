@@ -164,6 +164,15 @@ def test_build_step_retry_policy_only_retries_recoverable_provider_errors():
     )
 
 
+def test_capacity_retry_schedule_is_bounded_and_increases():
+    assert ai_build._capacity_retry_delay_seconds(1) == 1800
+    assert ai_build._capacity_retry_delay_seconds(2) == 3600
+    assert ai_build._capacity_retry_delay_seconds(3) == 7200
+    assert ai_build._capacity_retry_delay_seconds(4) == 14400
+    assert ai_build._capacity_retry_delay_seconds(5) == 21600
+    assert ai_build._capacity_retry_delay_seconds(50) == 21600
+
+
 def test_merge_replaces_existing_files_without_counting_twice():
     merged = ai_build._merge_files(
         [{"path": "index.html", "content": "old"}, {"path": "README.md", "content": "notes"}],
@@ -183,6 +192,8 @@ def test_merge_enforces_project_file_limit():
 def test_build_task_is_registered_in_model_metadata():
     assert BuildTask.__tablename__ == "build_tasks"
     assert "build_tasks" in BuildTask.metadata.tables
+    assert "next_retry_at" in BuildTask.__table__.columns
+    assert "retry_count" in BuildTask.__table__.columns
 
 
 def test_task_timeline_can_keep_the_completed_step_index():
@@ -269,7 +280,7 @@ def test_openrouter_free_model_is_configured_and_reported_free(monkeypatch):
     status = ai_build._provider_status()
     assert status == {
         "configured": True,
-        "service": "IBRANT AI",
+        "service": "ibrant AI",
         "mode": "automatic-build",
     }
     assert "provider" not in status

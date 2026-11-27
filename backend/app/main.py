@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -36,15 +37,32 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Resume persisted build tasks after an API process restart."""
+    dispatcher = None
     try:
         recovered = await ai_build.recover_interrupted_build_tasks()
         if recovered:
             logger.info("Queued %s interrupted AI build task(s) for recovery", recovered)
     except Exception:
         # A database outage should not prevent the API from starting. The next
-        # startup can recover these durable tasks once the database is available.
+        # poll can recover durable tasks once the database is available.
         logger.exception("Could not recover interrupted AI build tasks during startup")
+
+    async def queue_poller():
+        while True:
+            try:
+                await ai_build.dispatch_due_build_tasks()
+            except Exception:
+                logger.exception("ibrant build queue polling failed; it will retry")
+            await asyncio.sleep(15)
+
+    dispatcher = asyncio.create_task(queue_poller())
     yield
+    if dispatcher:
+        dispatcher.cancel()
+        try:
+            await dispatcher
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="Zorvi API", lifespan=lifespan)

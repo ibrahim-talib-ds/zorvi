@@ -1,4 +1,4 @@
-"""Account-owned source projects for the IBRANT build workspace."""
+"""Account-owned source projects for the ibrant build workspace."""
 import uuid
 from datetime import datetime
 

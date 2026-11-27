@@ -1,4 +1,4 @@
-"""Authenticated CRUD for a user's persisted IBRANT build projects."""
+"""Authenticated CRUD for a user's persisted ibrant build projects."""
 import io
 import re
 import uuid

@@ -1,4 +1,4 @@
-"""IBRANT AI Builder: free-first provider routing, autopilot jobs, and admin oversight.
+"""ibrant AI Builder: free-first provider routing, autopilot jobs, and admin oversight.
 
 Autopilot writes generated source files to the user's project, but deliberately
 never executes generated commands, installs packages, provisions resources,
@@ -10,7 +10,7 @@ import logging
 import re
 import uuid
 from email.utils import parsedate_to_datetime
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Annotated
 from urllib.parse import urlparse
 
@@ -51,7 +51,7 @@ AI_BUILD_STEP_RETRY_DELAYS_SECONDS = (1.0, 2.0)
 AI_BUILD_STEP_MAX_RETRY_AFTER_SECONDS = 15.0
 ACTIVE_TASK_LOCKS: dict[str, asyncio.Lock] = {}
 ACTIVE_TASK_LOCKS_GUARD = asyncio.Lock()
-ALLOWED_TASK_STATES = {"queued", "running", "paused", "completed", "failed", "cancelled"}
+ALLOWED_TASK_STATES = {"queued", "dispatching", "running", "waiting", "paused", "completed", "failed", "cancelled"}
 
 
 def _provider_config() -> tuple[str, str, str, bool]:
@@ -151,7 +151,7 @@ def _provider_status() -> dict:
     # Public product-health response only; provider routing remains server-side.
     return {
         "configured": configured,
-        "service": "IBRANT AI",
+        "service": "ibrant AI",
         "mode": "automatic-build",
     }
 
@@ -459,7 +459,7 @@ async def _ask_model(
                 "type": "function",
                 "function": {
                     "name": tool_name,
-                    "description": "Return the complete structured IBRANT build response matching this schema.",
+                    "description": "Return the complete structured ibrant build response matching this schema.",
                     "parameters": _groq_strict_schema(response_model),
                 },
             }]
@@ -749,6 +749,7 @@ def _task_read(task: BuildTask, project_name: str | None = None, user_name: str 
         "current_step_title": task.current_step_title,
         "started_at": task.started_at.isoformat() if task.started_at else None,
         "finished_at": task.finished_at.isoformat() if task.finished_at else None,
+        "next_retry_at": task.next_retry_at.isoformat() if task.next_retry_at else None,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
         "project_name": project_name or task.name,
@@ -777,7 +778,7 @@ async def _generate_step_patch(
     if existing_bytes >= MAX_PROJECT_BYTES:
         raise HTTPException(status_code=413, detail="This project has reached its 2 MB account workspace limit. Download the ZIP and continue locally.")
     current_files, context_bytes, context_truncated = _select_project_file_context(files)
-    system_prompt = """You are IBRANT Build Engineer. Implement exactly ONE planned step in an existing code project.
+    system_prompt = """You are ibrant Build Engineer. Implement exactly ONE planned step in an existing code project.
 Return exactly ONE JSON object, with no markdown, code fences, comments, or prose outside the object.
 Use this exact response shape and include every key:
 {
@@ -1085,6 +1086,12 @@ def _is_retryable_build_step_error(exc: Exception) -> bool:
     ))
 
 
+def _capacity_retry_delay_seconds(retry_count: int) -> int:
+    """Durable quota retry schedule: 30m, 1h, 2h, 4h, then 6h maximum."""
+    retry_number = max(1, int(retry_count or 1))
+    return min(1800 * (2 ** min(retry_number - 1, 4)), 21600)
+
+
 def _build_step_retry_delay_seconds(exc: Exception, attempt: int) -> float:
     """Use a provider retry hint when safe; otherwise use short local backoff."""
     if isinstance(exc, HTTPException) and exc.status_code == 429:
@@ -1130,11 +1137,11 @@ async def _run_build_task(task_id: str) -> None:
                     .where(BuildTask.id == uuid.UUID(task_id))
                     .with_for_update()
                 )
-                if claim_task is None or claim_task.status != "queued":
+                if claim_task is None or claim_task.status not in {"queued", "dispatching"}:
                     return
                 claim_task.status = "running"
                 claim_task.started_at = claim_task.started_at or datetime.now(timezone.utc)
-                _append_event(claim_task, "worker_claimed", "An IBRANT build worker claimed this task.")
+                _append_event(claim_task, "worker_claimed", "An ibrant build worker claimed this task.")
                 await claim_db.commit()
 
             while True:
@@ -1162,7 +1169,7 @@ async def _run_build_task(task_id: str) -> None:
                             _append_event(task, "task_completed", "All planned implementation steps are complete.", "success", step_index_override=max(0, len(steps) - 1))
                             db.add(Notification(
                                 user_id=task.user_id,
-                                title="Your IBRANT project is built",
+                                title="Your ibrant project is built",
                                 message=f"{task.name} has completed all planned AI build steps. Review it in your Playground.",
                                 href=f"/build/ai?task={task.id}",
                                 type="success",
@@ -1218,7 +1225,7 @@ async def _run_build_task(task_id: str) -> None:
                                 _append_event(
                                     retry_task,
                                     "step_retrying",
-                                    f"Provider response failed for step {step_index + 1}; IBRANT is retrying automatically (attempt {attempt + 1} of {AI_BUILD_STEP_MAX_ATTEMPTS}).",
+                                    f"Provider response failed for step {step_index + 1}; ibrant is retrying automatically (attempt {attempt + 1} of {AI_BUILD_STEP_MAX_ATTEMPTS}).",
                                     "warning",
                                     step_index_override=step_index,
                                     failed_attempt=attempt,
@@ -1241,12 +1248,13 @@ async def _run_build_task(task_id: str) -> None:
                     if patch is None:
                         raise HTTPException(status_code=502, detail="The AI provider did not produce a project-file batch after automatic recovery.")
                 except Exception as exc:
-                    if isinstance(exc, HTTPException) and exc.status_code == 429:
-                        message = "IBRANT could not get AI capacity right now. Your completed steps are saved; retry this step later."
+                    is_capacity_limit = isinstance(exc, HTTPException) and exc.status_code == 429
+                    if is_capacity_limit:
+                        message = "Waiting for AI capacity. Your completed work is saved and this build will resume automatically."
                     elif isinstance(exc, HTTPException) and exc.status_code in {502, 503, 504}:
-                        message = "IBRANT could not complete this step right now. Your completed steps are saved; retry this step later."
+                        message = "ibrant could not complete this step after automatic recovery. Your completed work is saved."
                     else:
-                        message = "IBRANT could not complete this step. Your completed steps are saved; try again or contact support."
+                        message = "ibrant could not complete this step. Your completed work is saved; support may need to inspect it."
                     async with AsyncSessionLocal() as db:
                         task = await db.get(BuildTask, uuid.UUID(task_id))
                         if task is None:
@@ -1255,21 +1263,32 @@ async def _run_build_task(task_id: str) -> None:
                             _append_event(task, "step_discarded", "The generated response was not applied because the task was paused or cancelled.", "warning")
                             await db.commit()
                             return
-                        task.status = "failed"
-                        task.last_error = str(message)[:1200]
-                        task.finished_at = datetime.now(timezone.utc)
-                        _append_event(task, "task_failed", task.last_error, "error")
-                        await _notify_admins_of_failure(db, task)
-                        db.add(Notification(
-                            user_id=task.user_id,
-                            title="Your AI build needs attention",
-                            message=f"{task.name}: {task.last_error}",
-                            href=f"/build/ai?task={task.id}",
-                            type="warning",
-                            is_broadcast=False,
-                        ))
+                        if is_capacity_limit:
+                            task.retry_count = int(task.retry_count or 0) + 1
+                            # Persist a bounded exponential schedule. The dispatcher
+                            # survives process restarts and resumes from this exact step.
+                            delay_seconds = _capacity_retry_delay_seconds(task.retry_count)
+                            task.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay_seconds)
+                            task.status = "waiting"
+                            task.last_error = message
+                            task.finished_at = None
+                            _append_event(task, "waiting_for_capacity", f"ibrant saved this step and will automatically retry when capacity is available.", "warning", retry_count=task.retry_count, retry_in_seconds=delay_seconds, next_retry_at=task.next_retry_at.isoformat())
+                        else:
+                            task.status = "failed"
+                            task.last_error = str(message)[:1200]
+                            task.finished_at = datetime.now(timezone.utc)
+                            _append_event(task, "task_failed", task.last_error, "error")
+                            await _notify_admins_of_failure(db, task)
+                            db.add(Notification(
+                                user_id=task.user_id,
+                                title="Your ibrant build needs attention",
+                                message=f"{task.name}: {task.last_error}",
+                                href=f"/build/ai?task={task.id}",
+                                type="warning",
+                                is_broadcast=False,
+                            ))
                         await db.commit()
-                    logger.warning("AI build task %s failed at step %s: %s", task_id, step_index, type(exc).__name__)
+                    logger.warning("AI build task %s %s at step %s: %s", task_id, 'waiting for capacity' if is_capacity_limit else 'failed', step_index, type(exc).__name__)
                     return
 
                 async with AsyncSessionLocal() as db:
@@ -1325,7 +1344,7 @@ async def _run_build_task(task_id: str) -> None:
             logger.exception("AI build worker crashed for task %s", task_id)
             async with AsyncSessionLocal() as db:
                 task = await db.get(BuildTask, uuid.UUID(task_id))
-                if task is not None and task.status in {"queued", "running"}:
+                if task is not None and task.status in {"queued", "running", "dispatching"}:
                     task.status = "failed"
                     task.last_error = "The build worker stopped unexpectedly. An administrator can inspect the task timeline."
                     task.finished_at = datetime.now(timezone.utc)
@@ -1351,11 +1370,11 @@ async def recover_interrupted_build_tasks() -> int:
     recovered_ids: list[str] = []
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(BuildTask).where(BuildTask.status.in_(["queued", "running"]))
+            select(BuildTask).where(BuildTask.status.in_(["queued", "running", "dispatching"]))
         )
         tasks = result.scalars().all()
         for task in tasks:
-            if task.status == "running":
+            if task.status in {"running", "dispatching"}:
                 task.status = "queued"
                 _append_event(task, "task_recovered", "The API restarted. The saved build has been safely re-queued from its last completed step.", "warning")
             recovered_ids.append(str(task.id))
@@ -1366,6 +1385,35 @@ async def recover_interrupted_build_tasks() -> int:
     if recovered_ids:
         logger.info("Recovered %s interrupted AI build task(s) after startup", len(recovered_ids))
     return len(recovered_ids)
+
+
+async def dispatch_due_build_tasks() -> int:
+    """Claim due waiting tasks from PostgreSQL, then run them.
+
+    SKIP LOCKED allows multiple API instances to poll the same durable queue
+    without dispatching a task twice.
+    """
+    task_ids: list[str] = []
+    now = datetime.now(timezone.utc)
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(BuildTask)
+            .where(
+                (BuildTask.status == "waiting") & (BuildTask.next_retry_at <= now)
+            )
+            .order_by(BuildTask.created_at)
+            .limit(20)
+            .with_for_update(skip_locked=True)
+        )
+        for task in result.scalars().all():
+            task.status = "dispatching"
+            task.next_retry_at = None
+            task_ids.append(str(task.id))
+        if task_ids:
+            await db.commit()
+    for task_id in task_ids:
+        asyncio.create_task(_run_build_task(task_id))
+    return len(task_ids)
 
 
 @router.get("/status")
@@ -1380,7 +1428,7 @@ async def create_build_plan(
     request: BuildPlanRequest,
     user: Annotated[User, Depends(get_current_user)],
 ) -> BuildPlan:
-    system_prompt = """You are IBRANT Build Architect, a careful senior software architect.
+    system_prompt = """You are ibrant Build Architect, a careful senior software architect.
 Return exactly ONE valid JSON object. Do not use markdown, code fences, comments, or prose.
 The JSON object MUST have this exact structure and every shown key:
 {
@@ -1435,7 +1483,7 @@ Rules:
         "technology_preferences": request.preferences.model_dump(),
         "answers_to_previous_questions": request.answers,
         "previous_plan_to_refine": request.previous_plan,
-        "user_context": "Authenticated IBRANT learner building a project step by step.",
+        "user_context": "Authenticated ibrant learner building a project step by step.",
     }
     try:
         data = await _ask_model(system_prompt, original_payload, max_tokens=7000, response_model=BuildPlan)
@@ -1610,7 +1658,7 @@ async def pause_my_build_task(
     task = await db.scalar(select(BuildTask).where(BuildTask.id == task_id, BuildTask.user_id == user.id))
     if task is None:
         raise HTTPException(status_code=404, detail="Build task not found.")
-    if task.status not in {"queued", "running"}:
+    if task.status not in {"queued", "dispatching", "running", "waiting"}:
         raise HTTPException(status_code=409, detail=f"Cannot pause a task in '{task.status}' state.")
     task.status = "paused"
     _append_event(task, "task_paused", "Autopilot was paused by the project owner.", "warning")
@@ -1635,6 +1683,7 @@ async def resume_my_build_task(
     if answer.strip():
         task.resume_context = answer.strip()[:4000]
     task.status = "queued"
+    task.next_retry_at = None
     task.last_error = None
     _append_event(task, "task_resumed", "The project owner resumed autopilot.", "info")
     await db.commit()
@@ -1658,9 +1707,10 @@ async def retry_my_build_task(
     if task.current_step_index >= len((task.plan or {}).get("steps", [])):
         raise HTTPException(status_code=409, detail="There is no remaining step to retry.")
     task.status = "queued"
+    task.next_retry_at = None
     task.last_error = None
     task.finished_at = None
-    _append_event(task, "task_retried", "The project owner asked IBRANT to retry the current step.")
+    _append_event(task, "task_retried", "The project owner asked ibrant to retry the current step.")
     await db.commit()
     await db.refresh(task)
     background_tasks.add_task(_run_build_task, str(task.id))
@@ -1739,7 +1789,7 @@ async def admin_pause_build_task(
     task = await db.get(BuildTask, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Build task not found.")
-    if task.status not in {"queued", "running"}:
+    if task.status not in {"queued", "dispatching", "running", "waiting"}:
         raise HTTPException(status_code=409, detail=f"Cannot pause a task in '{task.status}' state.")
     task.status = "paused"
     _append_event(task, "admin_paused", "An administrator paused this build task.", "warning")
@@ -1765,7 +1815,7 @@ async def admin_retry_build_task(
     task.status = "queued"
     task.last_error = None
     task.finished_at = None
-    _append_event(task, "admin_retried", "An administrator asked IBRANT to retry the current step.")
+    _append_event(task, "admin_retried", "An administrator asked ibrant to retry the current step.")
     await db.commit()
     await db.refresh(task)
     background_tasks.add_task(_run_build_task, str(task.id))

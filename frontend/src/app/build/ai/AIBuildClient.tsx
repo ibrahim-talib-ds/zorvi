@@ -60,13 +60,14 @@ interface BuildTask {
   name: string;
   prompt: string;
   plan: BuildPlan;
-  status: "queued" | "running" | "paused" | "completed" | "failed" | "cancelled";
+  status: "queued" | "dispatching" | "running" | "waiting" | "paused" | "completed" | "failed" | "cancelled";
   auto_run: boolean;
   current_step_index: number;
   completed_steps: number[];
   total_steps: number;
   current_step_title: string | null;
   last_error: string | null;
+  next_retry_at?: string | null;
   events: BuildTaskEvent[];
   updated_at: string | null;
 }
@@ -90,7 +91,7 @@ function responseError(status: number, raw: string) {
     if (typeof parsed.detail === "string") detail = parsed.detail;
   } catch { /* The API may return text rather than JSON. */ }
   if (status === 404) {
-    return "The API currently running on port 8001 is older than this Build Studio source. It has not loaded the /projects and /ai/build routes yet. Restart the IBRANT backend, then refresh this page.";
+    return "The API currently running on port 8001 is older than this Build Studio source. It has not loaded the /projects and /ai/build routes yet. Restart the ibrant backend, then refresh this page.";
   }
   return detail || `Request failed (HTTP ${status}).`;
 }
@@ -475,7 +476,7 @@ export default function AIBuildPage() {
         `- Database: ${plan.stack.database}`,
         `- Languages: ${plan.stack.languages.join(", ")}`, "",
         "## Architecture notes", plan.stack.rationale, "",
-        "Generated step by step with IBRANT. Configure credentials outside this workspace.",
+        "Generated step by step with ibrant. Configure credentials outside this workspace.",
       ].join("\n");
       const response = await fetchWithAuth(`${API_BASE}/projects`, {
         method: "POST",
@@ -515,7 +516,7 @@ export default function AIBuildPage() {
       };
       sessionStorage.setItem(STORAGE_PREFIX + project.id, JSON.stringify(saved));
       router.replace(`/build/ai?project=${project.id}`);
-      if (createdTask) setNotice("Autopilot started. IBRANT will build one safe file batch at a time, save progress, and pause if it needs your decision. You can pause or stop it whenever you like.");
+      if (createdTask) setNotice("Autopilot started. ibrant will build one safe file batch at a time, save progress, and pause if it needs your decision. You can pause or stop it whenever you like.");
       else if (!autoBuild) setNotice("Workspace created. Use manual mode to generate, review and approve each step.");
       else setNotice("Workspace created. Automatic building did not start; you can still use the manual Playground workflow.");
     } catch (err) {
@@ -604,14 +605,14 @@ export default function AIBuildPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/build" className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-[#929CBD] hover:text-white"><ArrowLeft size={14} /> Build Studio</Link>
-          <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7559E8]/15 text-[#B7A6FF]"><WandSparkles size={18} /></span><div><h1 className="font-display text-2xl font-extrabold text-white sm:text-3xl">Build with AI</h1><p className="mt-1 text-xs text-[#929CBD]">Describe it once. IBRANT can build in the background while you stay in control.</p></div></div>
+          <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7559E8]/15 text-[#B7A6FF]"><WandSparkles size={18} /></span><div><h1 className="font-display text-2xl font-extrabold text-white sm:text-3xl">Build with AI</h1><p className="mt-1 text-xs text-[#929CBD]">Describe it once. ibrant can build in the background while you stay in control.</p></div></div>
         </div>
         {projectId && <div className="flex flex-wrap gap-2"><Link href={`/playground?project=${projectId}`} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/5"><Code2 size={14} /> Open full Playground</Link><button onClick={() => void downloadProject()} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/5"><ArrowDownToLine size={14} /> Download ZIP</button></div>}
       </div>
 
       {statusError && <div role="alert" className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>AI Build API not available.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">{statusError}</p></div></div>}
-      {status && !status.configured && <div className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>IBRANT AI is not available right now.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">The build service is temporarily unavailable. Please try again later.</p></div></div>}
-      {status?.configured && <div role="status" className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-100"><CheckCircle2 size={15} /> IBRANT AI is ready. Your project is built and checked by IBRANT.</div>}
+      {status && !status.configured && <div className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>ibrant AI is not available right now.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">The build service is temporarily unavailable. Please try again later.</p></div></div>}
+      {status?.configured && <div role="status" className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-100"><CheckCircle2 size={15} /> ibrant AI is ready. Your project is built and checked by ibrant.</div>}
       {error && <div role="alert" className="mb-5 flex gap-2 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/10 p-4 text-sm text-[#FF9AA6]"><AlertCircle size={17} className="mt-0.5 shrink-0" />{error}</div>}
       {notice && <div role="status" className="mb-5 flex gap-2 rounded-xl border border-[#7559E8]/25 bg-[#7559E8]/10 p-4 text-sm text-[#D9D1FF]"><CheckCircle2 size={17} className="mt-0.5 shrink-0" />{notice}</div>}
       {requestedTaskId && !plan && !error && <div className="mb-5 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-[#B7BDD0]"><Loader2 size={14} className="animate-spin text-[#A78BFA]" /> Loading your saved build task and progress…</div>}
@@ -622,7 +623,7 @@ export default function AIBuildPage() {
           <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A78BFA]">Your saved build activity</p><h2 className="mt-1 font-display text-lg font-bold text-white">Continue a previous project</h2></div><span className="text-[10px] text-[#7A8199]">{recentTasksLoading ? "Refreshing…" : "Saved to your account"}</span></div>
           <div className="grid gap-3 md:grid-cols-2">
             {recentTasks.map((recent) => <div key={recent.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-white">{recent.name}</p><span className={`rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${recent.status === "failed" ? "border-rose-400/20 bg-rose-400/10 text-rose-200" : recent.status === "completed" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200" : recent.status === "paused" ? "border-amber-400/20 bg-amber-400/10 text-amber-200" : "border-[#7559E8]/25 bg-[#7559E8]/10 text-[#D5CAFF]"}`}>{recent.status}</span></div>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-white">{recent.name}</p><span className={`rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${recent.status === "failed" ? "border-rose-400/20 bg-rose-400/10 text-rose-200" : recent.status === "completed" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200" : recent.status === "paused" ? "border-amber-400/20 bg-amber-400/10 text-amber-200" : "border-[#7559E8]/25 bg-[#7559E8]/10 text-[#D5CAFF]"}`}>{recent.status === "waiting" ? "Waiting for capacity" : recent.status}</span></div>
               <p className="mt-2 text-[11px] text-[#929CBD]">{recent.completed_steps.length}/{recent.total_steps} steps saved · {recent.current_step_title || "No active step"}</p>
               {recent.last_error && <p className="mt-2 line-clamp-2 text-[11px] text-rose-200">{recent.last_error}</p>}
               <button onClick={() => void openRecentTask(recent.id)} disabled={openingTaskId === recent.id} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-[11px] font-semibold text-white hover:bg-white/5 disabled:opacity-50">{openingTaskId === recent.id ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Open task and progress</button>
@@ -675,7 +676,7 @@ export default function AIBuildPage() {
           <div className="rounded-2xl border border-[#7559E8]/25 bg-[#7559E8]/[0.06] p-4">
             <label className="flex cursor-pointer items-start gap-3">
               <input type="checkbox" checked={autoBuild} onChange={(event) => setAutoBuild(event.target.checked)} className="mt-1 h-4 w-4 accent-[#8B70FF]" />
-              <span><span className="block text-sm font-semibold text-white">Auto-build this project for me</span><span className="mt-1 block text-xs leading-5 text-[#929CBD]">Recommended. After you approve this architecture once, IBRANT will generate and save the planned code steps automatically. It pauses when it needs your answer, and you can pause or stop it at any time. It never runs generated commands, installs packages, configures payments, or deploys.</span></span>
+              <span><span className="block text-sm font-semibold text-white">Auto-build this project for me</span><span className="mt-1 block text-xs leading-5 text-[#929CBD]">Recommended. After you approve this architecture once, ibrant will generate and save the planned code steps automatically. It pauses when it needs your answer, and you can pause or stop it at any time. It never runs generated commands, installs packages, configures payments, or deploys.</span></span>
             </label>
           </div>
           <div className="flex flex-wrap justify-end gap-3"><button onClick={() => setPlan(null)} className="rounded-xl border border-white/10 px-4 py-3 text-xs font-semibold text-[#B7BDD0] hover:bg-white/5">Change requirements</button><button onClick={() => void createWorkspace()} disabled={creating || hasUnansweredQuestion} className="inline-flex items-center gap-2 rounded-xl bg-[#7559E8] px-5 py-3 text-xs font-bold text-white hover:bg-[#8B70FF] disabled:opacity-40">{creating ? <Loader2 size={15} className="animate-spin" /> : <FolderOpen size={15} />} {autoBuild ? "Approve plan & start Auto-build" : "Approve plan & create workspace"}</button></div>
@@ -700,7 +701,7 @@ export default function AIBuildPage() {
                       <h3 className="mt-2 font-display text-xl font-bold text-white">{task?.current_step_title || (task?.status === "completed" ? "Source generation completed" : "Preparing build task")}</h3>
                       <p className="mt-1 text-xs text-[#929CBD]">Task {taskId.slice(0, 8)} · {task?.status || "queued"}</p>
                     </div>
-                    <span className={`rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide ${task?.status === "completed" ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200" : task?.status === "failed" ? "border-rose-400/25 bg-rose-400/10 text-rose-200" : task?.status === "paused" ? "border-amber-400/25 bg-amber-400/10 text-amber-200" : "border-[#7559E8]/25 bg-[#7559E8]/10 text-[#D5CAFF]"}`}>{task?.status || "queued"}</span>
+                    <span className={`rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide ${task?.status === "completed" ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200" : task?.status === "failed" ? "border-rose-400/25 bg-rose-400/10 text-rose-200" : task?.status === "paused" ? "border-amber-400/25 bg-amber-400/10 text-amber-200" : "border-[#7559E8]/25 bg-[#7559E8]/10 text-[#D5CAFF]"}`}>{task?.status === "waiting" ? "Waiting for capacity" : task?.status || "queued"}</span>
                   </div>
                   <div className="mt-5 flex items-end justify-between gap-3">
                     <div><p className="text-3xl font-extrabold tabular-nums text-white">{task?.completed_steps.length ?? completedSteps.length}<span className="text-base font-medium text-[#7A8199]"> / {task?.total_steps ?? plan.steps.length}</span></p><p className="mt-1 text-[11px] text-[#929CBD]">implementation steps saved</p></div>
@@ -708,13 +709,14 @@ export default function AIBuildPage() {
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-[#8B70FF] transition-all" style={{ width: `${Math.round(((task?.completed_steps.length ?? completedSteps.length) / Math.max(1, task?.total_steps ?? plan.steps.length)) * 100)}%` }} /></div>
                   {task?.status === "completed" && <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 text-xs leading-5 text-amber-100"><strong>Source files are saved; runtime testing is still pending.</strong> Open the Playground for web-previewable projects. For Flutter, export the ZIP and run it on an Android emulator or device using the Flutter SDK.</div>}
-                  {task?.last_error && <div role="alert" className="mt-4 rounded-xl border border-rose-400/25 bg-rose-400/10 p-3 text-xs leading-5 text-rose-100"><strong>Build stopped:</strong> {task.last_error}</div>}
+                  {task?.status === "waiting" && <div role="status" className="mt-4 rounded-xl border border-[#A78BFA]/25 bg-[#7559E8]/10 p-3 text-xs leading-5 text-[#E3DCFF]"><strong>Waiting for AI capacity.</strong> Your saved steps are safe. ibrant will automatically resume this step when capacity is available.</div>}
+                  {task?.last_error && task.status !== "waiting" && <div role="alert" className="mt-4 rounded-xl border border-rose-400/25 bg-rose-400/10 p-3 text-xs leading-5 text-rose-100"><strong>Build stopped:</strong> {task.last_error}</div>}
                   {task?.status === "paused" && task.events[task.events.length - 1]?.type === "needs_user_input" && task.events.slice(-1).map((event) => <div key={event.at} className="mt-4 rounded-xl border border-amber-400/25 bg-amber-400/10 p-3"><p className="text-xs font-semibold text-amber-100">{event.message}</p><textarea value={taskAnswer} onChange={(inputEvent) => setTaskAnswer(inputEvent.target.value)} rows={2} className="mt-3 w-full rounded-lg border border-white/10 bg-[#0B0F1D] p-3 text-xs text-white outline-none focus:border-[#7559E8]" placeholder="Answer the AI so it can continue…" /><button onClick={() => void controlTask("resume")} disabled={taskActionBusy || !taskAnswer.trim()} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />} Answer & continue</button></div>)}
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {(task?.status === "queued" || task?.status === "running") && <button onClick={() => void controlTask("pause")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/5 disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <span>Ⅱ</span>} Pause build</button>}
+                    {(task?.status === "queued" || task?.status === "dispatching" || task?.status === "running" || task?.status === "waiting") && <button onClick={() => void controlTask("pause")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/5 disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <span>Ⅱ</span>} Pause build</button>}
                     {task?.status === "paused" && task.events[task.events.length - 1]?.type !== "needs_user_input" && <button onClick={() => void controlTask("resume")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />} Resume build</button>}
                     {task?.status === "failed" && <button onClick={() => void controlTask("retry")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg bg-[#7559E8] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{taskActionBusy ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} Retry failed step</button>}
-                    {(task?.status === "queued" || task?.status === "running" || task?.status === "paused") && <button onClick={() => void controlTask("cancel")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg border border-rose-400/25 px-4 py-2.5 text-xs font-semibold text-rose-200 hover:bg-rose-400/10 disabled:opacity-50">Stop build</button>}
+                    {(task?.status === "queued" || task?.status === "dispatching" || task?.status === "running" || task?.status === "waiting" || task?.status === "paused") && <button onClick={() => void controlTask("cancel")} disabled={taskActionBusy} className="inline-flex items-center gap-2 rounded-lg border border-rose-400/25 px-4 py-2.5 text-xs font-semibold text-rose-200 hover:bg-rose-400/10 disabled:opacity-50">Stop build</button>}
                     <Link href={`/playground?project=${projectId}`} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/5"><Code2 size={13} /> Open editor</Link>
                   </div>
                   {task?.status === "completed" && (
@@ -724,7 +726,7 @@ export default function AIBuildPage() {
                         <h4 className="text-sm font-bold text-white">Add another feature to this project</h4>
                       </div>
                       <p className="mt-2 text-xs leading-5 text-[#AAB3CC]">
-                        Describe the next change in plain language. IBRANT will inspect your saved files, plan the feature, and add it to this same project. Your existing code stays in place.
+                        Describe the next change in plain language. ibrant will inspect your saved files, plan the feature, and add it to this same project. Your existing code stays in place.
                       </p>
                       <textarea
                         value={featurePrompt}
@@ -801,7 +803,7 @@ export default function AIBuildPage() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B0F1D]">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3"><div className="flex items-center gap-2 text-xs font-bold text-white"><Eye size={15} className="text-[#A78BFA]" /> Live Playground · editor and preview</div><Link href={`/playground?project=${projectId}`} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#B7A6FF]">Open separately <ExternalLink size={12} /></Link></div>
-                <iframe key={previewRevision} title="IBRANT project code editor and live preview" src={`/playground?project=${projectId}&embedded=1`} className="h-[760px] w-full bg-[#0B0F1D]" />
+                <iframe key={previewRevision} title="ibrant project code editor and live preview" src={`/playground?project=${projectId}&embedded=1`} className="h-[760px] w-full bg-[#0B0F1D]" />
                 <div className="border-t border-white/10 px-4 py-3 text-[11px] leading-5 text-[#7F8AA5]">The preview refreshes as each source batch is saved. Backend APIs, databases, Flutter emulators and package installation still require their real runtimes.</div>
               </div>
             </div>
@@ -822,7 +824,7 @@ export default function AIBuildPage() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B0F1D]">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3"><div className="flex items-center gap-2 text-xs font-bold text-white"><Eye size={15} className="text-[#A78BFA]" /> Live Playground · editor and preview</div><Link href={`/playground?project=${projectId}`} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#B7A6FF]">Open separately <ExternalLink size={12} /></Link></div>
-                <iframe key={previewRevision} title="IBRANT project code editor and live preview" src={`/playground?project=${projectId}&embedded=1`} className="h-[760px] w-full bg-[#0B0F1D]" />
+                <iframe key={previewRevision} title="ibrant project code editor and live preview" src={`/playground?project=${projectId}&embedded=1`} className="h-[760px] w-full bg-[#0B0F1D]" />
                 <div className="border-t border-white/10 px-4 py-3 text-[11px] leading-5 text-[#7F8AA5]">The preview refreshes after each approved batch. Browser/Python Playground support is available here; backend servers, databases, Flutter builds and package installs are not run by this iframe.</div>
               </div>
             </div>

@@ -13,6 +13,7 @@ class BuildTask(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "build_tasks"
     __table_args__ = (
         Index("ix_build_tasks_status_created", "status", "created_at"),
+        Index("ix_build_tasks_status_retry", "status", "next_retry_at"),
         Index("ix_build_tasks_user_created", "user_id", "created_at"),
         Index("ix_build_tasks_project_id", "project_id"),
     )
@@ -36,3 +37,5 @@ class BuildTask(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     current_step_title: Mapped[str | None] = mapped_column(String(120), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))

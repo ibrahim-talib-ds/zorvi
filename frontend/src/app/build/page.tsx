@@ -26,10 +26,10 @@ const TEMPLATES: { id: TemplateId; title: string; description: string; icon: typ
   {
     id: "web", title: "Web application", description: "A working HTML, CSS and JavaScript project with a responsive layout and interactive starter screen.", icon: Code2, featured: true,
     files: [
-      { path: "index.html", content: `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <meta name="description" content="A project built with IBRANT." />\n  <title>My IBRANT Project</title>\n  <link rel="stylesheet" href="styles.css" />\n</head>\n<body>\n  <main class="page">\n    <span class="eyebrow">YOUR BUILD STARTS HERE</span>\n    <h1>Turn your idea into something real.</h1>\n    <p>Edit this page, style it, and add your own interactions.</p>\n    <button id="action">Try the interaction</button>\n    <p id="result" class="result" aria-live="polite"></p>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n` },
+      { path: "index.html", content: `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <meta name="description" content="A project built with ibrant." />\n  <title>My ibrant Project</title>\n  <link rel="stylesheet" href="styles.css" />\n</head>\n<body>\n  <main class="page">\n    <span class="eyebrow">YOUR BUILD STARTS HERE</span>\n    <h1>Turn your idea into something real.</h1>\n    <p>Edit this page, style it, and add your own interactions.</p>\n    <button id="action">Try the interaction</button>\n    <p id="result" class="result" aria-live="polite"></p>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n` },
       { path: "styles.css", content: `:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }\n* { box-sizing: border-box; }\nbody { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; color: #f8f8fc; background: radial-gradient(circle at 20% 10%, #30256d, #0b0f1d 52%); }\n.page { width: min(100%, 760px); padding: clamp(28px, 7vw, 64px); border: 1px solid #ffffff22; border-radius: 28px; background: #171b33cc; box-shadow: 0 24px 80px #0008; }\n.eyebrow { color: #b5a5ff; font-size: 12px; font-weight: 700; letter-spacing: .18em; }\nh1 { max-width: 620px; margin: 18px 0; font-size: clamp(38px, 7vw, 68px); line-height: 1.02; letter-spacing: -.05em; }\np { color: #c3c8da; font-size: 17px; line-height: 1.7; }\nbutton { margin-top: 16px; padding: 13px 20px; border: 0; border-radius: 12px; color: white; background: #7559e8; font-weight: 700; cursor: pointer; }\nbutton:hover { background: #8b70ff; }\n.result { min-height: 28px; color: #8fe0bf; }\n` },
       { path: "script.js", content: `const button = document.querySelector("#action");\nconst result = document.querySelector("#result");\nlet count = 0;\nbutton.addEventListener("click", () => {\n  count += 1;\n  result.textContent = \`You built an interaction. Clicks: \${count}\`;\n  console.log("Interaction count:", count);\n});\n` },
-      { path: "README.md", content: `# My IBRANT Web Project\n\nStart by editing index.html, styles.css, and script.js in the IBRANT Build Workspace.\n\nThe live preview runs HTML, CSS, and JavaScript in a sandboxed browser frame. Download a ZIP at any time to continue in a local code editor.\n` },
+      { path: "README.md", content: `# My ibrant Web Project\n\nStart by editing index.html, styles.css, and script.js in the ibrant Build Workspace.\n\nThe live preview runs HTML, CSS, and JavaScript in a sandboxed browser frame. Download a ZIP at any time to continue in a local code editor.\n` },
     ],
   },
   {
@@ -44,8 +44,8 @@ const TEMPLATES: { id: TemplateId; title: string; description: string; icon: typ
   {
     id: "python", title: "Python project", description: "A clean Python starter with a main entry point and a place for your own logic.", icon: FileCode2,
     files: [
-      { path: "main.py", content: `def main():\n    print("Hello from your IBRANT project!")\n    # Replace this with your own project logic.\n\n\nif __name__ == "__main__":\n    main()\n` },
-      { path: "README.md", content: `# Python project\n\nOpen main.py in the IBRANT Playground and run it with the Python WebAssembly runner.\n\nFor packages, services, databases, or a full Python application, download this project and continue in a local Python environment.\n` },
+      { path: "main.py", content: `def main():\n    print("Hello from your ibrant project!")\n    # Replace this with your own project logic.\n\n\nif __name__ == "__main__":\n    main()\n` },
+      { path: "README.md", content: `# Python project\n\nOpen main.py in the ibrant Playground and run it with the Python WebAssembly runner.\n\nFor packages, services, databases, or a full Python application, download this project and continue in a local Python environment.\n` },
     ],
   },
   {
@@ -64,7 +64,7 @@ function projectApiError(status: number, raw: string) {
     if (typeof parsed.detail === "string" && status !== 404) return parsed.detail;
   } catch { /* Keep non-JSON API errors readable. */ }
   if (status === 404) {
-    return "The backend currently serving this site does not expose /api/v1/projects. The Build API route is present in the source code, but the running API is stale. Restart the IBRANT backend and refresh this page.";
+    return "The backend currently serving this site does not expose /api/v1/projects. The Build API route is present in the source code, but the running API is stale. Restart the ibrant backend and refresh this page.";
   }
   return raw || `Request failed (HTTP ${status}).`;
 }
@@ -177,9 +177,9 @@ export default function BuildPage() {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[radial-gradient(ellipse_at_80%_0%,rgba(139,112,255,0.28),transparent_45%),linear-gradient(135deg,#1a1d3a,#0d1224_65%)] p-6 sm:p-9 lg:p-11">
         <div className="relative z-10 max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#A78BFA]/30 bg-[#7559E8]/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#C4B5FD]"><Rocket size={13} /> IBRANT Build Studio</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#A78BFA]/30 bg-[#7559E8]/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#C4B5FD]"><Rocket size={13} /> ibrant Build Studio</span>
           <h1 className="mt-5 font-display text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">From lesson to working project.</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#C2C8DC] sm:text-base">Start with a template or open a project you already own. Your workspace saves to your IBRANT account, so you can return to the same code later.</p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#C2C8DC] sm:text-base">Start with a template or open a project you already own. Your workspace saves to your ibrant account, so you can return to the same code later.</p>
           <p className="mt-3 max-w-2xl text-xs leading-5 text-[#929CBD]">Account projects store up to 50 text files (2 MB total); do not store credentials or environment secrets here. For larger purchased repositories, assets, or full-stack apps, extract the ZIP and use Open Folder in the Playground; server-side runtimes need a desktop development environment.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href="/build/ai" className="inline-flex items-center gap-2 rounded-xl bg-[#7559E8] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#8B70FF]"><Sparkles size={17} /> Build with AI</Link>

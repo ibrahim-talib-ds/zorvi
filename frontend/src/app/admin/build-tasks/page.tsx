@@ -8,7 +8,7 @@ import {
 import { API_BASE } from "@/lib/api/client";
 import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
-type TaskStatus = "queued" | "running" | "paused" | "completed" | "failed" | "cancelled";
+type TaskStatus = "queued" | "dispatching" | "running" | "waiting" | "paused" | "completed" | "failed" | "cancelled";
 interface TaskEvent {
   at: string;
   type: string;
@@ -42,6 +42,7 @@ interface BuildTask {
 const STATUSES: { id: "all" | TaskStatus; label: string }[] = [
   { id: "all", label: "All tasks" },
   { id: "running", label: "Running" },
+  { id: "waiting", label: "Waiting for capacity" },
   { id: "queued", label: "Queued" },
   { id: "paused", label: "Paused" },
   { id: "failed", label: "Failed" },
@@ -52,6 +53,8 @@ const STATUSES: { id: "all" | TaskStatus; label: string }[] = [
 function statusStyle(status: TaskStatus) {
   switch (status) {
     case "running": return "border-sky-400/25 bg-sky-400/10 text-sky-200";
+    case "dispatching": return "border-violet-400/25 bg-violet-400/10 text-violet-200";
+    case "waiting": return "border-amber-400/25 bg-amber-400/10 text-amber-200";
     case "queued": return "border-violet-400/25 bg-violet-400/10 text-violet-200";
     case "paused": return "border-amber-400/25 bg-amber-400/10 text-amber-200";
     case "completed": return "border-emerald-400/25 bg-emerald-400/10 text-emerald-200";

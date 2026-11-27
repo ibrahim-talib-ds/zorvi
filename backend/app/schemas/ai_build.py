@@ -1,4 +1,4 @@
-"""Contracts for IBRANT's guided AI project builder."""
+"""Contracts for ibrant's guided AI project builder."""
 from typing import Literal
 from uuid import UUID
 
