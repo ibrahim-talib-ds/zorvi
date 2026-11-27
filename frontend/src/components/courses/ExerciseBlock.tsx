@@ -23,6 +23,7 @@ type ExerciseConfig = {
   instructions: string;
   language?: string;
   hint?: string;
+  starter_code?: string;
   options?: string[];
   expected_answer?: string;
   min_words?: number;
@@ -105,19 +106,26 @@ export function encodeExercise(config: ExerciseConfig) {
 export function parseExercise(value: string | null): ExerciseConfig | null {
   if (!value) return null;
   if (!value.startsWith(PREFIX)) return { ...defaultConfig, instructions: value };
-  try {
-    return { ...defaultConfig, ...JSON.parse(value.slice(PREFIX.length)) };
-  } catch {
-    // Admins sometimes paste JSON copied from Markdown/HTML where punctuation
-    // is escaped as \* or \<. Those are not valid JSON escapes; normalize
-    // only invalid JSON escape sequences, then parse the original structure.
+  const payload = value.slice(PREFIX.length).trim();
+  const attempts = [
+    payload,
+    payload.replace(/\\+([*<>`~])/g, "$1"),
+    payload.replace(/\\(?!["\\/bfnrtu])/g, "").replace(/\\+([*<>`~])/g, "$1"),
+  ];
+  for (const candidate of attempts) {
     try {
-      const raw = value.slice(PREFIX.length).replace(/\\(?!["\\/bfnrtu])/g, "");
-      return { ...defaultConfig, ...JSON.parse(raw) };
-    } catch {
-      return { ...defaultConfig, instructions: value };
-    }
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object" && typeof parsed.instructions === "string") {
+        return { ...defaultConfig, ...parsed };
+      }
+    } catch { /* try the next safe normalization */ }
   }
+  // Malformed legacy serialization must never leak into the lesson as raw JSON.
+  return {
+    ...defaultConfig,
+    title: "Practice exercise",
+    instructions: "This saved exercise uses an older format and needs to be reopened and saved by the instructor.",
+  };
 }
 
 const languages: Record<string, string> = {
@@ -133,7 +141,7 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
   const inferredHtmlCode = config.type === "written" && /write\s+(?:your\s+)?html\s+code|html\s+code\s+(?:in|below)|create\s+(?:a|your)\s+(?:simple\s+)?html\s+(?:page|profile)|build\s+(?:a|your)\s+(?:simple\s+)?html\s+(?:page|profile)/i.test(config.instructions);
   const isCodeTask = config.type === "code" || inferredHtmlCode;
   const exerciseLanguage = (config.language || (inferredHtmlCode ? "html" : language)).trim().toLowerCase();
-  const starterCode = starterForLanguage(exerciseLanguage);
+  const starterCode = config.starter_code?.trim() || starterForLanguage(exerciseLanguage);
   const storageKey = `ibrant-exercise:${token ? token.slice(-16) : "guest"}:${lessonId || "lesson"}`;
   const [answer, setAnswer] = useState("");
   const [hintOpen, setHintOpen] = useState(false);
@@ -141,7 +149,7 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
   const [submissionStatus, setSubmissionStatus] = useState("Loading your saved work…");
   const [saving, setSaving] = useState(false);
   const [reviewInfo, setReviewInfo] = useState<{grade:number|null;feedback:string|null}|null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const words = answer.trim() ? answer.trim().split(/\s+/).length : 0;
   const isChoice = config.type === "multiple_choice" || config.type === "true_false";
 
@@ -226,9 +234,9 @@ function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, 
           <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plaintext || {}, prismLanguage)} padding={16} textareaClassName="focus:outline-none" style={{fontFamily:'"Fira Code",monospace',fontSize:14,minHeight:220,color:"#E8ECF4",background:"transparent"}}/></div>
           <div className="flex flex-wrap items-center gap-2">
             <PracticeInPlaygroundButton code={answer.trim() || starterCode} language={exerciseLanguage} lessonTitle={config.title || "Lesson exercise"} />
-            {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Preview HTML"}</button>}
+            {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Show live preview"}</button>}
           </div>
-          {canRunHtml && previewOpen && <iframe title="HTML exercise preview" sandbox="" srcDoc={answer || starterCode} className="h-64 w-full rounded-xl border border-white/10 bg-white"/>}
+          {canRunHtml && previewOpen && <div className="overflow-hidden rounded-xl border border-white/10 bg-white"><div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2"><span className="h-2.5 w-2.5 rounded-full bg-red-400"/><span className="h-2.5 w-2.5 rounded-full bg-amber-400"/><span className="h-2.5 w-2.5 rounded-full bg-emerald-400"/><span className="ml-2 text-xs font-medium text-slate-500">Live webpage preview</span></div><iframe title="HTML exercise preview" sandbox="" srcDoc={answer || starterCode} className="h-72 w-full bg-white"/></div>}
           <p className="text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Open it in Playground to continue building and run supported code. HTML can also be previewed here.</p>
         </>}
 
