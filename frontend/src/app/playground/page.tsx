@@ -16,7 +16,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowDownToLine, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, File, FileCode2, FilePlus2, Folder, FolderOpen, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Eye, File, FileCode2, FilePlus2, Folder, FolderOpen, GripHorizontal, GripVertical, Loader2, Play, RotateCcw, Save, Terminal, X } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 import { fetchWithAuth, useAuth } from "@/lib/auth/AuthContext";
 
@@ -27,6 +27,9 @@ const PG_LANG_KEY = "ibrant_PLAYGROUND_LANGUAGES_V1";
 const PG_TABS_KEY = "ibrant_PLAYGROUND_TABS_V2";
 
 const EXTRA_LANGUAGES = [
+  { id: "html", label: "HTML" },
+  { id: "css", label: "CSS" },
+  { id: "javascript", label: "JavaScript" },
   { id: "python", label: "Python" },
   { id: "typescript", label: "TypeScript" },
   { id: "java", label: "Java" },
@@ -342,6 +345,8 @@ console.log("Playground ready — open the terminal and type help");
 `,
 };
 
+const EMPTY_CODE: Code = { html: "", css: "", js: "" };
+
 const EXAMPLES: { name: string; code: Code }[] = [
   { name: "Welcome (default)", code: DEFAULT_CODE },
   {
@@ -542,8 +547,14 @@ const LEVEL_STYLE: Record<LogLine["level"], string> = {
 
 const DEFAULT_EDITOR_TABS: EditorTab[] = [
   { id: "html", name: "index.html", language: "html", core: true },
+];
+const WEB_CORE_TABS: EditorTab[] = [
+  { id: "html", name: "index.html", language: "html", core: true },
   { id: "css", name: "style.css", language: "css", core: true },
   { id: "javascript", name: "script.js", language: "javascript", core: true },
+];
+const INITIAL_EDITOR_TABS: EditorTab[] = [
+  { id: "plaintext", name: "Untitled", language: "plaintext", core: true },
 ];
 
 // ----------------------------------------------------------------------------
@@ -602,13 +613,13 @@ function ProjectTreeItem({
 // ----------------------------------------------------------------------------
 export default function PlaygroundPage() {
   const { token } = useAuth();
-  const [code, setCode] = useState<Code>(DEFAULT_CODE);
-  const [activeLanguage, setActiveLanguage] = useState("html");
+  const [code, setCode] = useState<Code>(EMPTY_CODE);
+  const [activeLanguage, setActiveLanguage] = useState("plaintext");
   const [extraCode, setExtraCode] = useState<Record<string, string>>({});
-  const [editorTabs, setEditorTabs] = useState<EditorTab[]>(DEFAULT_EDITOR_TABS);
-  const [activeTabId, setActiveTabId] = useState("html");
+  const [editorTabs, setEditorTabs] = useState<EditorTab[]>(INITIAL_EDITOR_TABS);
+  const [activeTabId, setActiveTabId] = useState("plaintext");
   const [runningPythonTabs, setRunningPythonTabs] = useState<string[]>([]);
-  const [srcDoc, setSrcDoc] = useState<string>(() => build(DEFAULT_CODE));
+  const [srcDoc, setSrcDoc] = useState<string>(() => build(EMPTY_CODE));
   const [autoRun, setAutoRun] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [input, setInput] = useState("");
@@ -618,6 +629,7 @@ export default function PlaygroundPage() {
   const [runtimeSessionId, setRuntimeSessionId] = useState("");
   const [runtimeStarting, setRuntimeStarting] = useState(false);
   const [editorShare, setEditorShare] = useState(56);
+  const [previewDetached, setPreviewDetached] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(320);
 
   const [projectTree, setProjectTree] = useState<ProjectNode[]>([]);
@@ -725,7 +737,7 @@ export default function PlaygroundPage() {
         setProjectRootName(project.name);
         setProjectTree([]);
         setCode(nextCode);
-        setEditorTabs([...DEFAULT_EDITOR_TABS.map((tab) => ({
+        setEditorTabs([...WEB_CORE_TABS.filter(tab => Boolean(corePaths[tab.id as "html" | "css" | "javascript"])).map((tab) => ({
           ...tab,
           name: tab.id === "html" ? (corePaths.html.split("/").pop() || "index.html")
             : tab.id === "css" ? (corePaths.css.split("/").pop() || "styles.css")
@@ -765,6 +777,13 @@ export default function PlaygroundPage() {
 
   const createLanguageTab = (language: string) => {
     if (!language) return;
+    if (["html", "css", "javascript"].includes(language)) {
+      setEditorTabs(current => current.some(tab => tab.id === language) ? current : [...current, { ...WEB_CORE_TABS.find(tab => tab.id === language)!, core: false }]);
+      setActiveTabId(language);
+      setActiveLanguage(language);
+      setActiveProjectFile(null); setActiveProjectPath(""); setProjectFileContent("");
+      return;
+    }
 
     const label = EXTRA_LANGUAGES.find((item) => item.id === language)?.label ?? language;
     const number = editorTabs.filter((tab) => tab.language === language).length + 1;
@@ -783,6 +802,25 @@ export default function PlaygroundPage() {
     setProjectFileContent("");
   };
 
+  const changeCurrentLanguage = (language: string) => {
+    if (!language) return;
+    const source = extraCode[activeTabId] ?? "";
+    const label = EXTRA_LANGUAGES.find(item => item.id === language)?.label ?? language;
+    if (["html", "css", "javascript"].includes(language)) {
+      const key = language === "javascript" ? "js" : language;
+      setCode(current => ({ ...current, [key]: source }));
+      setEditorTabs(current => {
+        const withoutCurrent = current.filter(tab => tab.id !== activeTabId);
+        return withoutCurrent.some(tab => tab.id === language) ? withoutCurrent : [...withoutCurrent, { ...WEB_CORE_TABS.find(tab => tab.id === language)!, core: false }];
+      });
+      setActiveTabId(language);
+    } else {
+      setEditorTabs(current => current.map(tab => tab.id === activeTabId ? { ...tab, core: false, language, name: `${label} lesson` } : tab));
+      setActiveLanguage(language);
+    }
+    setActiveLanguage(language);
+  };
+
   // A learner can send a lesson's code example straight into a fresh editor tab.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -798,12 +836,16 @@ export default function PlaygroundPage() {
       if (["html", "css", "javascript"].includes(language)) {
         const key = language === "javascript" ? "js" : language;
         setCode((current) => ({ ...current, [key]: handoff.code! }));
-        setActiveTabId(language === "javascript" ? "javascript" : language);
+        setEditorTabs(current => {
+          const withoutPlaceholder = current.filter(tab => tab.id !== "plaintext");
+          return withoutPlaceholder.some(tab => tab.id === language) ? withoutPlaceholder : [...withoutPlaceholder, { ...WEB_CORE_TABS.find(tab => tab.id === language)!, core: false }];
+        });
+        setActiveTabId(language);
         setActiveLanguage(language);
       } else {
         const id = `lesson-${Date.now()}-${nextTabCounterRef.current++}`;
         const tab: EditorTab = { id, name: title || `${language} lesson`, language };
-        setEditorTabs((current) => [...current, tab]);
+        setEditorTabs([tab]);
         setExtraCode((current) => ({ ...current, [id]: handoff.code! }));
         setActiveTabId(id);
         setActiveLanguage(language);
@@ -1082,7 +1124,7 @@ export default function PlaygroundPage() {
     if (!cloudProject) return;
     const coreEntry = (Object.entries(cloudCorePaths) as [keyof CloudCorePaths, string][]).find(([, filePath]) => filePath && filePath === path);
     if (coreEntry) {
-      const tab = DEFAULT_EDITOR_TABS.find((item) => item.id === (coreEntry[0] === "javascript" ? "javascript" : coreEntry[0]));
+      const tab = WEB_CORE_TABS.find((item) => item.id === (coreEntry[0] === "javascript" ? "javascript" : coreEntry[0]));
       if (tab) {
         const mappedTab = editorTabs.find((item) => item.id === tab.id) ?? tab;
         activateEditorTab(mappedTab);
@@ -1439,7 +1481,7 @@ export default function PlaygroundPage() {
     if (!["html", "css", "javascript"].includes(activeLanguage)) {
       pushLog(
         "sys",
-        `${activeLanguage} does not have a local runtime or validator connected yet. Nothing was executed.`
+        `${activeLanguage} is currently editor-only here. Choose a language with a connected runtime or validator, or connect your local runtime to execute this file.`
       );
       return;
     }
@@ -1514,6 +1556,15 @@ export default function PlaygroundPage() {
         const restored: Code = { html: c.html, css: c.css || "", js: c.js || "" };
         setCode(restored);
         setSrcDoc(build(restored));
+        const savedWebTabs = WEB_CORE_TABS.filter(tab => {
+          const key = tab.id === "javascript" ? "js" : tab.id as keyof Code;
+          return Boolean(restored[key]?.trim());
+        }).map(tab => ({ ...tab, core: false }));
+        if (savedWebTabs.length) {
+          setEditorTabs(savedWebTabs);
+          setActiveTabId(savedWebTabs[0].id);
+          setActiveLanguage(savedWebTabs[0].language);
+        }
         pushLog("sys", "Loaded your saved work from this browser.");
       }
     } catch { /* ignore */ }
@@ -1566,10 +1617,11 @@ export default function PlaygroundPage() {
           typeof tab.language === "string" &&
           EXTRA_LANGUAGES.some((language) => language.id === tab.language) &&
           !tab.handle &&
-          !tab.projectPath
+          !tab.projectPath &&
+          !tab.core
         );
 
-        setEditorTabs([...DEFAULT_EDITOR_TABS, ...validTabs]);
+        setEditorTabs([...INITIAL_EDITOR_TABS, ...validTabs.filter(tab => !INITIAL_EDITOR_TABS.some(core => core.id === tab.id))]);
         setExtraCode(saved.buffers ?? {});
 
         const restoredActive = validTabs.find((tab) => tab.id === saved.activeTabId);
@@ -1602,7 +1654,7 @@ export default function PlaygroundPage() {
       });
 
       if (restoredTabs.length) {
-        setEditorTabs([...DEFAULT_EDITOR_TABS, ...restoredTabs]);
+        setEditorTabs([...INITIAL_EDITOR_TABS, ...restoredTabs.filter(tab => !INITIAL_EDITOR_TABS.some(core => core.id === tab.id))]);
         setExtraCode(restoredBuffers);
       }
       if (activeRestoredId) {
@@ -1813,19 +1865,19 @@ export default function PlaygroundPage() {
     setRunningPythonTabs([]);
     clearPendingRequests();
     previewReadyRef.current = false;
-    setCode(DEFAULT_CODE);
-    setActiveLanguage("html");
-    setEditorTabs(DEFAULT_EDITOR_TABS);
-    setActiveTabId("html");
+    setCode(EMPTY_CODE);
+    setActiveLanguage("plaintext");
+    setEditorTabs(INITIAL_EDITOR_TABS);
+    setActiveTabId("plaintext");
     setExtraCode({});
-    setSrcDoc(build(DEFAULT_CODE));
+    setSrcDoc(build(EMPTY_CODE));
     setLogs([]);
     try {
       localStorage.removeItem(PG_KEY);
       localStorage.removeItem(PG_LANG_KEY);
       localStorage.removeItem(PG_TABS_KEY);
     } catch { /* ignore */ }
-    pushLog("sys", "Reset to the default example.");
+    pushLog("sys", "Workspace cleared. Choose a language to start a new file.");
   };
 
   const applyExample = (name: string) => {
@@ -1834,6 +1886,7 @@ export default function PlaygroundPage() {
     clearPendingRequests();
     previewReadyRef.current = false;
     setCode(ex.code);
+    setEditorTabs(current => current.some(tab => tab.id === "html") ? current : [...current.filter(tab => tab.id !== "plaintext"), { ...WEB_CORE_TABS[0], core: false }]);
     setActiveLanguage("html");
     setActiveTabId("html");
     setActiveProjectFile(null);
@@ -1905,6 +1958,19 @@ export default function PlaygroundPage() {
     }
   };
 
+  const openFullPreview = () => {
+    try {
+      localStorage.setItem("ibrant_PLAYGROUND_PREVIEW_V1", JSON.stringify({ srcDoc: isWebPreviewLanguage ? srcDoc : "", runtimePreviewUrl, logs: visibleLogs, language: activeLanguage, title: activeEditorTab.name, savedAt: Date.now() }));
+      const previewWindow = window.open("/playground-preview", "_blank");
+      if (!previewWindow) {
+        pushLog("error", "The preview page was blocked by your browser. Allow pop-ups for this site and try again.");
+      } else {
+        previewWindow.opener = null;
+        setPreviewDetached(true);
+      }
+    } catch { pushLog("error", "Could not open the full-page preview. Check your browser pop-up settings."); }
+  };
+
   return (
     <div className="min-h-screen bg-[#0B0F1D] px-4 py-5 lg:px-6 lg:py-6">
       {/* header */}
@@ -1915,7 +1981,7 @@ export default function PlaygroundPage() {
           </span>
           <div>
             <h1 className="font-display text-xl font-extrabold text-white">{cloudProject ? cloudProject.name : "Code Playground"}</h1>
-            <p className="text-xs text-[#7A8199]">{cloudProject ? "Saved to your ibrant account · auto-save enabled" : "Monaco editor · HTML/CSS/JS preview · Python WebAssembly runner"}</p>
+            <p className="text-xs text-[#7A8199]">{cloudProject ? "Saved to your ibrant account · auto-save enabled" : "Monaco editor · add only the languages you need · browser preview and Python runtime"}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1974,6 +2040,8 @@ export default function PlaygroundPage() {
           >
             <RotateCcw size={13} /> Reset
           </button>}
+          {previewDetached && <button type="button" onClick={() => setPreviewDetached(false)} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-[#B7BDD0] hover:bg-white/5">Show split preview</button>}
+          <button type="button" onClick={openFullPreview} className="inline-flex items-center gap-1.5 rounded-lg border border-[#7559E8]/35 bg-[#7559E8]/10 px-3 py-2 text-xs font-semibold text-[#C4B5FD] hover:bg-[#7559E8]/20"><Eye size={13}/> Open full preview</button>
           <button
             disabled={pythonRunning || runtimeStarting}
             onClick={() => runRef.current()}
@@ -2026,7 +2094,7 @@ export default function PlaygroundPage() {
         )}
         <div
           ref={workspaceSplitRef}
-          className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 lg:h-full lg:grid-cols-[minmax(0,var(--pg-editor))_12px_minmax(0,var(--pg-preview))] lg:gap-0"
+          className={`grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 lg:h-full ${previewDetached ? "lg:grid-cols-1" : "lg:grid-cols-[minmax(0,var(--pg-editor))_12px_minmax(0,var(--pg-preview))] lg:gap-0"}`}
           style={{
             "--pg-editor": `${editorShare}fr`,
             "--pg-preview": `${100 - editorShare}fr`,
@@ -2097,6 +2165,7 @@ export default function PlaygroundPage() {
               ))}
             </select>}
 
+            {isShellLanguage && <select value="" onChange={event => changeCurrentLanguage(event.target.value)} aria-label="Choose a language for this code tab" className="ml-2 rounded-md border border-[#F5A623]/30 bg-[#0B0F1D] px-2 py-1.5 text-[11px] text-[#F5C56D]"><option value="" disabled>Choose language…</option>{EXTRA_LANGUAGES.filter(item=>item.id!=="plaintext").map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select>}
             <span className="ml-auto hidden shrink-0 px-2 text-right font-mono text-[10px] text-[#687087] xl:inline">
               {activeLanguage === "python"
                 ? pythonRunning ? "Python · Running" : "Python · WebAssembly"
@@ -2149,7 +2218,7 @@ export default function PlaygroundPage() {
           </div>
         </section>
 
-        <div
+        {!previewDetached && <div
           role="separator"
           aria-label="Resize editor and preview"
           aria-orientation="vertical"
@@ -2159,10 +2228,10 @@ export default function PlaygroundPage() {
           style={{ touchAction: "none" }}
         >
           <GripVertical size={17} />
-        </div>
+        </div>}
 
         {/* preview + terminal */}
-        <section
+        {!previewDetached && <section
           ref={rightPanelRef}
           className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0"
         >
@@ -2218,18 +2287,22 @@ flutter run</code></pre>
               <div className="flex min-h-0 flex-1 items-center justify-center bg-[#0B0F1D] p-8">
                 <div className="max-w-sm text-center">
                   <div className="mb-3 text-lg font-semibold text-[#D7DDF3]">
-                    {activeLanguage === "python"
-                      ? "Python WebAssembly Runtime"
-                      : ["json", "xml"].includes(activeLanguage)
-                        ? `${activeLanguage.toUpperCase()} Validator`
-                        : `${activeLanguage.toUpperCase()} Workspace`}
+                    {activeLanguage === "plaintext"
+                      ? "Choose a language to begin"
+                      : activeLanguage === "python"
+                        ? "Python WebAssembly Runtime"
+                        : ["json", "xml"].includes(activeLanguage)
+                          ? `${activeLanguage.toUpperCase()} Validator`
+                          : `${activeLanguage.toUpperCase()} Workspace`}
                   </div>
                   <p className="text-sm leading-6 text-[#7A8199]">
-                    {activeLanguage === "python"
-                      ? "Python executes in an isolated WebAssembly worker. Results appear in the terminal."
-                      : ["json", "xml"].includes(activeLanguage)
-                        ? "Run validation to inspect syntax and errors in the terminal."
-                        : "A local execution engine or validator is not connected yet. Your code is preserved and is not falsely reported as executed."}
+                    {activeLanguage === "plaintext"
+                      ? "This workspace starts empty. Use the language selector above to choose HTML, CSS, JavaScript, Python or another language. Only supported runtimes will execute code."
+                      : activeLanguage === "python"
+                        ? "Python executes in an isolated WebAssembly worker. Results appear in the terminal."
+                        : ["json", "xml"].includes(activeLanguage)
+                          ? "Run validation to inspect syntax and errors in the terminal."
+                          : "This language is editor-only until its runtime or validator is connected. Your code is preserved."}
                   </p>
                 </div>
               </div>
@@ -2288,11 +2361,11 @@ flutter run</code></pre>
               />
             </form>
           </div>
-        </section>
+        </section>}
         </div>
       </div>
 
-      <p className="mx-auto mt-3 max-w-[1600px] text-center text-[11px] text-[#7A8199]">
+      <p className="mx-auto mt-3 max-w-[1600px] text-center text-[11px] text-[#7A8199]">Run Preview before opening the full-page preview to refresh the latest output. {''}
         {cloudProject ? "Your project saves automatically to your ibrant account. Export ZIP to keep a local copy or continue it in a desktop editor." : projectRootName ? "Files opened from a local folder are saved back to that folder with Save File or Ctrl+S. They are not uploaded to your ibrant account. HTML, CSS and JavaScript preview in the browser; Python runs through WebAssembly." : "Scratch code saves on this device. Create a saved project in Build to sync files to your ibrant account. HTML, CSS and JavaScript run in a sandboxed browser preview; Python runs through WebAssembly. Other languages require their respective engines or validators."}
       </p>
     </div>

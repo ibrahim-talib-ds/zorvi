@@ -19,6 +19,7 @@ from app.api.v1 import (
     messages as public_messages,
     projects,
     ai_build,
+    exercise_submissions,
 )
 from app.api.v1.admin import (
     categories as admin_categories,
@@ -29,6 +30,7 @@ from app.api.v1.admin import (
     notifications as admin_notifications,
     users as admin_users,
     messages as admin_messages,
+    exercise_submissions as admin_exercise_submissions,
 )
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,7 @@ app.include_router(instructor_applications.router, prefix="/api/v1", tags=["inst
 app.include_router(public_messages.router, prefix="/api/v1", tags=["messages"])
 app.include_router(projects.router, prefix="/api/v1", tags=["build-projects"])
 app.include_router(ai_build.router, prefix="/api/v1", tags=["ai-build"])
+app.include_router(exercise_submissions.router, prefix="/api/v1", tags=["exercise-submissions"])
 
 # Admin Routes
 app.include_router(admin_categories.router, prefix="/api/v1", tags=["admin:categories"])
@@ -104,6 +107,7 @@ app.include_router(admin_settings.router, prefix="/api/v1", tags=["admin:setting
 app.include_router(admin_notifications.router, prefix="/api/v1", tags=["admin:notifications"])
 app.include_router(admin_users.router, prefix="/api/v1", tags=["admin:users"])
 app.include_router(admin_messages.router, prefix="/api/v1", tags=["admin:messages"])
+app.include_router(admin_exercise_submissions.router, prefix="/api/v1", tags=["admin:exercise-submissions"])
 
 @app.get("/")
 async def root():

@@ -244,7 +244,8 @@ export default function LessonEditorPage() {
           </h1>
           <p className="text-sm text-[#7A8199]">Write content, add video, set exercises.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/courses/${courseId}/submissions`} className="inline-flex items-center gap-2 rounded-lg border border-[#F5A623]/25 bg-[#F5A623]/10 px-4 py-2 text-sm font-semibold text-[#F5C56D] hover:bg-[#F5A623]/15">Exercise submissions</Link>
           <Link
             href={`/admin/courses/${courseId}/lessons/${lessonId}/preview`}
             target="_blank"

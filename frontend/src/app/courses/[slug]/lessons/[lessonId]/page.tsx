@@ -357,7 +357,7 @@ export default async function LessonPage({ params }: PageProps) {
 
           {/* Legacy exercise content retained for existing lessons */}
           {lesson.exercise && (
-            <ExerciseBlock exerciseText={lesson.exercise} language="python" lessonId={lesson.id} />
+            <ExerciseBlock exerciseText={lesson.exercise} language="python" lessonId={lesson.id} courseSlug={slug} />
           )}
 
           {/* Mark complete button */}

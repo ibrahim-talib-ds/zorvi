@@ -1,6 +1,7 @@
 """ZORVI — Public course endpoints."""
 import secrets
 import uuid
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -28,6 +29,20 @@ from app.schemas.course import (
 )
 
 router = APIRouter(prefix="/courses", tags=["courses"])
+
+
+def _student_safe_exercise(value: str | None) -> str | None:
+    """Never expose instructor answer keys in the public lesson payload."""
+    prefix = "IBRANT_EXERCISE_V1:"
+    if not value or not value.startswith(prefix):
+        return value
+    try:
+        config = json.loads(value[len(prefix):])
+        config.pop("expected_answer", None)
+        return prefix + json.dumps(config, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return value
+
 
 
 @router.get("", response_model=list[CourseListItem])
@@ -240,6 +255,7 @@ async def get_lesson(
     is_completed = completed_result.scalar_one_or_none() is not None
 
     data = LessonRead.model_validate(lesson)
+    data.exercise = _student_safe_exercise(data.exercise)
     data.is_completed = is_completed
     return data
 

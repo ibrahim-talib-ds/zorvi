@@ -8,6 +8,7 @@ from app.models.course_module import CourseModule
 from app.models.lesson import Lesson, VideoProvider
 from app.models.enrollment import Enrollment
 from app.models.lesson_progress import LessonProgress
+from app.models.exercise_submission import ExerciseSubmission, ExerciseSubmissionStatus
 from app.models.certificate import Certificate
 from app.models.marketplace import (
     LicenseType,
@@ -39,7 +40,7 @@ __all__ = [
     "ProductDifficulty", "ProductStatus",
     "Course", "CourseStatus", "CourseDifficulty",
     "CourseModule", "Lesson", "VideoProvider",
-    "Enrollment", "LessonProgress", "Certificate", "PlatformSetting",
+    "Enrollment", "LessonProgress", "ExerciseSubmission", "ExerciseSubmissionStatus", "Certificate", "PlatformSetting",
     "Order", "OrderItem", "OrderStatus", "PaymentMethod",
     "DownloadToken", "NotificationReceipt", "UserProject", "BuildTask",
 ]

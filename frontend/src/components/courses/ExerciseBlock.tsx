@@ -11,6 +11,9 @@ import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-sql";
 import "prismjs/themes/prism-tomorrow.css";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { API_BASE } from "@/lib/api/client";
+import { LegacyExerciseBlock } from "./LegacyExerciseBlock";
 
 type ExerciseConfig = {
   version: 1;
@@ -41,30 +44,65 @@ const languages: Record<string, string> = {
   python: "python", sql: "sql", json: "javascript", text: "plain",
 };
 
-export function ExerciseBlock({ exerciseText, language = "python", lessonId }: { exerciseText: string; language?: string; lessonId?: string }) {
+function StructuredExerciseBlock({ exerciseText, language = "python", lessonId, courseSlug }: { exerciseText: string; language?: string; lessonId?: string; courseSlug?: string }) {
+  const { token } = useAuth();
   const config = useMemo(() => parseExercise(exerciseText) || defaultConfig, [exerciseText]);
-  const storageKey = `ibrant-exercise:${lessonId || "lesson"}`;
+  const storageKey = `ibrant-exercise:${token ? token.slice(-16) : "guest"}:${lessonId || "lesson"}`;
   const [answer, setAnswer] = useState("");
   const [hintOpen, setHintOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState("Loading your saved work…");
+  const [saving, setSaving] = useState(false);
+  const [reviewInfo, setReviewInfo] = useState<{grade:number|null;feedback:string|null}|null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const words = answer.trim() ? answer.trim().split(/\s+/).length : 0;
   const isChoice = config.type === "multiple_choice" || config.type === "true_false";
 
   useEffect(() => {
-    try { setAnswer(localStorage.getItem(storageKey) || ""); } catch { /* storage may be unavailable */ }
-  }, [storageKey]);
+    let cancelled = false;
+    const load = async () => {
+      try { setAnswer(localStorage.getItem(storageKey) || ""); } catch { /* storage may be unavailable */ }
+      if (!token || !courseSlug || !lessonId) { setSubmissionStatus("Sign in and enrol in this course to submit work to your instructor."); return; }
+      try {
+        const response = await fetch(`${API_BASE}/courses/${courseSlug}/lessons/${lessonId}/exercise-submission`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (response.status === 403) { setSubmissionStatus("Enrol in this course to submit your work for instructor review."); return; }
+        if (!response.ok) throw new Error("Could not load your saved submission.");
+        const data = await response.json();
+        if (!cancelled && data) {
+          setAnswer(data.answer || "");
+          setSubmitted(data.status === "submitted" || data.status === "reviewed");
+      setReviewInfo(data.feedback || data.grade != null ? { grade: data.grade, feedback: data.feedback } : null);
+          setSubmissionStatus(data.status === "reviewed" ? `Reviewed${data.grade != null ? ` · ${data.grade}/100` : ""}` : data.status === "submitted" ? "Submitted · awaiting instructor review" : data.feedback ? "Returned for revision · update your work and submit again" : "Draft saved to your account");
+          try { localStorage.setItem(storageKey, data.answer || ""); } catch { /* optional local backup */ }
+        } else if (!cancelled) setSubmissionStatus("Your work will be saved to your account.");
+      } catch { if (!cancelled) setSubmissionStatus("Online submission is temporarily unavailable. Your local draft is still available."); }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [storageKey, token, courseSlug, lessonId]);
 
   const updateAnswer = (value: string) => {
     setAnswer(value);
     setSubmitted(false);
+    setSubmissionStatus("You have unsaved changes. Save a draft or submit your updated response.");
     try { localStorage.setItem(storageKey, value); } catch { /* keep in memory */ }
   };
 
-  const submit = () => {
-    if (!answer.trim()) return;
-    setSubmitted(true);
-    try { localStorage.setItem(`${storageKey}:submitted`, JSON.stringify({ answer, submittedAt: new Date().toISOString() })); } catch { /* keep in memory */ }
+  const saveToServer = async (action: "save" | "submit") => {
+    if (!answer.trim() || !token || !courseSlug || !lessonId) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`${API_BASE}/courses/${courseSlug}/lessons/${lessonId}/exercise-submission`, {
+        method: "PUT", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ answer, action }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || "Your response could not be saved.");
+      setSubmitted(data.status === "submitted" || data.status === "reviewed");
+      setReviewInfo(data.feedback || data.grade != null ? { grade: data.grade, feedback: data.feedback } : null);
+      setSubmissionStatus(action === "submit" ? "Submitted successfully · your instructor can now review your work." : "Draft saved securely to your account.");
+    } catch (error) { setSubmissionStatus(error instanceof Error ? error.message : "Could not save your work."); }
+    finally { setSaving(false); }
   };
 
   const prismLanguage = languages[config.language || language] || "plain";
@@ -92,10 +130,10 @@ export function ExerciseBlock({ exerciseText, language = "python", lessonId }: {
 
         {config.type === "code" && <>
           <div className="flex flex-wrap items-center justify-between gap-2"><label className="text-sm font-semibold text-white">Write your code</label><select aria-label="Code language" value={config.language || language} disabled className="rounded-lg border border-white/10 bg-[#0B1020] px-3 py-2 text-xs text-[#B7BDD0]"><option>{(config.language || language).toUpperCase()}</option></select></div>
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plain, prismLanguage)} padding={16} textareaClassName="focus:outline-none" style={{fontFamily:'"Fira Code",monospace',fontSize:14,minHeight:220,color:"#E8ECF4",background:"transparent"}}/></div>
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E] focus-within:border-[#8B70FF]"><Editor value={answer} onValueChange={updateAnswer} highlight={code => Prism.highlight(code, Prism.languages[prismLanguage] || Prism.languages.plaintext || {}, prismLanguage)} padding={16} textareaClassName="focus:outline-none" style={{fontFamily:'"Fira Code",monospace',fontSize:14,minHeight:220,color:"#E8ECF4",background:"transparent"}}/></div>
           {canRunHtml && <button type="button" onClick={() => setPreviewOpen(v => !v)} className="rounded-lg border border-[#7559E8]/40 px-4 py-2 text-sm font-semibold text-[#C4B5FD]">{previewOpen ? "Hide preview" : "Preview HTML"}</button>}
           {canRunHtml && previewOpen && <iframe title="HTML exercise preview" sandbox="" srcDoc={answer} className="h-64 w-full rounded-xl border border-white/10 bg-white"/>}
-          <p className="text-xs text-[#9299AE]">Your code is saved as a local draft on this device. HTML can be previewed here; other languages are provided as an editor unless a supported runner is available.</p>
+          <p className="text-xs text-[#9299AE]">Your code is kept as a local draft while editing. Save or submit it to send your work to the instructor. HTML can be previewed here.</p>
         </>}
 
         {isChoice && <div className="grid gap-3">{(config.type === "true_false" ? ["True", "False"] : config.options || []).map((option, index) => <button type="button" key={option} onClick={() => updateAnswer(option)} className={`rounded-xl border p-4 text-left text-sm transition ${answer === option ? "border-[#8B70FF] bg-[#7559E8]/15 text-white" : "border-white/10 bg-[#0B1020] text-[#C4CBD8] hover:border-white/25"}`}><span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-xs text-[#A78BFA]">{String.fromCharCode(65 + index)}</span>{option}</button>)}</div>}
@@ -105,12 +143,23 @@ export function ExerciseBlock({ exerciseText, language = "python", lessonId }: {
         {config.hint && <div><button type="button" onClick={() => setHintOpen(v => !v)} className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5C56D]"><Lightbulb size={16}/>{hintOpen ? "Hide hint" : "Need a hint?"}</button>{hintOpen && <p className="mt-3 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-4 text-sm leading-6 text-[#F5D58E]">{config.hint}</p>}</div>}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
-          <p className="text-xs text-[#9299AE]">Your draft is saved on this device as you work.</p>
-          <button type="button" onClick={submit} disabled={!answer.trim()} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"><Save size={16}/> Save response</button>
+          <p className="max-w-md text-xs text-[#9299AE]">{submissionStatus}</p>
+          <div className="flex flex-wrap gap-2"><button type="button" onClick={() => void saveToServer("save")} disabled={!answer.trim() || saving || !token} className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-[#D7DDF3] hover:bg-white/5 disabled:opacity-40"><Save size={15}/> {saving ? "Saving…" : "Save draft"}</button><button type="button" onClick={() => void saveToServer("submit")} disabled={!answer.trim() || saving || !token || !courseSlug || submitted} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#7559E8] to-[#8B70FF] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7559E8]/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={16}/> Submit for review</button></div>
         </div>
-        {submitted && <div className="flex items-center gap-2 rounded-xl border border-[#22C58B]/25 bg-[#22C58B]/10 p-4 text-sm text-[#75E0B8]"><CheckCircle2 size={18}/> Response saved on this device. Your instructor cannot see this response yet.</div>}
-        {submitted && config.expected_answer && <details className="rounded-xl border border-white/10 bg-white/[.03] p-4"><summary className="cursor-pointer text-sm font-semibold text-[#C4B5FD]">View suggested answer</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B7BDD0]">{config.expected_answer}</p></details>}
+        {submitted && <div className="flex items-center gap-2 rounded-xl border border-[#22C58B]/25 bg-[#22C58B]/10 p-4 text-sm text-[#75E0B8]"><CheckCircle2 size={18}/> Your work has been submitted to ibrant Academy. You can see instructor feedback here after it is reviewed.</div>}
+        {reviewInfo && <div className="space-y-2 rounded-xl border border-[#22C58B]/25 bg-[#22C58B]/[.07] p-4"><p className="text-sm font-bold text-[#75E0B8]">Instructor feedback{reviewInfo.grade != null ? ` · ${reviewInfo.grade}/100` : ""}</p><p className="whitespace-pre-wrap text-sm leading-6 text-[#D4E8DF]">{reviewInfo.feedback || "Your instructor has reviewed this submission."}</p></div>}
       </div>
     </section>
   );
+}
+
+
+type ExerciseBlockProps = { exerciseText: string; language?: string; lessonId?: string; courseSlug?: string };
+
+export function ExerciseBlock(props: ExerciseBlockProps) {
+  const text = props.exerciseText || "";
+  if (!text.startsWith(PREFIX) && (text.includes("--- QUESTION ---") || text.includes("--- SOLUTION ---"))) {
+    return <LegacyExerciseBlock exerciseText={text} language={props.language || "python"} />;
+  }
+  return <StructuredExerciseBlock {...props} />;
 }
