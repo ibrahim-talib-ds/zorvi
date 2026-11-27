@@ -267,9 +267,13 @@ def test_openrouter_free_model_is_configured_and_reported_free(monkeypatch):
     assert model == "particle-ai/particle-1:free"
     assert bearer is True
     status = ai_build._provider_status()
-    assert status["configured"] is True
-    assert status["model"] == "particle-ai/particle-1:free"
-    assert status["free_tier"] is True
+    assert status == {
+        "configured": True,
+        "service": "IBRANT AI",
+        "mode": "automatic-build",
+    }
+    assert "provider" not in status
+    assert "model" not in status
 
 
 def test_openrouter_keeps_other_explicit_free_models(monkeypatch):

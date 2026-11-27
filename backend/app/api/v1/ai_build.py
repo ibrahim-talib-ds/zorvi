@@ -148,22 +148,11 @@ def _provider_status() -> dict:
         configured = bool(model and base_url and (settings.AI_API_KEY or "").strip())
     else:
         configured = bool(model and base_url and (provider == "ollama" or (settings.AI_API_KEY or "").strip()))
+    # Public product-health response only; provider routing remains server-side.
     return {
         "configured": configured,
-        "provider": provider,
-        "model": model or None,
-        "mode": "automatic-safe-file-build",
-        "secrets_stay_on_server": True,
-        "free_tier": (
-            provider in {"gemini", "groq", "ollama"}
-            or (
-                provider == "openai-compatible"
-                and urlparse((base_url or "").rstrip("/")).hostname == "openrouter.ai"
-                and bool(model)
-                and model.endswith(":free")
-            )
-        ),
-        "billing_enabled_by_this_feature": False,
+        "service": "IBRANT AI",
+        "mode": "automatic-build",
     }
 
 
@@ -1252,7 +1241,12 @@ async def _run_build_task(task_id: str) -> None:
                     if patch is None:
                         raise HTTPException(status_code=502, detail="The AI provider did not produce a project-file batch after automatic recovery.")
                 except Exception as exc:
-                    message = exc.detail if isinstance(exc, HTTPException) else "The AI step failed unexpectedly. Check provider status and try again."
+                    if isinstance(exc, HTTPException) and exc.status_code == 429:
+                        message = "IBRANT could not get AI capacity right now. Your completed steps are saved; retry this step later."
+                    elif isinstance(exc, HTTPException) and exc.status_code in {502, 503, 504}:
+                        message = "IBRANT could not complete this step right now. Your completed steps are saved; retry this step later."
+                    else:
+                        message = "IBRANT could not complete this step. Your completed steps are saved; try again or contact support."
                     async with AsyncSessionLocal() as db:
                         task = await db.get(BuildTask, uuid.UUID(task_id))
                         if task is None:

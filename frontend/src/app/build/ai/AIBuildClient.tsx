@@ -43,12 +43,8 @@ interface StepResult {
 interface ProjectRead { id: string; name: string; files: GeneratedFile[] }
 interface AiStatus {
   configured: boolean;
-  provider: string;
-  model: string | null;
+  service: string;
   mode: string;
-  secrets_stay_on_server: boolean;
-  free_tier?: boolean;
-  billing_enabled_by_this_feature?: boolean;
 }
 interface BuildTaskEvent {
   at: string;
@@ -614,8 +610,8 @@ export default function AIBuildPage() {
       </div>
 
       {statusError && <div role="alert" className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>AI Build API not available.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">{statusError}</p></div></div>}
-      {status && !status.configured && <div className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>Free-first AI provider is not configured yet.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">Recommended: create a Groq API key in <a className="underline" href="https://console.groq.com/keys" target="_blank" rel="noreferrer">Groq Console</a>, then set AI_PROVIDER=groq, AI_MODEL=openai/gpt-oss-120b, AI_BASE_URL=https://api.groq.com/openai/v1, and AI_API_KEY on the backend. Restart the API after changing its environment. The key is never entered here. Groq&apos;s free quota is limited and can change.</p></div></div>}
-      {status?.configured && <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-100"><CheckCircle2 size={15} /> AI provider configured: {status.provider} · {status.model || "provider default"} · {status.free_tier ? "free-tier or local inference" : "paid provider configured"} · key stays on server · no paid fallback</div>}
+      {status && !status.configured && <div className="mb-5 flex gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100"><AlertCircle size={17} className="mt-0.5 shrink-0" /><div><strong>IBRANT AI is not available right now.</strong><p className="mt-1 text-xs leading-5 text-amber-100/80">The build service is temporarily unavailable. Please try again later.</p></div></div>}
+      {status?.configured && <div role="status" className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-100"><CheckCircle2 size={15} /> IBRANT AI is ready. Your project is built and checked by IBRANT.</div>}
       {error && <div role="alert" className="mb-5 flex gap-2 rounded-xl border border-[#F05D70]/25 bg-[#F05D70]/10 p-4 text-sm text-[#FF9AA6]"><AlertCircle size={17} className="mt-0.5 shrink-0" />{error}</div>}
       {notice && <div role="status" className="mb-5 flex gap-2 rounded-xl border border-[#7559E8]/25 bg-[#7559E8]/10 p-4 text-sm text-[#D9D1FF]"><CheckCircle2 size={17} className="mt-0.5 shrink-0" />{notice}</div>}
       {requestedTaskId && !plan && !error && <div className="mb-5 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-[#B7BDD0]"><Loader2 size={14} className="animate-spin text-[#A78BFA]" /> Loading your saved build task and progress…</div>}
