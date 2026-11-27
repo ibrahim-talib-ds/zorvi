@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchWithAuth } from "@/lib/auth/AuthContext";
 import { API_BASE } from "@/lib/api/client";
+import { encodeExercise, parseExercise } from "@/components/courses/ExerciseBlock";
 
 interface LessonData {
   id: string;
@@ -500,19 +501,22 @@ export default function LessonEditorPage() {
           />
         </div>
 
-        {/* Exercise */}
-        <div className="rounded-2xl border border-[#F5A623]/20 bg-[#F5A623]/5 p-6">
-          <h2 className="font-display text-lg font-bold text-[#F5A623] mb-4">
-            Practice exercise <span className="text-xs text-[#B7BDD0] font-normal">(optional)</span>
-          </h2>
-          <textarea
-            value={exercise}
-            onChange={(e) => setExercise(e.target.value)}
-            rows={6}
-            placeholder="What should the student do to practice this lesson?&#10;&#10;Example:&#10;1. Create a file called hello.py&#10;2. Add a print statement&#10;3. Run it and confirm the output"
-            className="w-full bg-[#0B0F1D] border border-[#F5A623]/20 rounded-lg px-4 py-3 text-white placeholder-[#7A8199] focus:outline-none focus:border-[#F5A623]/50 resize-y text-sm"
-          />
-        </div>
+        {/* Structured student exercise builder */}
+        {(() => {
+          const config = parseExercise(exercise) || { version: 1 as const, type: "written" as const, title: "Practice exercise", instructions: "", min_words: 150, max_words: 200 };
+          const update = (patch: Record<string, unknown>) => setExercise(encodeExercise({ ...config, ...patch } as typeof config));
+          return <section className="space-y-5 rounded-2xl border border-[#F5A623]/25 bg-gradient-to-br from-[#F5A623]/[.07] to-[#7559E8]/[.06] p-6">
+            <div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#F5C56D]">Student workspace</p><h2 className="mt-1 text-xl font-bold text-white">Practice exercise <span className="text-xs font-normal text-[#9299AE]">(optional)</span></h2><p className="mt-1 text-sm text-[#9299AE]">Choose the activity format. Students will receive the matching workspace automatically.</p></div>
+            <div className="grid gap-3 sm:grid-cols-2"><div><label className={labelClass}>Exercise type</label><select value={config.type} onChange={e=>update({type:e.target.value})} className={inputClass}><option value="written">Written response</option><option value="code">Code task</option><option value="multiple_choice">Multiple choice</option><option value="true_false">True / False</option><option value="short_answer">Short answer</option></select></div><div><label className={labelClass}>Workspace title</label><input value={config.title} onChange={e=>update({title:e.target.value})} placeholder="e.g. Build your first page" className={inputClass}/></div></div>
+            <div><label className={labelClass}>Instructions for students</label><textarea value={config.instructions} onChange={e=>update({instructions:e.target.value})} rows={5} placeholder="Explain the task, steps, and what students should submit." className={inputClass}/></div>
+            {config.type === "written" && <div className="grid gap-3 sm:grid-cols-2"><div><label className={labelClass}>Suggested minimum words</label><input type="number" min="0" value={config.min_words || 0} onChange={e=>update({min_words:Number(e.target.value)})} className={inputClass}/></div><div><label className={labelClass}>Suggested maximum words</label><input type="number" min="0" value={config.max_words || 0} onChange={e=>update({max_words:Number(e.target.value)})} className={inputClass}/></div></div>}
+            {config.type === "code" && <div><label className={labelClass}>Programming language</label><select value={config.language || "html"} onChange={e=>update({language:e.target.value})} className={inputClass}>{LESSON_CODE_LANGUAGES.map(language=><option key={language.value} value={language.value}>{language.label}</option>)}</select><p className="mt-2 text-xs text-[#9299AE]">HTML tasks include a safe preview. Other languages provide an editor; code execution is enabled only where a supported runner exists.</p></div>}
+            {(config.type === "multiple_choice" || config.type === "true_false") && <><div><label className={labelClass}>Answer options · one per line</label><textarea value={(config.type === "true_false" ? ["True","False"] : config.options || []).join("\n")} readOnly={config.type === "true_false"} onChange={e=>update({options:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)})} rows={4} className={inputClass}/></div><div><label className={labelClass}>Correct answer (optional)</label><select value={config.expected_answer || ""} onChange={e=>update({expected_answer:e.target.value})} className={inputClass}><option value="">Do not auto-grade</option>{(config.type === "true_false" ? ["True","False"] : config.options || []).map(option=><option key={option} value={option}>{option}</option>)}</select></div></>}
+            {config.type === "short_answer" && <div><label className={labelClass}>Suggested answer (optional)</label><textarea value={config.expected_answer || ""} onChange={e=>update({expected_answer:e.target.value})} rows={2} className={inputClass}/></div>}
+            <div><label className={labelClass}>Optional hint</label><textarea value={config.hint || ""} onChange={e=>update({hint:e.target.value})} rows={2} placeholder="A helpful clue students can reveal when stuck" className={inputClass}/></div>
+            <div className="rounded-xl border border-white/10 bg-[#0B1020]/70 p-4 text-xs leading-5 text-[#AEB9CA]">Student responses are saved locally on their device in this version. Instructor-side submission and grading require a separate submission API.</div>
+          </section>;
+        })()}
 
         {/* Practical examples builder */}
         <section className="rounded-2xl border border-[#7559E8]/25 bg-[#111827] p-6 space-y-5">
